@@ -1008,40 +1008,97 @@
   </div>
 </section>
 
-<!-- Final Funnel: Two Paths -->
-<section class="homepage-cta" id="homepage-cta">
-  <div class="homepage-cta__header">
-    <h2 class="homepage-cta__section-title">Choose Your Path</h2>
-    <p class="homepage-cta__section-subtitle">Start free or unlock the full experience</p>
-  </div>
-  
-  <div class="homepage-cta__grid" role="group" aria-label="Pricing options">
-    <div class="homepage-cta__card homepage-cta__card--free" role="article" aria-labelledby="free-plan-title">
-      <h3 class="homepage-cta__card-title" id="free-plan-title">The Comp Card</h3>
-      <p class="homepage-cta__card-description">Free forever. Get your AI-curated comp card in minutes.</p>
-      <ul class="homepage-cta__features" aria-label="Free plan features">
-        <li>AI-Curated Comp Card</li>
-        <li>Publication-ready PDF</li>
-        <li>Basic portfolio</li>
-      </ul>
-      <a href="/apply" class="homepage-cta__button homepage-cta__button--primary" aria-label="Create free comp card">Create Free Comp Card</a>
+<!-- Pricing Section -->
+<section class="pricing-section" id="homepage-cta">
+  <div class="pricing-section__container">
+    <div class="pricing-section__header">
+      <h2 class="pricing-section__title">Simple, Transparent Pricing</h2>
+      <p class="pricing-section__subtitle">Choose the plan that works for you</p>
     </div>
     
-    <div class="homepage-cta__card homepage-cta__card--pro" role="article" aria-labelledby="pro-plan-title">
-      <span class="homepage-cta__popular-badge">Most Popular</span>
-      <h3 class="homepage-cta__card-title" id="pro-plan-title">The Live Portfolio</h3>
-      <div class="homepage-cta__card-price" aria-label="Price: 9.99 dollars per month">
-        $9.99<span class="homepage-cta__card-period">/month</span>
+    <div class="pricing-section__grid" role="group" aria-label="Pricing options">
+      <!-- Free Plan -->
+      <div class="pricing-card pricing-card--free" role="article" aria-labelledby="free-plan-title">
+        <div class="pricing-card__header">
+          <h3 class="pricing-card__title" id="free-plan-title">Free</h3>
+          <div class="pricing-card__price">
+            <span class="pricing-card__price-amount">$0</span>
+            <span class="pricing-card__price-period">forever</span>
+          </div>
+        </div>
+        <p class="pricing-card__description">Perfect for getting started with your first comp card</p>
+        <ul class="pricing-card__features" aria-label="Free plan features">
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>AI-Curated Comp Card</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Publication-ready PDF</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Basic portfolio page</span>
+          </li>
+        </ul>
+        <a href="/apply" class="pricing-card__button pricing-card__button--free" aria-label="Create free comp card">
+          Get Started Free
+        </a>
       </div>
-      <p class="homepage-cta__card-description">Unlock the full experience with a live portfolio website.</p>
-      <ul class="homepage-cta__features" aria-label="Pro plan features">
-        <li>Everything in Free</li>
-        <li>Live Portfolio Website</li>
-        <li>Advanced AI Curation</li>
-        <li>No Watermarks</li>
-        <li>Custom Domain Option</li>
-      </ul>
-      <a href="/pro/upgrade" class="homepage-cta__button homepage-cta__button--secondary" aria-label="Upgrade to Studio Plus">Upgrade to Studio+</a>
+      
+      <!-- Pro Plan -->
+      <div class="pricing-card pricing-card--pro" role="article" aria-labelledby="pro-plan-title">
+        <div class="pricing-card__badge">Most Popular</div>
+        <div class="pricing-card__header">
+          <h3 class="pricing-card__title" id="pro-plan-title">Studio+</h3>
+          <div class="pricing-card__price">
+            <span class="pricing-card__price-amount">$9.99</span>
+            <span class="pricing-card__price-period">/month</span>
+          </div>
+        </div>
+        <p class="pricing-card__description">Everything you need for a professional portfolio</p>
+        <ul class="pricing-card__features" aria-label="Pro plan features">
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Everything in Free</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Live portfolio website</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Advanced AI curation</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>No watermarks</span>
+          </li>
+          <li class="pricing-card__feature">
+            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Custom domain option</span>
+          </li>
+        </ul>
+        <a href="/pro/upgrade" class="pricing-card__button pricing-card__button--pro" aria-label="Upgrade to Studio Plus">
+          Upgrade to Studio+
+        </a>
+      </div>
     </div>
   </div>
 </section>
