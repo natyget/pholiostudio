@@ -17810,10 +17810,13 @@ body.filmstrip-hover {
   background: linear-gradient(135deg, #ffffff 0%, rgba(201, 165, 90, 0.02) 100%);
   border: 2px solid rgba(201, 165, 90, 0.15);
   border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
   text-align: left;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
@@ -17859,7 +17862,7 @@ body.filmstrip-hover {
 }
 
 .homepage-agency__feature:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px);
   box-shadow: 0 16px 48px rgba(201, 165, 90, 0.25),
     0 6px 20px rgba(0, 0, 0, 0.1);
   border-color: rgba(201, 165, 90, 0.4);
@@ -17876,7 +17879,10 @@ body.filmstrip-hover {
   border: 2px solid rgba(201, 165, 90, 0.25);
   border-radius: 16px;
   margin-bottom: 2rem;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -17897,7 +17903,7 @@ body.filmstrip-hover {
 .homepage-agency__feature:hover .homepage-agency__feature-icon-wrapper {
   background: linear-gradient(135deg, rgba(201, 165, 90, 0.18) 0%, rgba(201, 165, 90, 0.12) 100%);
   border-color: rgba(201, 165, 90, 0.5);
-  transform: scale(1.05) rotate(-5deg);
+  transform: scale(1.03);
   box-shadow: 0 4px 16px rgba(201, 165, 90, 0.3);
 }
 
@@ -17913,11 +17919,11 @@ body.filmstrip-hover {
   position: relative;
   z-index: 1;
   filter: drop-shadow(0 2px 4px rgba(201, 165, 90, 0.2));
-  transition: transform 0.5s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .homepage-agency__feature:hover .homepage-agency__feature-icon {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .homepage-agency__feature-content {
@@ -19943,7 +19949,7 @@ body.filmstrip-hover {
 }
 
 .homepage-cta__card--free {
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .homepage-cta__card--free:hover {
@@ -19966,13 +19972,12 @@ body.filmstrip-hover {
     0 20px 60px rgba(201, 165, 90, 0.25),
     0 8px 24px rgba(201, 165, 90, 0.15),
     0 0 0 1px rgba(201, 165, 90, 0.1) inset;
-  transform: scale(1.02);
   position: relative;
   z-index: 2;
 }
 
 .homepage-cta__card--pro:hover {
-  transform: scale(1.05) translateY(-8px);
+  transform: translateY(-8px);
   border-color: rgba(201, 165, 90, 0.6);
   box-shadow:
     0 30px 80px rgba(201, 165, 90, 0.4),
@@ -20020,6 +20025,10 @@ body.filmstrip-hover {
   margin: 0 0 2rem 0;
   text-align: left;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
 }
 
 .homepage-cta__features li {
