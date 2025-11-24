@@ -991,7 +991,12 @@
       <p class="homepage-testimonials__subtitle">See what our community says about Pholio</p>
     </div>
     
-    <blockquote class="testimonial">
+    <div class="testimonial__image-wrapper">
+      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80" alt="Sarah Chen, Creative Director at Elite Model Management" class="testimonial__image" loading="lazy" width="120" height="120">
+      <span class="testimonial__badge testimonial__badge--agency" aria-label="Agency testimonial">Agency</span>
+    </div>
+    
+    <blockquote class="testimonial" cite="Sarah Chen, Elite Model Management">
       <p class="testimonial__text">
         "Pholio transformed how we manage our talent roster. The AI curation maintains editorial standards while saving hours of manual work. Every comp card is publication-ready."
       </p>
@@ -1010,30 +1015,30 @@
     <p class="homepage-cta__section-subtitle">Start free or unlock the full experience</p>
   </div>
   
-  <div class="homepage-cta__grid">
-    <div class="homepage-cta__card homepage-cta__card--free">
-      <h3 class="homepage-cta__card-title">The Comp Card</h3>
+  <div class="homepage-cta__grid" role="group" aria-label="Pricing options">
+    <div class="homepage-cta__card homepage-cta__card--free" role="article" aria-labelledby="free-plan-title">
+      <h3 class="homepage-cta__card-title" id="free-plan-title">The Comp Card</h3>
       <p class="homepage-cta__card-description">Free forever. Get your AI-curated comp card in minutes.</p>
-      <ul class="homepage-cta__features">
+      <ul class="homepage-cta__features" aria-label="Free plan features">
         <li>AI-Curated Comp Card</li>
         <li>Publication-ready PDF</li>
         <li>Basic portfolio</li>
       </ul>
-      <a href="/apply" class="homepage-cta__button homepage-cta__button--primary">Create Free Comp Card</a>
+      <a href="/apply" class="homepage-cta__button homepage-cta__button--primary" aria-label="Create free comp card">Create Free Comp Card</a>
     </div>
     
-    <div class="homepage-cta__card homepage-cta__card--pro">
-      <h3 class="homepage-cta__card-title">The Live Portfolio</h3>
-      <p class="homepage-cta__card-price">$9.99<span class="homepage-cta__card-period">/month</span></p>
+    <div class="homepage-cta__card homepage-cta__card--pro" role="article" aria-labelledby="pro-plan-title">
+      <h3 class="homepage-cta__card-title" id="pro-plan-title">The Live Portfolio</h3>
+      <p class="homepage-cta__card-price" aria-label="Price: 9.99 dollars per month">$9.99<span class="homepage-cta__card-period">/month</span></p>
       <p class="homepage-cta__card-description">Unlock the full experience with a live portfolio website.</p>
-      <ul class="homepage-cta__features">
+      <ul class="homepage-cta__features" aria-label="Pro plan features">
         <li>Everything in Free</li>
         <li>Live Portfolio Website</li>
         <li>Advanced AI Curation</li>
         <li>No Watermarks</li>
         <li>Custom Domain Option</li>
       </ul>
-      <a href="/pro/upgrade" class="homepage-cta__button homepage-cta__button--secondary">Upgrade to Studio+</a>
+      <a href="/pro/upgrade" class="homepage-cta__button homepage-cta__button--secondary" aria-label="Upgrade to Studio Plus">Upgrade to Studio+</a>
     </div>
   </div>
 </section>

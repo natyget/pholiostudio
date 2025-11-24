@@ -19292,6 +19292,8 @@ body.filmstrip-hover {
   margin-bottom: 2rem;
   display: flex;
   justify-content: center;
+  position: relative;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
 .testimonial__image {
@@ -19894,7 +19896,191 @@ body.filmstrip-hover {
 }
 
 .homepage-cta__grid {
-  display: none; /* Hide old grid, using table instead */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Pricing Card Styles */
+.homepage-cta__card {
+  padding: 3rem 2.5rem;
+  background: #ffffff;
+  border: 2px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  text-align: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    background 0.4s ease;
+  position: relative;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  animation: fadeInUp 0.6s ease-out;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.homepage-cta__card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.homepage-cta__card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.homepage-cta__card--free {
+  opacity: 0.95;
+}
+
+.homepage-cta__card--free:hover {
+  transform: translateY(-4px);
+  border-color: rgba(15, 23, 42, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.homepage-cta__card--pro {
+  background: linear-gradient(135deg,
+      #ffffff 0%,
+      rgba(250, 249, 247, 0.98) 25%,
+      rgba(201, 165, 90, 0.08) 50%,
+      rgba(250, 249, 247, 0.98) 75%,
+      #ffffff 100%);
+  border: 3px solid rgba(201, 165, 90, 0.4);
+  border-radius: 20px;
+  box-shadow:
+    0 20px 60px rgba(201, 165, 90, 0.25),
+    0 8px 24px rgba(201, 165, 90, 0.15),
+    0 0 0 1px rgba(201, 165, 90, 0.1) inset;
+  transform: scale(1.02);
+  position: relative;
+  z-index: 2;
+}
+
+.homepage-cta__card--pro:hover {
+  transform: scale(1.05) translateY(-8px);
+  border-color: rgba(201, 165, 90, 0.6);
+  box-shadow:
+    0 30px 80px rgba(201, 165, 90, 0.4),
+    0 12px 32px rgba(201, 165, 90, 0.25),
+    0 0 0 1px rgba(201, 165, 90, 0.2) inset;
+}
+
+.homepage-cta__card-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 400;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  letter-spacing: 0.02em;
+}
+
+.homepage-cta__card-description {
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+  line-height: 1.6;
+  color: #475569;
+  margin: 0 0 1.5rem 0;
+}
+
+.homepage-cta__card-price {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 300;
+  color: #0f172a;
+  line-height: 1;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.homepage-cta__card-period {
+  font-family: var(--font-sans);
+  font-size: clamp(0.875rem, 1.25vw, 1rem);
+  color: #64748b;
+  font-weight: 400;
+}
+
+.homepage-cta__features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  text-align: left;
+  flex: 1;
+}
+
+.homepage-cta__features li {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: #475569;
+  padding: 0.75rem 0;
+  padding-left: 1.75rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.homepage-cta__features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.homepage-cta__card--pro .homepage-cta__features li::before {
+  color: var(--color-accent);
+}
+
+.homepage-cta__button {
+  display: inline-block;
+  padding: 1rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.homepage-cta__button--primary {
+  background: #0f172a;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+}
+
+.homepage-cta__button--primary:hover {
+  background: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.homepage-cta__button--secondary {
+  background: var(--color-accent);
+  color: #ffffff;
+  border: 2px solid var(--color-accent);
+}
+
+.homepage-cta__button--secondary:hover {
+  background: rgba(201, 165, 90, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 165, 90, 0.3);
 }
 
 .homepage-cta__column {
@@ -20729,6 +20915,18 @@ body.filmstrip-hover {
   .homepage-cta__grid {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+
+  .homepage-cta__card {
+    padding: 2.5rem 2rem;
+  }
+
+  .homepage-cta__card--pro {
+    transform: scale(1);
+  }
+
+  .homepage-cta__card--pro:hover {
+    transform: translateY(-4px) scale(1);
   }
 
   .homepage-cta__column {
