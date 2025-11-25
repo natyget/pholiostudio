@@ -2147,11 +2147,18 @@
 
 .applicants-inbox-view {
   display: block !important;
+  margin-top: 0;
 }
 
 /* Ensure list view is visible by default */
 .agency-dashboard__view--list.applicants-inbox-view {
   display: block !important;
+}
+
+/* Container spacing */
+.applicants-views-container {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .applicants-inbox {
@@ -2161,6 +2168,7 @@
   background: var(--agency-bg-surface, #ffffff);
   border: 1px solid var(--agency-border, #e2e8f0);
   border-radius: 0;
+  margin-top: 0;
 }
 
 .applicants-inbox-row {
@@ -2520,27 +2528,37 @@
     font-size: 1rem;
   }
 
-  .agency-applicants-header__main {
+  .agency-applicants-header__row--controls {
     flex-direction: column;
-    gap: 1.5rem;
+    align-items: stretch;
+    gap: 1rem;
   }
 
-  .agency-applicants-header__actions {
+  .agency-applicants-header__search-group {
     width: 100%;
-    flex-wrap: wrap;
+    flex-direction: column;
   }
 
   .agency-applicants-header__search {
-    min-width: 100%;
-    order: 1;
-  }
-
-  .agency-applicants-header__filters-btn {
-    order: 2;
+    width: 100%;
+    max-width: 100%;
   }
 
   .agency-applicants-header__view-toggle {
-    order: 3;
+    align-self: flex-end;
+  }
+
+  .applicants-status-pills {
+    gap: 0.375rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .applicants-status-pill {
+    font-size: 0.8125rem;
+    padding: 0.4375rem 0.875rem;
+    flex-shrink: 0;
   }
 }
 
@@ -8520,27 +8538,43 @@
    ============================================ */
 
 .agency-applicants-header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+  margin-top: 0;
   padding: 0;
-  border-bottom: 1px solid var(--agency-border, #e2e8f0);
-  padding-bottom: 2rem;
+  padding-top: 0;
 }
 
 .agency-applicants-header__content {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1.5rem;
 }
 
-.agency-applicants-header__main {
+.agency-applicants-header__row {
   display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.agency-applicants-header__row--title {
+  justify-content: flex-start;
+}
+
+.agency-applicants-header__row--controls {
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--agency-spacing-lg);
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.agency-applicants-header__row--status {
+  justify-content: flex-start;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--agency-border, #e2e8f0);
 }
 
 .agency-applicants-header__title-group {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .agency-applicants-header__title {
@@ -8562,18 +8596,21 @@
   font-weight: 400;
 }
 
-.agency-applicants-header__actions {
+.agency-applicants-header__search-group {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .agency-applicants-header__search {
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 300px;
+  flex: 1;
+  min-width: 280px;
+  max-width: 500px;
 }
 
 .agency-applicants-header__search-icon {
@@ -8619,6 +8656,73 @@
 .agency-applicants-header__filters-btn:hover {
   background: var(--agency-bg-elevated);
   border-color: var(--agency-brand-color, var(--agency-accent-gold));
+}
+
+/* Status Pills */
+.applicants-status-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.applicants-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--agency-bg-surface, #ffffff);
+  border: 1px solid var(--agency-border, #e2e8f0);
+  border-radius: 20px;
+  font-family: var(--agency-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--agency-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.applicants-status-pill:hover {
+  background: var(--agency-bg-elevated, #f5f5f4);
+  border-color: var(--agency-text-tertiary, #cbd5e1);
+  color: var(--agency-text-primary, #0f172a);
+}
+
+.applicants-status-pill--active {
+  background: var(--agency-brand-color, var(--agency-accent-gold));
+  border-color: var(--agency-brand-color, var(--agency-accent-gold));
+  color: var(--agency-text-primary, #0f172a);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(201, 165, 90, 0.2);
+}
+
+.applicants-status-pill--active:hover {
+  background: var(--agency-brand-color-dark, rgba(201, 165, 90, 0.9));
+  border-color: var(--agency-brand-color-dark, rgba(201, 165, 90, 0.9));
+}
+
+.applicants-status-pill__label {
+  font-weight: inherit;
+}
+
+.applicants-status-pill__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.375rem;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.applicants-status-pill--active .applicants-status-pill__count {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--agency-text-primary, #0f172a);
 }
 
 .agency-applicants-header__view-toggle {
@@ -9199,7 +9303,8 @@
 }
 
 .applicants-views-container {
-  margin-top: var(--agency-spacing-lg);
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .applicants-views-container .agency-dashboard__view {
@@ -9210,7 +9315,7 @@
   display: block;
 }
 
-/* Default to pipeline view */
-.applicants-views-container #view-pipeline {
+/* Default to list view */
+.applicants-views-container #view-list {
   display: block;
 }

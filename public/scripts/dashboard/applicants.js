@@ -730,9 +730,24 @@
     },
 
     initInboxPage() {
+      // Status pill clicks
+      const statusPills = document.querySelectorAll('.applicants-status-pill');
+      statusPills.forEach(pill => {
+          pill.addEventListener('click', () => {
+              const status = pill.dataset.status;
+              const url = new URL(window.location);
+              if (status === 'all') {
+                url.searchParams.delete('status');
+              } else {
+                url.searchParams.set('status', status);
+              }
+              window.location.href = url.toString();
+          });
+      });
+      
       // Legacy filter pills (if they still exist)
-      const pills = document.querySelectorAll('.agency-inbox-header__filter-pill');
-      pills.forEach(pill => {
+      const legacyPills = document.querySelectorAll('.agency-inbox-header__filter-pill');
+      legacyPills.forEach(pill => {
           pill.addEventListener('click', () => {
               const status = pill.dataset.status;
               const url = new URL(window.location);
