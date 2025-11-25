@@ -171,7 +171,7 @@
       // Bind global functions for inline usage
       window.openApplicationDetail = this.openApplicationDetail.bind(this);
       
-      const previewButtons = document.querySelectorAll('.agency-dashboard__card-preview, .agency-dashboard__gallery-preview, .agency-dashboard__list-preview, .agency-dashboard__table-preview, .agency-dashboard__scout-preview-btn');
+      const previewButtons = document.querySelectorAll('.agency-dashboard__card-preview, .agency-dashboard__gallery-preview, .agency-dashboard__list-preview, .agency-dashboard__table-preview, .agency-dashboard__scout-preview-btn, .applicants-inbox-row__action-btn--view');
       
       previewButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -484,22 +484,40 @@
 
     initQuickActions() {
        document.querySelectorAll('[data-action]').forEach(btn => {
-           if (btn.classList.contains('agency-dashboard__quick-btn') || btn.classList.contains('agency-dashboard__card-action-btn')) {
+           if (btn.classList.contains('agency-dashboard__quick-btn') || 
+               btn.classList.contains('agency-dashboard__card-action-btn') ||
+               btn.classList.contains('applicants-inbox-row__action-btn')) {
                btn.addEventListener('click', async (e) => {
                    e.preventDefault();
+                   e.stopPropagation();
                    const action = btn.dataset.action;
                    const appId = btn.dataset.applicationId;
                    if (!appId) return;
                    
                    try {
                        await this.updateApplicationStatus(appId, action);
-                       window.Toast.success(`Action ${action} successful`);
+                       window.Toast.success(`Application ${action}ed successfully`);
                        window.location.reload();
                    } catch(e) {
                        window.Toast.error('Action failed');
                    }
                });
            }
+       });
+       
+       // Handle view button clicks
+       document.querySelectorAll('.applicants-inbox-row__action-btn--view').forEach(btn => {
+           btn.addEventListener('click', (e) => {
+               e.preventDefault();
+               e.stopPropagation();
+               const applicationId = btn.dataset.applicationId;
+               const profileId = btn.dataset.profileId;
+               if (applicationId) {
+                   this.openApplicationDetail(applicationId);
+               } else if (profileId) {
+                   this.openApplicationDetail(profileId);
+               }
+           });
        });
     },
 
@@ -528,18 +546,20 @@
     initViewModes() {
       const viewButtons = document.querySelectorAll('.agency-applicants-header__view-btn');
       const views = {
-        pipeline: document.getElementById('view-pipeline'),
         list: document.getElementById('view-list'),
         gallery: document.getElementById('view-gallery'),
         table: document.getElementById('view-table')
       };
 
-      // Get saved preference or default to pipeline
-      const savedView = localStorage.getItem('applicants-view-mode') || 'pipeline';
+      // Get saved preference or default to list
+      const savedView = localStorage.getItem('applicants-view-mode') || 'list';
       
       viewButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           const viewMode = btn.dataset.view;
+          
+          // Skip pipeline view if it exists
+          if (viewMode === 'pipeline') return;
           
           // Update active button
           viewButtons.forEach(b => b.classList.remove('agency-applicants-header__view-btn--active'));
@@ -569,14 +589,19 @@
         });
       });
 
-      // Set initial view
+      // Set initial view (default to list)
       const initialView = new URLSearchParams(window.location.search).get('view') || savedView;
       const initialBtn = Array.from(viewButtons).find(btn => btn.dataset.view === initialView);
-      if (initialBtn) {
+      if (initialBtn && initialView !== 'pipeline') {
         initialBtn.click();
-      } else if (views[initialView]) {
-        views[initialView].style.display = 'block';
-        views[initialView].classList.add('agency-dashboard__view--active');
+      } else if (views.list) {
+        // Default to list view
+        views.list.style.display = 'block';
+        views.list.classList.add('agency-dashboard__view--active');
+        const listBtn = Array.from(viewButtons).find(btn => btn.dataset.view === 'list');
+        if (listBtn) {
+          listBtn.classList.add('agency-applicants-header__view-btn--active');
+        }
       }
     },
 

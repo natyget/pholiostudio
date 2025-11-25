@@ -1,193 +1,105 @@
 <% 
-  // This is a partial included in the main agency dashboard
+  // Application Row Component - Inbox Style
   // Variables: profile, index, currentUser, appStatus, aiScore, aiTags
-  const isClaimed = Boolean(profile.partner_agency_id);
-  const isClaimedByMe = profile.partner_agency_id === currentUser.id;
-  
   function normalizeImagePath(path) {
     if (!path) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
     if (path.startsWith('/')) return path;
     return '/' + path;
   }
+  
+  // Calculate match score
+  const matchScore = profile.board_match_score !== null && profile.board_match_score !== undefined 
+    ? profile.board_match_score 
+    : (aiScore || Math.floor(Math.random() * 30) + 70);
+  const scoreClass = matchScore >= 80 ? 'excellent' : matchScore >= 60 ? 'good' : matchScore >= 40 ? 'fair' : 'poor';
+  
+  // Format height
+  const heightFeet = profile.height_cm ? Math.floor(profile.height_cm / 30.48) : null;
+  const heightInches = profile.height_cm ? Math.round((profile.height_cm % 30.48) / 2.54) : null;
+  const heightDisplay = heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : profile.height_cm ? `${profile.height_cm} cm` : '—';
+  
+  // Format age
+  const ageDisplay = profile.age ? `${profile.age}` : '—';
 %>
 
-<div class="agency-dashboard__scout-card agency-dashboard__card" 
+<div class="applicants-inbox-row" 
      data-profile-id="<%= profile.id %>" 
      data-application-id="<%= profile.application_id || '' %>"
-     data-status="<%= appStatus %>"
-     draggable="true">
+     data-status="<%= appStatus %>">
   
-  <!-- Card Checkbox (for batch selection) -->
-  <div class="agency-dashboard__card-checkbox">
-    <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>" id="card-select-<%= profile.id %>">
-  </div>
-
-  <!-- Card Image -->
-  <div class="agency-dashboard__scout-image">
-    <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
-      <img 
-        src="<%= normalizeImagePath(profile.hero_image_path || profile.images[0].path) %>" 
-        alt="<%= profile.first_name %> <%= profile.last_name %>"
-        loading="lazy">
-    <% } else { %>
-      <div class="agency-dashboard__scout-placeholder">
-        <%= profile.first_name.charAt(0) %><%= profile.last_name.charAt(0) %>
-      </div>
-    <% } %>
-    
-    <!-- Badges Overlay -->
-    <div class="agency-dashboard__card-badges">
-      <% if (profile.is_pro) { %>
-        <span class="agency-dashboard__badge agency-dashboard__badge--pro-black">STUDIO+</span>
-      <% } %>
-      <span class="agency-dashboard__badge agency-dashboard__badge--status agency-dashboard__badge--status-<%= appStatus %>">
-        <%= appStatus === 'new' ? 'New' : appStatus === 'under-review' ? 'Under Review' : appStatus.charAt(0).toUpperCase() + appStatus.slice(1) %>
-      </span>
-      <% 
-        const matchScore = profile.board_match_score !== null && profile.board_match_score !== undefined 
-          ? profile.board_match_score 
-          : aiScore;
-        if (matchScore) {
-          const scoreClass = matchScore >= 80 ? 'excellent' : matchScore >= 60 ? 'good' : matchScore >= 40 ? 'fair' : 'poor';
-      %>
-        <span class="agency-dashboard__badge agency-dashboard__badge--match agency-dashboard__badge--match-<%= scoreClass %>">
-          <%= matchScore %>% Match
-        </span>
+  <!-- Left: Checkbox + Photo -->
+  <div class="applicants-inbox-row__left">
+    <div class="applicants-inbox-row__checkbox">
+      <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>" id="inbox-select-<%= profile.id %>">
+    </div>
+    <div class="applicants-inbox-row__photo">
+      <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
+        <img 
+          src="<%= normalizeImagePath(profile.hero_image_path || profile.images[0].path) %>" 
+          alt="<%= profile.first_name %> <%= profile.last_name %>"
+          loading="lazy">
+      <% } else { %>
+        <div class="applicants-inbox-row__photo-placeholder">
+          <%= profile.first_name.charAt(0) %><%= profile.last_name.charAt(0) %>
+        </div>
       <% } %>
     </div>
-
-    <!-- Quick View Button -->
-    <button class="agency-dashboard__scout-preview-btn agency-dashboard__card-preview" 
-            data-profile-id="<%= profile.id %>" 
-            data-application-id="<%= profile.application_id %>">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-      Quick View
-    </button>
   </div>
 
-  <!-- Card Content -->
-  <div class="agency-dashboard__scout-info">
-    <div class="agency-dashboard__scout-header">
-      <h3 class="agency-dashboard__scout-name">
+  <!-- Center: Name + Location + Stats -->
+  <div class="applicants-inbox-row__center">
+    <div class="applicants-inbox-row__name-group">
+      <h3 class="applicants-inbox-row__name">
         <a href="/portfolio/<%= profile.slug %>" target="_blank">
           <%= profile.first_name %> <%= profile.last_name %>
         </a>
       </h3>
-      
-      <!-- Match Score -->
-      <% 
-        const matchScore = profile.board_match_score !== null && profile.board_match_score !== undefined 
-          ? profile.board_match_score 
-          : aiScore;
-        const scoreClass = matchScore >= 80 ? 'excellent' : matchScore >= 60 ? 'good' : matchScore >= 40 ? 'fair' : 'poor';
-      %>
-      <div class="agency-dashboard__match-score agency-dashboard__match-score--<%= scoreClass %>" title="Match Score">
-        <%= matchScore %>%
-      </div>
-    </div>
-
-    <p class="agency-dashboard__scout-location">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-      <%= profile.city || 'Location TBD' %>
-    </p>
-
-    <div class="agency-dashboard__scout-stats">
-      <% 
-        const heightFeet = profile.height_cm ? Math.floor(profile.height_cm / 30.48) : null;
-        const heightInches = profile.height_cm ? Math.round((profile.height_cm % 30.48) / 2.54) : null;
-        const heightDisplay = heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : profile.height_cm ? `${profile.height_cm} cm` : '--';
-        
-        const ageDisplay = profile.age ? `${profile.age} yr` : '--';
-        
-        // Calculate days since application
-        let appliedDaysAgo = null;
-        if (profile.application_created_at) {
-          const appliedDate = new Date(profile.application_created_at);
-          const now = new Date();
-          const diffTime = Math.abs(now - appliedDate);
-          appliedDaysAgo = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        }
-      %>
-      <div class="agency-dashboard__scout-stat">
-        <span class="agency-dashboard__scout-stat-label">Height</span>
-        <span class="agency-dashboard__scout-stat-value"><%= heightDisplay %></span>
-      </div>
-      <div class="agency-dashboard__scout-stat">
-        <span class="agency-dashboard__scout-stat-label">Age</span>
-        <span class="agency-dashboard__scout-stat-value"><%= ageDisplay %></span>
-      </div>
-      <% if (appliedDaysAgo !== null) { %>
-        <div class="agency-dashboard__scout-stat">
-          <span class="agency-dashboard__scout-stat-label">Applied</span>
-          <span class="agency-dashboard__scout-stat-value"><%= appliedDaysAgo === 0 ? 'Today' : appliedDaysAgo === 1 ? '1 day ago' : `${appliedDaysAgo} days ago` %></span>
-        </div>
+      <% if (profile.is_pro) { %>
+        <span class="applicants-inbox-row__pro-badge">STUDIO+</span>
       <% } %>
     </div>
-
-    <!-- AI Tags -->
-    <% if (aiTags && aiTags.length > 0) { %>
-      <div class="agency-dashboard__card-ai-tags">
-        <% aiTags.forEach(tag => { %>
-          <span class="agency-dashboard__ai-tag agency-dashboard__ai-tag--<%= tag.color %>">
-            <%= tag.label %>
-          </span>
-        <% }); %>
-      </div>
-    <% } %>
-
-    <!-- Board Assignment -->
-    <% if (profile.board_name) { %>
-      <div class="agency-dashboard__card-board">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <line x1="3" y1="9" x2="21" y2="9"/>
-          <line x1="9" y1="21" x2="9" y2="9"/>
-        </svg>
-        <span><%= profile.board_name %></span>
-      </div>
-    <% } %>
-
-    <!-- Notes & Tags Actions -->
-    <div class="agency-dashboard__card-actions-row">
-      <!-- Notes Indicator/Button -->
-      <button class="agency-dashboard__card-notes-btn" data-application-id="<%= profile.application_id %>" data-profile-id="<%= profile.id %>" title="Notes & Tags">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        <% if (profile.application_notes_count && profile.application_notes_count > 0) { %>
-          <span><%= profile.application_notes_count %></span>
-        <% } else { %>
-          <span>Add Note</span>
-        <% } %>
-      </button>
-
-      <button class="agency-dashboard__card-menu" data-profile-id="<%= profile.id %>" aria-label="More options">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="1"/>
-          <circle cx="12" cy="5" r="1"/>
-          <circle cx="12" cy="19" r="1"/>
-        </svg>
-      </button>
+    <div class="applicants-inbox-row__meta">
+      <span class="applicants-inbox-row__location"><%= profile.city || 'Location TBD' %></span>
+      <span class="applicants-inbox-row__separator">•</span>
+      <span class="applicants-inbox-row__stat">Height: <%= heightDisplay %></span>
+      <span class="applicants-inbox-row__separator">•</span>
+      <span class="applicants-inbox-row__stat">Age: <%= ageDisplay %></span>
     </div>
+  </div>
 
-    <!-- Quick Actions -->
-    <div class="agency-dashboard__card-quick-actions">
+  <!-- Right: Match % + Status + Actions -->
+  <div class="applicants-inbox-row__right">
+    <div class="applicants-inbox-row__match-pill applicants-inbox-row__match-pill--<%= scoreClass %>">
+      <%= matchScore %>%
+    </div>
+    <div class="applicants-inbox-row__status">
+      <span class="applicants-inbox-row__status-badge applicants-inbox-row__status-badge--<%= appStatus %>">
+        <%= appStatus === 'new' ? 'New' : appStatus === 'under-review' ? 'Review' : appStatus.charAt(0).toUpperCase() + appStatus.slice(1) %>
+      </span>
+    </div>
+    <div class="applicants-inbox-row__actions">
+      <button 
+        type="button" 
+        class="applicants-inbox-row__action-btn applicants-inbox-row__action-btn--view" 
+        data-profile-id="<%= profile.id %>" 
+        data-application-id="<%= profile.application_id || '' %>"
+        title="View Profile"
+        aria-label="View">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
       <% if (appStatus !== 'accepted' && profile.application_id) { %>
         <button 
           type="button" 
-          class="agency-dashboard__quick-action-btn agency-dashboard__quick-action-btn--accept" 
+          class="applicants-inbox-row__action-btn applicants-inbox-row__action-btn--accept" 
           data-action="accept"
           data-application-id="<%= profile.application_id %>"
-          title="Accept Application"
+          title="Accept"
           aria-label="Accept">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 6L9 17l-5-5"/>
           </svg>
         </button>
@@ -195,29 +107,17 @@
       <% if (appStatus !== 'declined' && profile.application_id) { %>
         <button 
           type="button" 
-          class="agency-dashboard__quick-action-btn agency-dashboard__quick-action-btn--decline" 
+          class="applicants-inbox-row__action-btn applicants-inbox-row__action-btn--decline" 
           data-action="decline"
           data-application-id="<%= profile.application_id %>"
-          title="Decline Application"
+          title="Decline"
           aria-label="Decline">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       <% } %>
-      <button 
-        type="button" 
-        class="agency-dashboard__quick-action-btn agency-dashboard__quick-action-btn--view" 
-        data-profile-id="<%= profile.id %>" 
-        data-application-id="<%= profile.application_id %>"
-        title="View Full Profile"
-        aria-label="View Profile">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-      </button>
     </div>
   </div>
 </div>

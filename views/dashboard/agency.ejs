@@ -111,9 +111,8 @@
       <%- include('../partials/agency/inbox-header', { safeStats, pipelineCounts, filters }) %>
       <%- include('../partials/agency/applicants-filter-drawer', { safeBoards }) %>
       <div class="applicants-views-container">
-        <%- include('../partials/agency/kanban', { profilesByStatus, currentUser }) %>
-        <%- include('../partials/agency/gallery', { safeProfiles, currentUser }) %>
         <%- include('../partials/agency/list', { safeProfiles, currentUser }) %>
+        <%- include('../partials/agency/gallery', { safeProfiles, currentUser }) %>
         <%- include('../partials/agency/table', { safeProfiles, currentUser }) %>
       </div>
     <% } else if (page === 'discover') { %>

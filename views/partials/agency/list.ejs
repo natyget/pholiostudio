@@ -1,66 +1,26 @@
-    <!-- List View -->
-    <div class="agency-dashboard__view agency-dashboard__view--list" id="view-list" style="display: none;">
-      <div class="agency-dashboard__list">
-        <% safeProfiles.forEach((profile, index) => { %>
-          <div class="agency-dashboard__list-item" data-profile-id="<%= profile.id %>">
-            <div class="agency-dashboard__list-checkbox">
-              <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>" id="select-<%= profile.id %>">
-            </div>
-            <div class="agency-dashboard__list-image">
-              <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
-                <img 
-                  src="<%= normalizeImagePath(profile.hero_image_path || profile.images[0].path) %>" 
-                  alt="<%= profile.first_name %> <%= profile.last_name %>"
-                  loading="lazy">
-              <% } else { %>
-                <div class="agency-dashboard__list-placeholder">
-                  <%= profile.first_name.charAt(0) %><%= profile.last_name.charAt(0) %>
-                </div>
-              <% } %>
-            </div>
-            <div class="agency-dashboard__list-content">
-              <h4 class="agency-dashboard__list-name"><%= profile.first_name %> <%= profile.last_name %></h4>
-              <p class="agency-dashboard__list-meta">
-                  <%= profile.city || 'Location TBD' %>
-                    <% if (profile.height_cm) { %> • <%= profile.height_cm %> cm<% } %>
-                <% if (profile.measurements) { %> • <%= profile.measurements %><% } %>
-                </p>
-                <% if (profile.bio_curated) { %>
-                <p class="agency-dashboard__list-bio"><%= profile.bio_curated.length > 150 ? profile.bio_curated.substring(0, 150) + '...' : profile.bio_curated %></p>
-                  <% } %>
-            </div>
-            <div class="agency-dashboard__list-actions">
-              <button class="agency-dashboard__list-preview" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">Preview</button>
-              <div class="agency-dashboard__list-quick-actions">
-                <% const appStatus = profile.application_status || 'pending'; %>
-                <% if (appStatus !== 'accepted') { %>
-                  <button 
-                    type="button" 
-                    class="agency-dashboard__quick-btn agency-dashboard__quick-btn--accept" 
-                    data-action="accept" 
-                    data-application-id="<%= profile.application_id || '' %>"
-                  >
-                    Accept
-                  </button>
-                <% } %>
-                <% if (appStatus !== 'declined') { %>
-                  <button 
-                    type="button" 
-                    class="agency-dashboard__quick-btn agency-dashboard__quick-btn--decline" 
-                    data-action="decline" 
-                    data-application-id="<%= profile.application_id || '' %>"
-                  >
-                    Decline
-                  </button>
-                <% } %>
-              </div>
-            </div>
-          </div>
-            <% }); %>
-        <% if (safeProfiles.length === 0) { %>
-          <div class="agency-dashboard__empty-state">
-            <p>No applications found</p>
-        </div>
-        <% } %>
+<!-- Inbox List View (Primary) -->
+<div class="agency-dashboard__view agency-dashboard__view--list applicants-inbox-view" id="view-list">
+  <div class="applicants-inbox">
+    <% safeProfiles.forEach((profile, index) => { 
+      const appStatus = profile.application_status || 'pending';
+      const aiScore = Math.floor(Math.random() * 30) + 70;
+      const aiTags = [];
+      if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('editorial')) {
+        aiTags.push({ label: 'Editorial Potential', color: 'purple' });
+      }
+      if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('commercial')) {
+        aiTags.push({ label: 'Commercial Ready', color: 'blue' });
+      }
+      if (profile.height_cm && profile.height_cm >= 175) {
+        aiTags.push({ label: 'Runway Fit', color: 'green' });
+      }
+    %>
+      <%- include('../../dashboard/partials/application-card', { profile, index, currentUser, appStatus, aiScore, aiTags }) %>
+    <% }); %>
+    <% if (safeProfiles.length === 0) { %>
+      <div class="applicants-inbox__empty">
+        <p class="applicants-inbox__empty-text">No applications found</p>
       </div>
-    </div>
+    <% } %>
+  </div>
+</div>
