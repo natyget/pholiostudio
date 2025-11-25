@@ -13,18 +13,31 @@ exports.seed = async function seed(knex) {
   await knex('applications').del();
   await knex('images').del();
   await knex('profiles').del();
-  await knex('users').del();
+  // Don't delete users - keep existing agency account
+  // await knex('users').del();
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
-  // Create agency account
-  const agencyId = uuidv4();
-  await knex('users').insert({
-    id: agencyId,
-    email: 'agency@example.com',
-    password_hash: passwordHash,
-    role: 'AGENCY'
-  });
+  // Find or create agency account
+  let agencyId;
+  const existingAgency = await knex('users')
+    .where({ email: 'you@agency.com', role: 'AGENCY' })
+    .first();
+  
+  if (existingAgency) {
+    agencyId = existingAgency.id;
+    console.log('[Seed] Using existing agency account: you@agency.com');
+  } else {
+    // Create agency account if it doesn't exist
+    agencyId = uuidv4();
+    await knex('users').insert({
+      id: agencyId,
+      email: 'you@agency.com',
+      password_hash: passwordHash,
+      role: 'AGENCY'
+    });
+    console.log('[Seed] Created new agency account: you@agency.com');
+  }
 
   // Create talent account
   const talentId = uuidv4();
