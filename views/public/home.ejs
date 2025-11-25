@@ -1009,95 +1009,132 @@
 </section>
 
 <!-- Pricing Section -->
-<section class="pricing-section" id="homepage-cta">
-  <div class="pricing-section__container">
-    <div class="pricing-section__header">
-      <h2 class="pricing-section__title">Simple, Transparent Pricing</h2>
-      <p class="pricing-section__subtitle">Choose the plan that works for you</p>
+<section class="homepage-pricing" id="homepage-cta">
+  <div class="homepage-pricing__container">
+    <div class="homepage-pricing__header">
+      <h2 class="homepage-pricing__title">Choose Your Plan</h2>
+      <p class="homepage-pricing__subtitle">Start free, upgrade when you're ready</p>
     </div>
     
-    <div class="pricing-section__grid" role="group" aria-label="Pricing options">
+    <div class="homepage-pricing__grid">
       <!-- Free Plan -->
-      <div class="pricing-card pricing-card--free" role="article" aria-labelledby="free-plan-title">
-        <div class="pricing-card__header">
-          <h3 class="pricing-card__title" id="free-plan-title">Free</h3>
-          <div class="pricing-card__price">
-            <span class="pricing-card__price-amount">$0</span>
-            <span class="pricing-card__price-period">forever</span>
+      <div class="homepage-pricing__card homepage-pricing__card--free">
+        <div class="homepage-pricing__badge homepage-pricing__badge--free">Free</div>
+        
+        <div class="homepage-pricing__card-header">
+          <div class="homepage-pricing__price">
+            <span class="homepage-pricing__price-amount">$0</span>
+            <span class="homepage-pricing__price-period">forever</span>
+          </div>
+          <p class="homepage-pricing__tagline">Perfect for getting started</p>
+        </div>
+
+        <div class="homepage-pricing__features">
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>AI-Refined Bio & Stats</span>
+          </div>
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Printable PDF Comp Card</span>
+          </div>
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Ink Theme (Free)</span>
+          </div>
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Basic Portfolio Page</span>
+          </div>
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Basic Analytics</span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--limited">
+            <svg class="homepage-pricing__check homepage-pricing__check--limited" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Default Branding <small>(with watermark)</small></span>
           </div>
         </div>
-        <p class="pricing-card__description">Perfect for getting started with your first comp card</p>
-        <ul class="pricing-card__features" aria-label="Free plan features">
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>AI-Curated Comp Card</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Publication-ready PDF</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Basic portfolio page</span>
-          </li>
-        </ul>
-        <a href="/apply" class="pricing-card__button pricing-card__button--free" aria-label="Create free comp card">
+
+        <a href="/apply" class="homepage-pricing__cta homepage-pricing__cta--free">
           Get Started Free
         </a>
+        <p class="homepage-pricing__note">No credit card required</p>
       </div>
-      
+
       <!-- Pro Plan -->
-      <div class="pricing-card pricing-card--pro" role="article" aria-labelledby="pro-plan-title">
-        <div class="pricing-card__badge">Most Popular</div>
-        <div class="pricing-card__header">
-          <h3 class="pricing-card__title" id="pro-plan-title">Studio+</h3>
-          <div class="pricing-card__price">
-            <span class="pricing-card__price-amount">$9.99</span>
-            <span class="pricing-card__price-period">/month</span>
+      <div class="homepage-pricing__card homepage-pricing__card--pro">
+        <div class="homepage-pricing__badge homepage-pricing__badge--pro">Most Popular</div>
+        
+        <div class="homepage-pricing__card-header">
+          <div class="homepage-pricing__price">
+            <span class="homepage-pricing__price-amount">$9.99</span>
+            <span class="homepage-pricing__price-period">/month</span>
+          </div>
+          <p class="homepage-pricing__tagline">Everything you need for a professional portfolio</p>
+        </div>
+
+        <div class="homepage-pricing__features">
+          <div class="homepage-pricing__feature">
+            <svg class="homepage-pricing__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span><strong>Everything in Free</strong></span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Custom URL <small>(yourname.pholio.studio)</small></span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Custom Branding <small>(no watermarks)</small></span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Premium PDF Themes <small>(Noir, Studio, Archive, Slate)</small></span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Full Analytics Suite</span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Advanced AI Curation</span>
+          </div>
+          <div class="homepage-pricing__feature homepage-pricing__feature--pro">
+            <svg class="homepage-pricing__check homepage-pricing__check--pro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Video Reels Support</span>
           </div>
         </div>
-        <p class="pricing-card__description">Everything you need for a professional portfolio</p>
-        <ul class="pricing-card__features" aria-label="Pro plan features">
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Everything in Free</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Live portfolio website</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Advanced AI curation</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>No watermarks</span>
-          </li>
-          <li class="pricing-card__feature">
-            <svg class="pricing-card__check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Custom domain option</span>
-          </li>
-        </ul>
-        <a href="/pro/upgrade" class="pricing-card__button pricing-card__button--pro" aria-label="Upgrade to Studio Plus">
+
+        <a href="/pro/upgrade" class="homepage-pricing__cta homepage-pricing__cta--pro">
           Upgrade to Studio+
         </a>
+        <p class="homepage-pricing__note">Cancel anytime. No questions asked.</p>
       </div>
     </div>
   </div>

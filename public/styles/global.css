@@ -20064,6 +20064,260 @@ body.filmstrip-hover {
   box-shadow: 0 4px 12px rgba(201, 165, 90, 0.3);
 }
 
+/* Homepage Pricing Section - New Design */
+.homepage-pricing {
+  padding: 6rem 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #faf9f7 100%);
+  position: relative;
+}
+
+.homepage-pricing__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.homepage-pricing__header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.homepage-pricing__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+.homepage-pricing__subtitle {
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+}
+
+.homepage-pricing__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Pricing Cards */
+.homepage-pricing__card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.homepage-pricing__card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+}
+
+.homepage-pricing__card--free {
+  border-color: #e2e8f0;
+}
+
+.homepage-pricing__card--pro {
+  border: 2px solid rgba(201, 165, 90, 0.4);
+  background: linear-gradient(135deg, #ffffff 0%, rgba(201, 165, 90, 0.02) 100%);
+  box-shadow: 0 8px 32px rgba(201, 165, 90, 0.12);
+  position: relative;
+}
+
+.homepage-pricing__card--pro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, rgba(201, 165, 90, 0.6) 0%, rgba(201, 165, 90, 0.9) 50%, rgba(201, 165, 90, 0.6) 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.homepage-pricing__card--pro:hover {
+  border-color: rgba(201, 165, 90, 0.6);
+  box-shadow: 0 20px 64px rgba(201, 165, 90, 0.2);
+}
+
+/* Badges */
+.homepage-pricing__badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1.25rem;
+  border-radius: 24px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.homepage-pricing__badge--free {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.homepage-pricing__badge--pro {
+  background: var(--color-accent);
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(201, 165, 90, 0.3);
+}
+
+/* Card Header */
+.homepage-pricing__card-header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.homepage-pricing__price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.homepage-pricing__price-amount {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 300;
+  color: #0f172a;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.homepage-pricing__price-period {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.homepage-pricing__tagline {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Features List */
+.homepage-pricing__features {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.homepage-pricing__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.homepage-pricing__feature small {
+  display: block;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+.homepage-pricing__feature--limited {
+  opacity: 0.8;
+}
+
+.homepage-pricing__check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  margin-top: 2px;
+  stroke-width: 2.5;
+}
+
+.homepage-pricing__check--pro {
+  color: var(--color-accent);
+}
+
+.homepage-pricing__check--limited {
+  color: #cbd5e1;
+}
+
+/* CTA Buttons */
+.homepage-pricing__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  text-align: center;
+  border: 2px solid transparent;
+  margin-top: auto;
+}
+
+.homepage-pricing__cta--free {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.homepage-pricing__cta--free:hover {
+  background: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.homepage-pricing__cta--pro {
+  background: var(--color-accent);
+  color: #0f172a;
+  border-color: var(--color-accent);
+  font-weight: 700;
+}
+
+.homepage-pricing__cta--pro:hover {
+  background: rgba(201, 165, 90, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 165, 90, 0.3);
+}
+
+/* Note */
+.homepage-pricing__note {
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 1rem 0 0 0;
+}
+
 .homepage-cta__column {
   padding: 4rem 3rem;
   background: #ffffff;
@@ -21008,6 +21262,23 @@ body.filmstrip-hover {
   .pricing-card__price-amount {
     font-size: 2.5rem;
   }
+
+  .homepage-pricing {
+    padding: 4rem 1.5rem;
+  }
+
+  .homepage-pricing__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .homepage-pricing__card {
+    padding: 2.5rem 2rem;
+  }
+
+  .homepage-pricing__price-amount {
+    font-size: 2.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -21041,6 +21312,18 @@ body.filmstrip-hover {
   }
 
   .pricing-card__price-amount {
+    font-size: 2rem;
+  }
+
+  .homepage-pricing {
+    padding: 3rem 1rem;
+  }
+
+  .homepage-pricing__card {
+    padding: 2rem 1.5rem;
+  }
+
+  .homepage-pricing__price-amount {
     font-size: 2rem;
   }
 }
