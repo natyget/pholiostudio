@@ -13,6 +13,14 @@ async function attachLocals(req, res, next) {
     res.locals.isDashboard = false;
   }
 
+  // View Helpers
+  res.locals.normalizeImagePath = (path) => {
+    if (!path) return '/images/default-avatar.png';
+    if (path.startsWith('http') || path.startsWith('//')) return path;
+    if (path.startsWith('/')) return path;
+    return '/' + path;
+  };
+
   // Try to load user from session first
   if (req.session && req.session.userId) {
     try {
