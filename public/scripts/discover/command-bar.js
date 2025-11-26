@@ -7,7 +7,7 @@
   'use strict';
 
   // Elements
-  const commandBarTrigger = document.getElementById('command-bar-trigger');
+  const commandBarTrigger = document.getElementById('ai-search-trigger');
   const aiSearchModal = document.getElementById('ai-search-modal');
   const modalOverlay = document.getElementById('modal-overlay');
   const modalClose = document.getElementById('modal-close');
