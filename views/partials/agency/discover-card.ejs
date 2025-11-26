@@ -1,0 +1,79 @@
+<%
+  // Format location
+  const location = profile.city && profile.country 
+    ? `${profile.city.toUpperCase()}, ${profile.country.toUpperCase()}`
+    : profile.city 
+      ? `${profile.city.toUpperCase()}`
+      : 'LOCATION TBD';
+
+  // Format height
+  const heightFeet = profile.height_cm ? Math.floor(profile.height_cm / 30.48) : null;
+  const heightInches = profile.height_cm ? Math.round((profile.height_cm % 30.48) / 2.54) : null;
+  const heightDisplay = heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : profile.height_cm ? `${profile.height_cm} cm` : '--';
+
+  // Format age
+  const ageDisplay = profile.age ? `${profile.age} Years` : '--';
+  
+  // Match score (placeholder or actual)
+  const matchScore = profile.match_score || Math.floor(Math.random() * 15) + 85;
+%>
+
+<div class="discover-card" data-profile-id="<%= profile.id %>">
+  <!-- Image Container -->
+  <div class="discover-card__image-container">
+    <!-- Selection Checkbox (Top Left) -->
+    <div class="discover-card__select">
+      <label class="discover-card__checkbox-label">
+        <input 
+          type="checkbox" 
+          class="discover-card__checkbox"
+          data-profile-id="<%= profile.id %>"
+          aria-label="Select <%= profile.first_name %>"
+        />
+        <span class="discover-card__checkbox-custom">
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </label>
+    </div>
+
+    <!-- Match/Status Indicator (Top Right) -->
+    <div class="discover-card__indicator">
+      <span class="discover-card__indicator-dot"></span>
+    </div>
+
+    <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
+      <img 
+        src="<%= normalizeImagePath(profile.hero_image_path || (profile.images && profile.images[0] ? profile.images[0].path : '')) %>" 
+        alt="<%= profile.first_name %> <%= profile.last_name %>"
+        class="discover-card__image"
+        loading="lazy"
+      />
+    <% } else { %>
+      <div class="discover-card__placeholder">
+        <%= (profile.first_name || 'T').charAt(0).toUpperCase() %><%= (profile.last_name || 'T').charAt(0).toUpperCase() %>
+      </div>
+    <% } %>
+    
+    <!-- Hover Overlay (View Profile Button Only) -->
+    <div class="discover-card__overlay">
+      <button class="discover-card__view-btn" data-profile-id="<%= profile.id %>">
+        View Profile
+      </button>
+    </div>
+  </div>
+  
+  <!-- Info (Below Image - Always Visible) -->
+  <div class="discover-card__info">
+    <h3 class="discover-card__name">
+      <%= profile.first_name %> <%= profile.last_name %>
+    </h3>
+    <div class="discover-card__location"><%= location %></div>
+    <div class="discover-card__stats">
+      <span class="discover-card__stat"><%= heightDisplay %></span>
+      <span class="discover-card__stat-divider">•</span>
+      <span class="discover-card__stat"><%= ageDisplay %></span>
+    </div>
+  </div>
+</div>

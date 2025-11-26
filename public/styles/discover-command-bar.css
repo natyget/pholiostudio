@@ -1,0 +1,525 @@
+/* ============================================
+   DISCOVER HERO SECTION
+   Editorial Luxury × Command Center
+   ============================================ */
+
+.discover-hero {
+  min-height: 60vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
+  padding: var(--space-xl) var(--space-md);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.discover-hero__content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.discover-hero__intro {
+  margin-bottom: var(--space-lg);
+}
+
+.discover-hero__title {
+  font-family: var(--font-editorial);
+  font-size: 3.5rem;
+  font-weight: 400;
+  color: var(--discover-dark-text);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.discover-hero__subtitle {
+  font-family: var(--font-command);
+  font-size: 1.125rem;
+  color: var(--discover-dark-text-muted);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ============================================
+   AI COMMAND BAR TRIGGER
+   ============================================ */
+
+.discover-command-bar {
+  margin-bottom: var(--space-md);
+}
+
+.discover-command-bar__trigger {
+  width: 100%;
+  max-width: 700px;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-command);
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+.discover-command-bar__trigger:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.discover-command-bar__icon {
+  flex-shrink: 0;
+  color: var(--discover-blue);
+}
+
+.discover-command-bar__text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.discover-command-bar__kbd {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Map View Toggle */
+.discover-hero__map-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.discover-hero__map-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================
+   AI SEARCH MODAL
+   ============================================ */
+
+.discover-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.discover-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.discover-modal__container {
+  position: relative;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.discover-modal__content {
+  background: var(--discover-cream);
+  border-radius: 16px;
+  padding: 2rem;
+  overflow-y: auto;
+  max-height: 85vh;
+  box-shadow: var(--shadow-2xl);
+}
+
+/* Modal Header */
+.discover-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.discover-modal__title {
+  font-family: var(--font-editorial);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--discover-charcoal);
+  margin: 0;
+}
+
+.discover-modal__close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--discover-charcoal);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.discover-modal__close:hover {
+  background: var(--discover-off-white);
+}
+
+/* Tabs */
+.discover-modal__tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--discover-border);
+  padding-bottom: 0.5rem;
+}
+
+.discover-modal__tab {
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--discover-charcoal);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  opacity: 0.6;
+}
+
+.discover-modal__tab:hover {
+  opacity: 1;
+  background: var(--discover-off-white);
+}
+
+.discover-modal__tab--active {
+  opacity: 1;
+  background: var(--discover-charcoal);
+  color: var(--discover-cream);
+}
+
+/* Search Input */
+.discover-modal__search {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: var(--space-md);
+}
+
+.discover-modal__input {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  background: var(--discover-off-white);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-family: var(--font-command);
+  font-size: 1rem;
+  color: var(--discover-charcoal);
+  outline: none;
+  transition: all var(--transition-base);
+}
+
+.discover-modal__input:focus {
+  border-color: var(--discover-blue);
+  box-shadow: 0 0 0 4px var(--discover-glow);
+}
+
+.discover-modal__input::placeholder {
+  color: var(--discover-silver);
+}
+
+.discover-modal__submit {
+  padding: 1rem 2rem;
+  background: var(--discover-charcoal);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-command);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--discover-cream);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.discover-modal__submit:hover {
+  background: var(--discover-black);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* AI Thinking Animation */
+.discover-modal__thinking {
+  margin-bottom: var(--space-md);
+  padding: 1rem;
+  background: var(--discover-off-white);
+  border-radius: 10px;
+}
+
+.discover-modal__thinking-animation {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--discover-blue) 0%,
+    var(--discover-purple) 50%,
+    var(--discover-blue) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.discover-modal__thinking-text {
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  color: var(--discover-charcoal);
+  margin: 0;
+  text-align: center;
+}
+
+/* Sections */
+.discover-modal__section {
+  margin-bottom: var(--space-md);
+}
+
+.discover-modal__section-title {
+  font-family: var(--font-command);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--discover-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.75rem 0;
+}
+
+/* Suggestions */
+.discover-modal__suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.discover-modal__suggestion-item {
+  margin: 0;
+}
+
+.discover-modal__suggestion {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--discover-off-white);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  color: var(--discover-charcoal);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.discover-modal__suggestion:hover {
+  background: var(--discover-cream);
+  border-color: var(--discover-blue);
+  transform: translateX(4px);
+}
+
+/* Chips */
+.discover-modal__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.discover-chip {
+  padding: 0.5rem 1rem;
+  background: var(--discover-off-white);
+  border: 1px solid var(--discover-border);
+  border-radius: 20px;
+  font-family: var(--font-command);
+  font-size: 0.8125rem;
+  color: var(--discover-charcoal);
+  transition: all var(--transition-fast);
+  cursor: default;
+}
+
+.discover-chip:hover {
+  background: var(--discover-charcoal);
+  color: var(--discover-cream);
+  border-color: var(--discover-charcoal);
+}
+
+/* ============================================
+   DISCOVER CONTROLS
+   ============================================ */
+
+.discover-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  background: var(--discover-cream);
+  border-bottom: 1px solid var(--discover-border);
+}
+
+.discover-controls__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.discover-controls__results {
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  color: var(--discover-charcoal);
+}
+
+.discover-controls__view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: transparent; /* Removed blocky background */
+}
+
+.discover-controls__view-btn {
+  width: auto; /* Allow width to adjust if we add text */
+  height: 36px;
+  padding: 0 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--discover-off-white);
+  border: 1px solid var(--discover-border);
+  border-radius: 6px;
+  color: var(--discover-charcoal);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  opacity: 1; /* Full opacity */
+}
+
+.discover-controls__view-btn:hover {
+  border-color: var(--discover-blue);
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.discover-controls__view-btn--active {
+  background: var(--discover-blue);
+  border-color: var(--discover-blue);
+  color: #ffffff; /* White text on gold */
+  box-shadow: var(--shadow-sm);
+}
+
+.discover-controls__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.discover-controls__sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.discover-controls__sort-label {
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  color: var(--discover-charcoal);
+}
+
+.discover-controls__sort-select {
+  padding: 0.5rem 2rem 0.5rem 1rem; /* Extra padding for arrow */
+  background-color: var(--discover-off-white);
+  border: 1px solid var(--discover-border);
+  border-radius: 6px;
+  font-family: var(--font-command);
+  font-size: 0.875rem;
+  color: var(--discover-charcoal);
+  cursor: pointer;
+  outline: none;
+  appearance: none; /* Custom arrow */
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%232B2B2B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  transition: all var(--transition-fast);
+}
+
+.discover-controls__sort-select:hover,
+.discover-controls__sort-select:focus {
+  border-color: var(--discover-blue);
+  background-color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discover-hero__title {
+    font-size: 2.5rem;
+  }
+  
+  .discover-command-bar__text {
+    font-size: 0.875rem;
+  }
+  
+  .discover-modal__content {
+    padding: 1.5rem;
+  }
+  
+  .discover-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+}

@@ -11,8 +11,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@200;300;400&family=Inter:wght@400;500;600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Noto+Serif+Display:wght@200;300;400&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
+
 
     <!-- Styles -->
     <link rel="stylesheet" href="/styles/global.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
@@ -21,8 +22,17 @@
         <link rel="stylesheet" href="/styles/agency-dashboard.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
         <link rel="stylesheet" href="/styles/agency-dashboard-mobile.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
         <link rel="stylesheet" href="/styles/agency-dashboard-discover.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
+        <link rel="stylesheet" href="/styles/discover-design-system.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
+        <link rel="stylesheet" href="/styles/discover-command-bar.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
+        <link rel="stylesheet" href="/styles/discover-grid.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
+        <link rel="stylesheet" href="/styles/profile-modal.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
+        <link rel="stylesheet" href="/styles/light-table.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
         <link rel="stylesheet" href="/styles/toast.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
     <% } %>
+
+
+
+
 </head>
 
 <body class="dashboard-body <%= typeof user !== 'undefined' && user && user.role === 'AGENCY' ? 'dashboard-body--agency' : 'dashboard-body--talent' %>">
@@ -220,6 +230,15 @@
 
             <!-- Dashboard Scripts -->
             <script src="/scripts/dashboard.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>"></script>
+            <% if (typeof user !== 'undefined' && user && user.role === 'AGENCY') { %>
+                <script src="/scripts/discover/command-bar.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>"></script>
+                <script src="/scripts/discover/grid-controller.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>"></script>
+                <script src="/scripts/discover/profile-modal.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>"></script>
+                <script src="/scripts/discover/light-table.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>"></script>
+            <% } %>
+
+
+
 </body>
 
 </html>

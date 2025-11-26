@@ -1,0 +1,63 @@
+<!-- Light Table - Floating Dock & Comparison Modal -->
+
+<!-- Floating Dock (Bottom of screen) -->
+<div class="light-table-dock" id="light-table-dock" style="display: none;">
+  <div class="light-table-dock__content">
+    <div class="light-table-dock__header">
+      <div class="light-table-dock__title-group">
+        <span class="light-table-dock__icon">🎨</span>
+        <span class="light-table-dock__title discover-title">Light Table</span>
+        <span class="light-table-dock__count" id="selected-count">0</span>
+      </div>
+      
+      <div class="light-table-dock__actions">
+        <button class="light-table-dock__action-btn" id="clear-selection-btn">Clear</button>
+        <button class="light-table-dock__expand-btn" id="expand-light-table">
+          Compare Selected
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="light-table-dock__thumbnails" id="light-table-thumbnails">
+      <!-- Thumbnails populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Full Comparison Modal -->
+<div class="light-table-modal" id="light-table-modal" style="display: none;">
+  <div class="light-table-modal__header">
+    <div class="light-table-modal__header-left">
+      <button class="light-table-modal__back" id="close-light-table">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Discovery
+      </button>
+      <h2 class="light-table-modal__title discover-title">Comparison View</h2>
+    </div>
+    
+    <div class="light-table-modal__header-right">
+      <button class="light-table-modal__export-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export PDF
+      </button>
+      <button class="light-table-modal__share-btn">Share Selection</button>
+    </div>
+  </div>
+  
+  <div class="light-table-modal__body">
+    <div class="light-table-modal__grid" id="comparison-grid">
+      <!-- Comparison cards populated by JS -->
+    </div>
+  </div>
+</div>

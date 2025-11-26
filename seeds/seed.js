@@ -14,7 +14,7 @@ exports.seed = async function seed(knex) {
   await knex('images').del();
   await knex('profiles').del();
   // Don't delete users - keep existing agency account
-  // await knex('users').del();
+  await knex('users').del();
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
@@ -67,7 +67,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Keats',
     city: 'Los Angeles, CA',
     height_cm: 180,
-    measurements: '32-25-35',
+    // measurements: '32-25-35', // Removed in migration
     bio_raw: 'Elara is a collaborative creative professional with a background in editorial campaigns and on-set leadership. Based in Los Angeles, she balances editorial edge with commercial versatility.',
     bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
     hero_image_path: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=2000&q=80',
@@ -99,11 +99,11 @@ exports.seed = async function seed(knex) {
     reference_name: null,
     reference_email: null,
     reference_phone: null,
-    reference_relationship: null,
+    // reference_relationship: null, // Removed in migration
     emergency_contact_name: 'Jane Doe',
     emergency_contact_phone: '+1 (555) 123-4567',
     emergency_contact_relationship: 'Parent',
-    nationality: 'American',
+    // nationality: 'American', // Removed in migration
     union_membership: null,
     ethnicity: null,
     tattoos: false,
@@ -164,7 +164,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Talent',
     city: 'New York, NY',
     height_cm: 177,
-    measurements: '34-26-36',
+    // measurements: '34-26-36', // Removed in migration
     bio_raw: 'Sample talent profile for testing.',
     bio_curated: 'Sample talent profile for testing purposes.',
     hero_image_path: '/uploads/seed/elara-headshot.webp',
@@ -209,7 +209,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Martinez',
     city: 'Miami, FL',
     height_cm: 175,
-    measurements: '34-24-36',
+    // measurements: '34-24-36', // Removed in migration
     bio_raw: 'Sophia Martinez is an emerging talent with a fresh, editorial look. Based in Miami, she brings a vibrant energy to every shoot. Her versatility spans from high-fashion editorials to commercial campaigns.',
     bio_curated: 'Sophia Martinez is an emerging talent with a fresh, editorial look. Based in Miami, she brings a vibrant energy to every shoot. Standing at 5\'9" with measurements of 34-24-36, her versatility spans from high-fashion editorials to commercial campaigns. She has a natural ability to adapt to different creative directions and brings professionalism to every production.',
     hero_image_path: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=2000&q=80',
@@ -240,11 +240,11 @@ exports.seed = async function seed(knex) {
     reference_name: 'Maria Rodriguez',
     reference_email: 'maria@example.com',
     reference_phone: '+1 (305) 555-0123',
-    reference_relationship: 'Photographer',
+    // reference_relationship: 'Photographer', // Removed in migration
     emergency_contact_name: 'Carlos Martinez',
     emergency_contact_phone: '+1 (305) 555-0124',
     emergency_contact_relationship: 'Father',
-    nationality: 'American',
+    // nationality: 'American', // Removed in migration
     union_membership: null,
     ethnicity: 'Hispanic',
     tattoos: false,
@@ -319,7 +319,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Chen',
     city: 'New York, NY',
     height_cm: 188,
-    measurements: '40-32-38',
+    // measurements: '40-32-38', // Removed in migration
     bio_raw: 'Alexander Chen is an experienced model with a strong portfolio in editorial and commercial work. Based in New York, he has worked with top agencies and photographers. His chiseled features and professional demeanor make him ideal for high-end campaigns.',
     bio_curated: 'Alexander Chen is an experienced model with a strong portfolio in editorial and commercial work. Based in New York, he has worked with top agencies and photographers. Standing at 6\'2" with measurements of 40-32-38, his chiseled features and professional demeanor make him ideal for high-end campaigns. He brings reliability and creativity to every project.',
     hero_image_path: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=2000&q=80',
@@ -350,11 +350,11 @@ exports.seed = async function seed(knex) {
     reference_name: 'David Kim',
     reference_email: 'david@example.com',
     reference_phone: '+1 (212) 555-0234',
-    reference_relationship: 'Agent',
+    // reference_relationship: 'Agent', // Removed in migration
     emergency_contact_name: 'Lisa Chen',
     emergency_contact_phone: '+1 (212) 555-0235',
     emergency_contact_relationship: 'Spouse',
-    nationality: 'American',
+    // nationality: 'American', // Removed in migration
     union_membership: 'SAG-AFTRA',
     ethnicity: 'Asian',
     tattoos: true,
@@ -436,7 +436,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Thompson',
     city: 'Los Angeles, CA',
     height_cm: 178,
-    measurements: '33-25-35',
+    // measurements: '33-25-35', // Removed in migration
     bio_raw: 'Isabella Thompson is an established model with extensive experience in runway, editorial, and commercial work. Based in Los Angeles, she has walked for major fashion weeks and appeared in numerous high-profile campaigns. Her professionalism and versatility make her a valuable addition to any project.',
     bio_curated: 'Isabella Thompson is an established model with extensive experience in runway, editorial, and commercial work. Based in Los Angeles, she has walked for major fashion weeks and appeared in numerous high-profile campaigns. Standing at 5\'10" with measurements of 33-25-35, her professionalism and versatility make her a valuable addition to any project. She brings years of industry experience and a collaborative spirit to every production.',
     hero_image_path: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=2000&q=80',
@@ -467,11 +467,11 @@ exports.seed = async function seed(knex) {
     reference_name: 'Michael Johnson',
     reference_email: 'michael@example.com',
     reference_phone: '+1 (310) 555-0345',
-    reference_relationship: 'Creative Director',
+    // reference_relationship: 'Creative Director', // Removed in migration
     emergency_contact_name: 'Robert Thompson',
     emergency_contact_phone: '+1 (310) 555-0346',
     emergency_contact_relationship: 'Husband',
-    nationality: 'American',
+    // nationality: 'American', // Removed in migration
     union_membership: 'SAG-AFTRA',
     ethnicity: 'Caucasian',
     tattoos: false,
@@ -553,7 +553,7 @@ exports.seed = async function seed(knex) {
     last_name: 'Wilson',
     city: 'Chicago, IL',
     height_cm: 183,
-    measurements: '42-34-40',
+    // measurements: '42-34-40', // Removed in migration
     bio_raw: 'James Wilson is a commercial model with experience in print and digital campaigns. Based in Chicago, he specializes in lifestyle and product photography. His approachable look and professional attitude make him ideal for commercial work.',
     bio_curated: 'James Wilson is a commercial model with experience in print and digital campaigns. Based in Chicago, he specializes in lifestyle and product photography. Standing at 6\'0" with measurements of 42-34-40, his approachable look and professional attitude make him ideal for commercial work. He brings reliability and a positive energy to every shoot.',
     hero_image_path: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=2000&q=80',
@@ -584,11 +584,11 @@ exports.seed = async function seed(knex) {
     reference_name: 'Sarah Davis',
     reference_email: 'sarah@example.com',
     reference_phone: '+1 (312) 555-0456',
-    reference_relationship: 'Photographer',
+    // reference_relationship: 'Photographer', // Removed in migration
     emergency_contact_name: 'Patricia Wilson',
     emergency_contact_phone: '+1 (312) 555-0457',
     emergency_contact_relationship: 'Mother',
-    nationality: 'American',
+    // nationality: 'American', // Removed in migration
     union_membership: null,
     ethnicity: 'Caucasian',
     tattoos: false,
@@ -644,4 +644,135 @@ exports.seed = async function seed(knex) {
     accepted_at: null,
     declined_at: knex.raw("NOW() - INTERVAL '12 days'")
   });
+  // ============================================
+  // GENERATE 30 RANDOM PROFILES
+  // ============================================
+
+  const firstNamesFemale = ['Emma', 'Olivia', 'Ava', 'Mia', 'Harper', 'Camila', 'Gianna', 'Elizabeth', 'Eleanor', 'Ella', 'Abigail', 'Sofia', 'Avery', 'Scarlett', 'Emily', 'Aria', 'Penelope', 'Chloe', 'Layla', 'Mila', 'Nora', 'Hazel', 'Madison', 'Ellie', 'Lily', 'Nova', 'Isla', 'Grace', 'Violet', 'Aurora'];
+  const firstNamesMale = ['Liam', 'Noah', 'Oliver', 'Elijah', 'James', 'William', 'Benjamin', 'Lucas', 'Henry', 'Theodore', 'Jack', 'Levi', 'Alexander', 'Jackson', 'Mateo', 'Daniel', 'Michael', 'Mason', 'Sebastian', 'Ethan', 'Logan', 'Owen', 'Samuel', 'Jacob', 'Asher', 'Aiden', 'John', 'Joseph', 'Wyatt', 'David'];
+  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson'];
+  const cities = ['New York, NY', 'Los Angeles, CA', 'Miami, FL', 'Chicago, IL', 'London, UK', 'Paris, France', 'Milan, Italy', 'Berlin, Germany', 'Tokyo, Japan', 'Sydney, Australia', 'Toronto, Canada', 'Barcelona, Spain', 'Stockholm, Sweden', 'Copenhagen, Denmark', 'Amsterdam, Netherlands'];
+  
+  const unsplashImages = [
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1464863979621-258859e62245?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1503104834685-7205e8607eb9?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1534030347209-7147fd9e7b1a?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80'
+  ];
+
+  const eyeColors = ['Blue', 'Green', 'Brown', 'Hazel', 'Grey'];
+  const hairColors = ['Blonde', 'Brown', 'Black', 'Red', 'Grey', 'White'];
+  const hairLengths = ['Short', 'Medium', 'Long', 'Bald'];
+  const skinTones = ['Fair', 'Light', 'Medium', 'Olive', 'Tan', 'Dark', 'Deep'];
+
+  for (let i = 0; i < 30; i++) {
+    const isFemale = Math.random() > 0.5;
+    const firstName = isFemale 
+      ? firstNamesFemale[Math.floor(Math.random() * firstNamesFemale.length)]
+      : firstNamesMale[Math.floor(Math.random() * firstNamesMale.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    
+    // Random stats
+    const height = 165 + Math.floor(Math.random() * 30); // 165-195cm
+    const age = 18 + Math.floor(Math.random() * 15); // 18-33
+    const bust = 30 + Math.floor(Math.random() * 10);
+    const waist = 22 + Math.floor(Math.random() * 12);
+    const hips = 32 + Math.floor(Math.random() * 10);
+    
+    const userId = uuidv4();
+    await knex('users').insert({
+      id: userId,
+      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.com`,
+      password_hash: passwordHash,
+      role: 'TALENT'
+    });
+
+    const profileId = uuidv4();
+    const heroImage = unsplashImages[Math.floor(Math.random() * unsplashImages.length)];
+    
+    await knex('profiles').insert({
+      id: profileId,
+      user_id: userId,
+      slug: `${firstName.toLowerCase()}-${lastName.toLowerCase()}-${i}`,
+      first_name: firstName,
+      last_name: lastName,
+      city: city,
+      height_cm: height,
+      bio_raw: `${firstName} is a talented model based in ${city.split(',')[0]}.`,
+      bio_curated: `${firstName} ${lastName} is a professional model based in ${city.split(',')[0]}. Standing at ${Math.floor(height/30.48)}'${Math.floor((height%30.48)/2.54)}", ${isFemale ? 'she' : 'he'} brings unique energy to every project.`,
+      hero_image_path: heroImage,
+      is_pro: Math.random() > 0.7, // 30% are pro
+      is_discoverable: true,
+      partner_agency_id: null,
+      gender: isFemale ? 'Female' : 'Male',
+      date_of_birth: new Date(new Date().getFullYear() - age, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)),
+      age: age,
+      weight_kg: height - 110 + Math.floor(Math.random() * 10),
+      weight_lbs: Math.floor((height - 110 + Math.floor(Math.random() * 10)) * 2.20462),
+      dress_size: isFemale ? (Math.floor(Math.random() * 6) * 2).toString() : null,
+      hair_length: hairLengths[Math.floor(Math.random() * hairLengths.length)],
+      skin_tone: skinTones[Math.floor(Math.random() * skinTones.length)],
+      languages: JSON.stringify(['English']),
+      availability_travel: Math.random() > 0.3,
+      availability_schedule: Math.random() > 0.5 ? 'Full-time' : 'Part-time',
+      experience_level: ['New Face', 'Emerging', 'Experienced', 'Pro'][Math.floor(Math.random() * 4)],
+      eye_color: eyeColors[Math.floor(Math.random() * eyeColors.length)],
+      hair_color: hairColors[Math.floor(Math.random() * hairColors.length)],
+      specialties: JSON.stringify(['Editorial', 'Commercial', 'Runway'])
+    });
+
+    // Add images
+    for (let j = 0; j < 3; j++) {
+      await knex('images').insert({
+        id: uuidv4(),
+        profile_id: profileId,
+        path: unsplashImages[Math.floor(Math.random() * unsplashImages.length)],
+        label: j === 0 ? 'Headshot' : (j === 1 ? 'Editorial' : 'Commercial'),
+        sort: j + 1
+      });
+    }
+
+    // Randomly create applications for some profiles (30% chance)
+    if (Math.random() > 0.7) {
+      const status = ['pending', 'accepted', 'declined', 'archived'][Math.floor(Math.random() * 4)];
+      let viewedAt = null;
+      let acceptedAt = null;
+      let declinedAt = null;
+
+      if (status !== 'pending' || Math.random() > 0.5) {
+        viewedAt = knex.fn.now();
+      }
+      if (status === 'accepted') acceptedAt = knex.fn.now();
+      if (status === 'declined') declinedAt = knex.fn.now();
+
+      await knex('applications').insert({
+        id: uuidv4(),
+        profile_id: profileId,
+        agency_id: agencyId,
+        status: status,
+        created_at: knex.raw(`NOW() - INTERVAL '${Math.floor(Math.random() * 30)} days'`),
+        updated_at: knex.fn.now(),
+        viewed_at: viewedAt,
+        accepted_at: acceptedAt,
+        declined_at: declinedAt
+      });
+    }
+  }
 };

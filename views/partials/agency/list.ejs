@@ -1,26 +1,61 @@
 <!-- Inbox List View (Primary) -->
 <div class="agency-dashboard__view agency-dashboard__view--list applicants-inbox-view" id="view-list">
   <div class="applicants-inbox">
-    <% safeProfiles.forEach((profile, index) => { 
-      const appStatus = profile.application_status || 'pending';
-      const aiScore = Math.floor(Math.random() * 30) + 70;
-      const aiTags = [];
-      if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('editorial')) {
-        aiTags.push({ label: 'Editorial Potential', color: 'purple' });
-      }
-      if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('commercial')) {
-        aiTags.push({ label: 'Commercial Ready', color: 'blue' });
-      }
-      if (profile.height_cm && profile.height_cm >= 175) {
-        aiTags.push({ label: 'Runway Fit', color: 'green' });
-      }
-    %>
-      <%- include('../../dashboard/partials/application-card', { profile, index, currentUser, appStatus, aiScore, aiTags }) %>
-    <% }); %>
     <% if (safeProfiles.length === 0) { %>
-      <div class="applicants-inbox__empty">
-        <p class="applicants-inbox__empty-text">No applications found</p>
+      <!-- Enhanced Empty State -->
+      <div class="applicants-inbox__empty-state">
+        <div class="applicants-inbox__empty-icon">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h2 class="applicants-inbox__empty-title">Ready to discover your next talent?</h2>
+        <p class="applicants-inbox__empty-description">
+          Share your application link to start receiving submissions from aspiring models and talent.
+        </p>
+        <div class="applicants-inbox__empty-actions">
+          <button class="applicants-inbox__empty-btn applicants-inbox__empty-btn--primary" onclick="window.location.href='/dashboard/agency?page=discover'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            Browse Discover
+          </button>
+          <button class="applicants-inbox__empty-btn applicants-inbox__empty-btn--secondary" onclick="alert('Application link: ' + window.location.origin + '/apply')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            Share Application Link
+          </button>
+        </div>
+        <div class="applicants-inbox__empty-tips">
+          <h3 class="applicants-inbox__empty-tips-title">Quick Tips:</h3>
+          <ul class="applicants-inbox__empty-tips-list">
+            <li>Share your application link on Instagram and social media</li>
+            <li>Use the Discover page to scout and invite talent directly</li>
+            <li>Set up your agency profile to attract quality applicants</li>
+          </ul>
+        </div>
       </div>
+    <% } else { %>
+      <% safeProfiles.forEach((profile, index) => { 
+        const appStatus = profile.application_status || 'pending';
+        const aiScore = Math.floor(Math.random() * 30) + 70;
+        const aiTags = [];
+        if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('editorial')) {
+          aiTags.push({ label: 'Editorial Potential', color: 'purple' });
+        }
+        if (profile.bio_curated && profile.bio_curated.toLowerCase().includes('commercial')) {
+          aiTags.push({ label: 'Commercial Ready', color: 'blue' });
+        }
+        if (profile.height_cm && profile.height_cm >= 175) {
+          aiTags.push({ label: 'Runway Fit', color: 'green' });
+        }
+      %>
+        <%- include('../../dashboard/partials/application-card', { profile, index, currentUser, appStatus, aiScore, aiTags }) %>
+      <% }); %>
     <% } %>
   </div>
 </div>
