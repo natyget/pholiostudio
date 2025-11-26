@@ -1600,7 +1600,7 @@ router.get('/api/agency/overview/stats', requireRole('AGENCY'), async (req, res,
 
     // Get all public talent profiles (not just applications)
     const publicTalentCount = await knex('profiles')
-      .where({ is_public: true })
+      .where({ is_discoverable: true })
       .count('id as count')
       .first();
 

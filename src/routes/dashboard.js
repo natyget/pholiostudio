@@ -1634,19 +1634,19 @@ router.post('/dashboard/settings/visibility', requireRole('TALENT'), async (req,
       return res.redirect('/dashboard/settings');
     }
     
-    const isPublic = visibility === 'public';
+    const isDiscoverable = visibility === 'public';
     
     // Check if is_public column exists before updating
     try {
       await knex('profiles')
         .where({ id: profile.id })
-        .update({ is_public: isPublic, updated_at: knex.fn.now() });
+        .update({ is_discoverable: isDiscoverable, updated_at: knex.fn.now() });
       
-      addMessage(req, 'success', `Portfolio is now ${isPublic ? 'public' : 'private'}.`);
+      addMessage(req, 'success', `Portfolio is now ${isDiscoverable ? 'public' : 'private'}.`);
     } catch (updateError) {
       // If column doesn't exist, log warning but don't fail
-      if (updateError.code === '42703' || updateError.message?.includes('column "is_public" does not exist')) {
-        console.log('[Settings] is_public column does not exist, skipping visibility update');
+      if (updateError.code === '42703' || updateError.message?.includes('column "is_discoverable" does not exist')) {
+        console.log('[Settings] is_discoverable column does not exist, skipping visibility update');
         addMessage(req, 'info', 'Portfolio visibility feature is not yet available. Your portfolio is currently public.');
       } else {
         throw updateError;
