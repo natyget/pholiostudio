@@ -285,6 +285,13 @@
       const isEmailPhase = time < EMAIL_SHOW_DURATION;
       const buildProgress = Math.max(0, (time - EMAIL_SHOW_DURATION) / BUILD_DURATION);
       
+      // Determine current step based on progress
+      let currentStep = 0;
+      if (progress >= 0 && progress < 25) currentStep = 1; // Analyzing
+      else if (progress >= 25 && progress < 50) currentStep = 2; // Organizing
+      else if (progress >= 50 && progress < 75) currentStep = 3; // Formatting
+      else if (progress >= 75) currentStep = 4; // Finalizing
+      
       // Email fade out
       if (!isEmailPhase) {
         const emailFields = rawDocument.querySelectorAll('.email-draft__field-value, .email-draft__subject');
@@ -301,135 +308,88 @@
         }
       }
 
-      // Portfolio build
+      // Portfolio card animation based on steps
+      const skeleton = portfolioCard.querySelector('.portfolio-card__skeleton');
+      const heroImage = portfolioCard.querySelector('.portfolio-card__hero-image');
+      const heroImg = portfolioCard.querySelector('.portfolio-card__hero-image img');
+      const freeBadge = portfolioCard.querySelector('.portfolio-card__free-badge');
+      const header = portfolioCard.querySelector('.portfolio-card__header');
+      const statsSection = portfolioCard.querySelector('.portfolio-card__stats-section');
+      const social = portfolioCard.querySelector('.portfolio-card__social');
+      const urlFooter = portfolioCard.querySelector('.portfolio-card__url-footer');
+      
       if (buildProgress > 0) {
         transformationZone.classList.add('animating');
         
-        // Header (0-15%)
-        if (buildProgress >= 0) {
-          const headerProgress = Math.min(1, buildProgress / 0.15);
-          const header = portfolioCard.querySelector('.portfolio-card__header');
-          const name = portfolioCard.querySelector('.portfolio-card__name');
-          const location = portfolioCard.querySelector('.portfolio-card__location');
-          
+        // Step 1: Analyzing - Show skeleton, hide all content
+        if (currentStep === 1) {
+          if (skeleton) skeleton.style.opacity = '1';
+          if (heroImage) heroImage.style.opacity = '0';
+          if (header) header.style.opacity = '0';
+          if (statsSection) statsSection.style.opacity = '0';
+          if (social) social.style.opacity = '0';
+          if (urlFooter) urlFooter.style.opacity = '0';
+        }
+        
+        // Step 2: Organizing - Hide skeleton, fade in header
+        if (currentStep >= 2) {
+          if (skeleton) skeleton.style.opacity = '0';
           if (header) {
+            const headerProgress = currentStep === 2 ? Math.min(1, (progress - 25) / 25) : 1;
             header.style.opacity = String(headerProgress);
             header.style.transform = `translateY(${-20 * (1 - headerProgress)}px)`;
           }
-          if (name && buildProgress >= 0.05) {
-            const nameProgress = Math.min(1, (buildProgress - 0.05) / 0.1);
-            name.style.opacity = String(nameProgress);
-            name.style.transform = `translateY(${10 * (1 - nameProgress)}px) scale(${0.95 + 0.05 * nameProgress})`;
-          }
-          if (location && buildProgress >= 0.13) {
-            const locProgress = Math.min(1, (buildProgress - 0.13) / 0.05);
-            location.style.opacity = String(locProgress);
-            location.style.transform = `translateY(${5 * (1 - locProgress)}px)`;
+        }
+        
+        // Step 3: Formatting - Slide up stats grid
+        if (currentStep >= 3) {
+          if (statsSection) {
+            const statsProgress = currentStep === 3 ? Math.min(1, (progress - 50) / 25) : 1;
+            statsSection.style.opacity = String(statsProgress);
+            statsSection.style.transform = `translateY(${30 * (1 - statsProgress)}px)`;
           }
         }
-
-        // Hero image (15-30%)
-        if (buildProgress >= 0.2) {
-          const imgProgress = Math.min(1, (buildProgress - 0.2) / 0.1);
-          const heroImage = portfolioCard.querySelector('.portfolio-card__hero-image');
-          const heroImg = portfolioCard.querySelector('.portfolio-card__hero-image img');
+        
+        // Step 4: Finalizing - Fade in image, badge, social, footer
+        if (currentStep >= 4) {
+          const finalProgress = currentStep === 4 ? Math.min(1, (progress - 75) / 25) : 1;
           
           if (heroImage) {
-            heroImage.style.opacity = String(imgProgress);
-            heroImage.style.transform = `scale(${0.98 + 0.02 * imgProgress})`;
+            heroImage.style.opacity = String(finalProgress);
+            heroImage.style.transform = `scale(${0.95 + 0.05 * finalProgress})`;
           }
+          
           if (heroImg) {
-            const brightness = 0.7 + 0.35 * imgProgress;
-            const contrast = 0.8 + 0.28 * imgProgress;
-            const grayscale = 0.3 * (1 - imgProgress);
+            const brightness = 0.7 + 0.3 * finalProgress;
+            const contrast = 0.8 + 0.2 * finalProgress;
+            const grayscale = 0.3 * (1 - finalProgress);
             heroImg.style.filter = `brightness(${brightness}) contrast(${contrast}) grayscale(${grayscale})`;
           }
-        }
-
-        // Stats (30-55%)
-        if (buildProgress >= 0.33) {
-          const statsProgress = Math.min(1, (buildProgress - 0.33) / 0.22);
-          const stats = portfolioCard.querySelector('.portfolio-card__stats');
-          const statItems = portfolioCard.querySelectorAll('.portfolio-card__stat');
           
-          if (stats) {
-            stats.style.opacity = String(statsProgress);
-            stats.style.transform = `translateY(${15 * (1 - statsProgress)}px)`;
+          if (freeBadge) {
+            freeBadge.style.opacity = String(finalProgress);
+            freeBadge.style.transform = `translateY(${-10 * (1 - finalProgress)}px)`;
           }
           
-          statItems.forEach((stat, index) => {
-            const itemProgress = Math.min(1, Math.max(0, (statsProgress - index * 0.15) / 0.15));
-            const label = stat.querySelector('.portfolio-card__stat-label');
-            const value = stat.querySelector('.portfolio-card__stat-value');
-            
-            if (label && itemProgress > 0) {
-              label.style.opacity = String(itemProgress);
-              label.style.transform = `translateX(${-10 * (1 - itemProgress)}px)`;
-            }
-            if (value && itemProgress > 0.3) {
-              const valProgress = Math.min(1, (itemProgress - 0.3) / 0.7);
-              value.style.opacity = String(valProgress);
-              value.style.transform = `translateY(${5 * (1 - valProgress)}px)`;
-            }
-          });
-        }
-
-        // Contact (48-55%)
-        if (buildProgress >= 0.48) {
-          const contactProgress = Math.min(1, (buildProgress - 0.48) / 0.07);
-          const contact = portfolioCard.querySelector('.portfolio-card__contact');
-          if (contact) {
-            contact.style.opacity = String(contactProgress);
-            contact.style.transform = `translateY(${5 * (1 - contactProgress)}px)`;
-          }
-        }
-
-        // Gallery (50-70%)
-        if (buildProgress >= 0.5) {
-          const galleryProgress = Math.min(1, (buildProgress - 0.5) / 0.2);
-          const gallery = portfolioCard.querySelector('.portfolio-card__gallery');
-          const galleryItems = portfolioCard.querySelectorAll('.portfolio-card__gallery-item');
-          
-          if (gallery) {
-            gallery.style.opacity = String(galleryProgress);
-            gallery.style.transform = `translateY(${10 * (1 - galleryProgress)}px)`;
+          if (social) {
+            social.style.opacity = String(finalProgress);
+            social.style.transform = `translateY(${10 * (1 - finalProgress)}px)`;
           }
           
-          galleryItems.forEach((item, index) => {
-            const itemProgress = Math.min(1, Math.max(0, (galleryProgress - index * 0.2) / 0.2));
-            const img = item.querySelector('img');
-            
-            if (itemProgress > 0) {
-              item.style.opacity = String(itemProgress);
-              item.style.transform = `scale(${0.9 + 0.1 * itemProgress})`;
-              
-              if (img) {
-                const brightness = 0.8 + 0.25 * itemProgress;
-                const contrast = 0.85 + 0.2 * itemProgress;
-                const grayscale = 0.2 * (1 - itemProgress);
-                img.style.filter = `brightness(${brightness}) contrast(${contrast}) grayscale(${grayscale})`;
-              }
-            }
-          });
-        }
-
-        // Bio (66-100%)
-        if (buildProgress >= 0.66) {
-          const bioProgress = Math.min(1, (buildProgress - 0.66) / 0.34);
-          const bio = portfolioCard.querySelector('.portfolio-card__bio');
-          const bioText = portfolioCard.querySelector('.portfolio-card__bio-text');
-          
-          if (bio) {
-            bio.style.opacity = String(bioProgress);
-            bio.style.transform = `translateY(${10 * (1 - bioProgress)}px)`;
-          }
-          if (bioText) {
-            bioText.style.opacity = String(bioProgress);
-            bioText.style.transform = `translateY(${5 * (1 - bioProgress)}px)`;
+          if (urlFooter) {
+            urlFooter.style.opacity = String(finalProgress);
+            urlFooter.style.transform = `translateY(${10 * (1 - finalProgress)}px)`;
           }
         }
       } else {
         transformationZone.classList.remove('animating');
+        // Reset all to hidden
+        if (skeleton) skeleton.style.opacity = '1';
+        if (heroImage) heroImage.style.opacity = '0';
+        if (header) header.style.opacity = '0';
+        if (statsSection) statsSection.style.opacity = '0';
+        if (social) social.style.opacity = '0';
+        if (urlFooter) urlFooter.style.opacity = '0';
       }
     }
 
@@ -528,6 +488,42 @@
       });
       if (emailBody) emailBody.style.opacity = '1';
       
+      // Reset portfolio card to initial state
+      const skeleton = portfolioCard.querySelector('.portfolio-card__skeleton');
+      const heroImage = portfolioCard.querySelector('.portfolio-card__hero-image');
+      const header = portfolioCard.querySelector('.portfolio-card__header');
+      const statsSection = portfolioCard.querySelector('.portfolio-card__stats-section');
+      const social = portfolioCard.querySelector('.portfolio-card__social');
+      const urlFooter = portfolioCard.querySelector('.portfolio-card__url-footer');
+      const heroImg = portfolioCard.querySelector('.portfolio-card__hero-image img');
+      const freeBadge = portfolioCard.querySelector('.portfolio-card__free-badge');
+      
+      if (skeleton) skeleton.style.opacity = '1';
+      if (heroImage) heroImage.style.opacity = '0';
+      if (header) {
+        header.style.opacity = '0';
+        header.style.transform = 'translateY(-20px)';
+      }
+      if (statsSection) {
+        statsSection.style.opacity = '0';
+        statsSection.style.transform = 'translateY(30px)';
+      }
+      if (social) {
+        social.style.opacity = '0';
+        social.style.transform = 'translateY(10px)';
+      }
+      if (urlFooter) {
+        urlFooter.style.opacity = '0';
+        urlFooter.style.transform = 'translateY(10px)';
+      }
+      if (heroImg) {
+        heroImg.style.filter = 'brightness(0.7) contrast(0.8) grayscale(0.3)';
+      }
+      if (freeBadge) {
+        freeBadge.style.opacity = '0';
+        freeBadge.style.transform = 'translateY(-10px)';
+      }
+      
       // Hide replay button
       if (replayButton) replayButton.classList.remove('visible');
       
@@ -547,34 +543,50 @@
       });
     }
 
-    // Initial state
-    const portfolioSections = portfolioCard.querySelectorAll('.portfolio-card__header, .portfolio-card__hero-image, .portfolio-card__stats, .portfolio-card__gallery, .portfolio-card__bio');
-    const portfolioElements = portfolioCard.querySelectorAll('.portfolio-card__name, .portfolio-card__location, .portfolio-card__stat-label, .portfolio-card__stat-value, .portfolio-card__bio-text, .portfolio-card__contact');
-    const portfolioItems = portfolioCard.querySelectorAll('.portfolio-card__gallery-item');
-    const portfolioImages = portfolioCard.querySelectorAll('.portfolio-card__hero-image img, .portfolio-card__gallery-item img');
+    // Initial state - Show skeleton, hide all content
+    const skeleton = portfolioCard.querySelector('.portfolio-card__skeleton');
+    const heroImage = portfolioCard.querySelector('.portfolio-card__hero-image');
+    const header = portfolioCard.querySelector('.portfolio-card__header');
+    const statsSection = portfolioCard.querySelector('.portfolio-card__stats-section');
+    const social = portfolioCard.querySelector('.portfolio-card__social');
+    const urlFooter = portfolioCard.querySelector('.portfolio-card__url-footer');
+    const heroImg = portfolioCard.querySelector('.portfolio-card__hero-image img');
+    const freeBadge = portfolioCard.querySelector('.portfolio-card__free-badge');
     
-    portfolioSections.forEach(section => {
-      section.style.opacity = '0';
-      section.style.transform = '';
-      section.style.transition = '';
-    });
-
-    portfolioElements.forEach(el => {
-      el.style.opacity = '0';
-      el.style.transform = '';
-      el.style.transition = '';
-    });
-
-    portfolioItems.forEach(item => {
-      item.style.opacity = '0';
-      item.style.transform = 'scale(0.9)';
-      item.style.transition = '';
-    });
-
-    portfolioImages.forEach(img => {
-      img.style.filter = 'brightness(0.7) contrast(0.8) grayscale(0.3)';
-      img.style.transition = '';
-    });
+    if (skeleton) skeleton.style.opacity = '1';
+    if (heroImage) heroImage.style.opacity = '0';
+    if (header) {
+      header.style.opacity = '0';
+      header.style.transform = 'translateY(-20px)';
+      header.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
+    if (statsSection) {
+      statsSection.style.opacity = '0';
+      statsSection.style.transform = 'translateY(30px)';
+      statsSection.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
+    if (social) {
+      social.style.opacity = '0';
+      social.style.transform = 'translateY(10px)';
+      social.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
+    if (urlFooter) {
+      urlFooter.style.opacity = '0';
+      urlFooter.style.transform = 'translateY(10px)';
+      urlFooter.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
+    if (heroImage) {
+      heroImage.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
+    if (heroImg) {
+      heroImg.style.filter = 'brightness(0.7) contrast(0.8) grayscale(0.3)';
+      heroImg.style.transition = 'filter 0.7s ease';
+    }
+    if (freeBadge) {
+      freeBadge.style.opacity = '0';
+      freeBadge.style.transform = 'translateY(-10px)';
+      freeBadge.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    }
 
     // Initialize
     updateSlider(0);
@@ -908,171 +920,50 @@
   // Dashboard Showcase Interactive Features
   function initDashboardShowcase() {
     const showcase = document.getElementById('dashboard-showcase');
-    if (!showcase) return;
-
-    // Intersection Observer for scroll-triggered animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    // Animate counter function
-    function animateCounter(element, target, suffix = '') {
-      const skeleton = element.querySelector('.stat-counter-skeleton');
-      if (skeleton) {
-        skeleton.classList.add('hidden');
-      }
-      
-      let current = 0;
-      const duration = 2000; // 2 seconds
-      const increment = target / (duration / 16); // 60fps
-      
-      const animate = () => {
-        current += increment;
-        if (current < target) {
-          element.textContent = Math.round(current) + suffix;
-          requestAnimationFrame(animate);
-        } else {
-          element.textContent = target + suffix;
-          if (skeleton) {
-            skeleton.remove();
-          }
-        }
-      };
-      
-      // Clear skeleton and start animation
-      if (skeleton) {
-        element.textContent = '';
-      }
-      animate();
+    if (!showcase) {
+      console.log('[Dashboard Showcase] Section not found');
+      return;
     }
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !entry.target.classList.contains('counters-animated')) {
-          entry.target.classList.add('is-visible', 'counters-animated');
-          
-          // Animate stat counters
-          const statValues = entry.target.querySelectorAll('[data-target]');
-          statValues.forEach((stat, index) => {
-            const target = parseInt(stat.getAttribute('data-target'), 10);
-            const suffix = stat.textContent.includes('%') ? '%' : '';
-            
-            // Check if it's an analytics value (has parent with data-analytics-card)
-            const isAnalyticsValue = stat.closest('[data-analytics-card]');
-            const delay = isAnalyticsValue ? 500 + (index * 150) : 300 + (index * 100);
-            
-            setTimeout(() => {
-              animateCounter(stat, target, suffix);
-            }, delay);
-          });
-          
-          // Animate analytics cards entrance
-          const analyticsCards = entry.target.querySelectorAll('[data-analytics-card]');
-          analyticsCards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
-            setTimeout(() => {
-              card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-              card.style.opacity = '1';
-              card.style.transform = 'translateY(0)';
-            }, 400 + (index * 100));
-          });
-          
-          // Animate profile completion progress bar
-          const progressSection = entry.target.querySelector('#talent-profile-progress');
-          if (progressSection) {
-            const progressFill = progressSection.querySelector('#progress-fill');
-            const progressPercentage = progressSection.querySelector('#progress-percentage');
-            const completionItems = progressSection.querySelectorAll('.dashboard-showcase__completion-item');
-            
-            if (progressFill && progressPercentage) {
-              const targetProgress = parseInt(progressPercentage.getAttribute('data-target') || '95', 10);
-              
-              // Reset to 0
-              progressFill.style.width = '0%';
-              progressPercentage.textContent = '0%';
-              
-              // Animate to target
-              let currentProgress = 0;
-              const duration = 2000; // 2 seconds
-              const increment = targetProgress / (duration / 16); // 60fps
-              
-              const animateProgress = () => {
-                currentProgress += increment;
-                if (currentProgress < targetProgress) {
-                  progressFill.style.width = currentProgress + '%';
-                  progressPercentage.textContent = Math.round(currentProgress) + '%';
-                  requestAnimationFrame(animateProgress);
-                } else {
-                  progressFill.style.width = targetProgress + '%';
-                  progressPercentage.textContent = targetProgress + '%';
-                }
-              };
-              
-              setTimeout(() => {
-                animateProgress();
-              }, 300);
-            }
-            
-            // Animate completion checklist items
-            if (completionItems.length > 0) {
-              completionItems.forEach((item, index) => {
-                const icon = item.querySelector('.dashboard-showcase__completion-icon');
-                const label = item.querySelector('.dashboard-showcase__completion-label');
-                
-                // Start hidden
-                if (icon) icon.style.opacity = '0';
-                if (label) label.style.opacity = '0';
-                if (label) label.style.transform = 'translateX(-10px)';
-                
-                // Animate in with stagger
-                setTimeout(() => {
-                  if (icon) {
-                    icon.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                    icon.style.opacity = '1';
-                    icon.style.transform = 'scale(1.2)';
-                    setTimeout(() => {
-                      icon.style.transform = 'scale(1)';
-                    }, 200);
-                  }
-                  if (label) {
-                    label.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                    label.style.opacity = '1';
-                    label.style.transform = 'translateX(0)';
-                  }
-                }, 800 + (index * 200));
-              });
-            }
-          }
-          
-          // Animate other progress bars (if any)
-          const otherProgressFills = entry.target.querySelectorAll('.dashboard-showcase__progress-fill:not(#progress-fill)');
-          otherProgressFills.forEach(progressFill => {
-            const width = progressFill.style.width || '0%';
-            progressFill.style.width = '0%';
-            setTimeout(() => {
-              progressFill.style.width = width;
-            }, 200);
-          });
+    console.log('[Dashboard Showcase] Initializing browser windows...');
+
+    // Accordion functionality for talent dashboard preview
+    const accordionHeaders = showcase.querySelectorAll('.dashboard-preview--talent .talent-accordion__header');
+    accordionHeaders.forEach(header => {
+      header.addEventListener('click', (e) => {
+        e.preventDefault();
+        const item = header.closest('.talent-accordion__item');
+        if (!item) return;
+        
+        const isExpanded = item.classList.contains('talent-accordion__item--expanded');
+        
+        // Close all items
+        showcase.querySelectorAll('.talent-accordion__item').forEach(i => {
+          i.classList.remove('talent-accordion__item--expanded');
+          i.setAttribute('aria-expanded', 'false');
+        });
+        
+        // Toggle current item
+        if (!isExpanded) {
+          item.classList.add('talent-accordion__item--expanded');
+          item.setAttribute('aria-expanded', 'true');
         }
       });
-    }, observerOptions);
+    });
 
-    observer.observe(showcase);
-
-    // Enhanced hover effects for panels
-    const panels = showcase.querySelectorAll('.dashboard-showcase__panel');
-    panels.forEach(panel => {
-      panel.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-8px)';
+    // Browser window hover effects
+    const browserWindows = showcase.querySelectorAll('.browser-window');
+    browserWindows.forEach(window => {
+      window.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-4px)';
       });
       
-      panel.addEventListener('mouseleave', function() {
+      window.addEventListener('mouseleave', function() {
         this.style.transform = 'translateY(0)';
       });
     });
+
+    // Note: Old intersection observer and animation code removed - simplified for side-by-side layout
 
     // Interactive media grid items
     const mediaItems = showcase.querySelectorAll('.dashboard-showcase__media-item');
@@ -1685,6 +1576,32 @@
     });
   }
 
+  // Social Media Links - Prevent Redirect
+  function initSocialMediaLinks() {
+    // Use event delegation to handle clicks even if elements are hidden initially
+    // This works even when elements are dynamically shown/hidden
+    const handleSocialClick = (e) => {
+      const socialLink = e.target.closest('.portfolio-card__social-link--no-redirect');
+      if (socialLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Link is clickable but doesn't redirect
+        console.log('[Social] Link clicked:', socialLink.getAttribute('data-social'));
+        // Add visual feedback
+        socialLink.style.opacity = '0.6';
+        setTimeout(() => {
+          socialLink.style.opacity = '1';
+        }, 200);
+        return false;
+      }
+    };
+    
+    // Attach to document for event delegation
+    document.addEventListener('click', handleSocialClick, true);
+    
+    console.log('[Social] Event listeners attached for social media links');
+  }
+
   // Initialize everything when DOM is ready
   document.addEventListener('DOMContentLoaded', () => {
     initUniversalHeaderMenu();
@@ -1702,6 +1619,7 @@
     initInteractiveFeatureCards();
     initComparisonTable();
     initEnhancedScrollAnimations();
+    initSocialMediaLinks();
     respectReducedMotion();
   });
 })();

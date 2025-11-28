@@ -19,12 +19,21 @@
 %>
 <section class="apply-header" id="apply-header">
   <div class="apply-header__container">
-    <span class="apply-header__badge">Apply</span>
-    <h1 class="apply-header__headline">
-      <span class="apply-header__headline-fashion">Create your comp card.</span>
-      <span class="apply-header__headline-ai">AI-curated quality.</span>
-    </h1>
-    <p class="apply-header__subheadline">Submit your details once. Our AI refines your bio, standardizes your stats, and delivers a polished PDF comp card — free, instantly, no watermark.</p>
+    <% if (typeof lockedAgency !== 'undefined' && lockedAgency) { %>
+      <span class="apply-header__badge">Agency Application</span>
+      <h1 class="apply-header__headline">
+        <span class="apply-header__headline-fashion">You're applying to:</span>
+        <span class="apply-header__headline-ai"><%= lockedAgency.name %></span>
+      </h1>
+      <p class="apply-header__subheadline">Submit your application directly to <%= lockedAgency.name %>. It's free and takes just a few minutes.</p>
+    <% } else { %>
+      <span class="apply-header__badge">Apply</span>
+      <h1 class="apply-header__headline">
+        <span class="apply-header__headline-fashion">Create your comp card.</span>
+        <span class="apply-header__headline-ai">AI-curated quality.</span>
+      </h1>
+      <p class="apply-header__subheadline">Submit your details once. Our AI refines your bio, standardizes your stats, and delivers a polished PDF comp card — free, instantly, no watermark.</p>
+    <% } %>
     <div class="apply-header__accent"></div>
   </div>
 </section>

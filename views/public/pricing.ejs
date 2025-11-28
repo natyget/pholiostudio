@@ -14,6 +14,18 @@
 <!-- Split-Screen Editorial Pricing Layout -->
 <section class="pricing-spread" id="pricing-spread">
   <div class="pricing-spread__container">
+    <!-- Pricing Toggle -->
+    <div class="pricing-toggle">
+      <label class="pricing-toggle__label pricing-toggle__label--monthly">Monthly</label>
+      <button type="button" class="pricing-toggle__switch" id="pricing-toggle" aria-label="Toggle between monthly and yearly pricing" aria-pressed="false">
+        <span class="pricing-toggle__slider"></span>
+      </button>
+      <label class="pricing-toggle__label pricing-toggle__label--yearly">
+        Yearly
+        <span class="pricing-toggle__badge">Save 17%</span>
+      </label>
+    </div>
+
     <div class="pricing-spread__layout">
 
       <!-- Left: Pro (Primary Focus - 60%) -->
@@ -23,10 +35,11 @@
         <div class="pricing-card__header">
           <div class="pricing-card__price">
             <span class="pricing-card__currency">$</span>
-            <span class="pricing-card__amount">9.99</span>
-            <span class="pricing-card__period">/month</span>
+            <span class="pricing-card__amount" data-monthly="9.99" data-yearly="99.00">9.99</span>
+            <span class="pricing-card__period" data-monthly="/month" data-yearly="/year">/month</span>
           </div>
           <p class="pricing-card__tagline">The professional standard for working talent and agencies.</p>
+          <p class="pricing-card__billing-note" data-yearly="Billed annually. Equivalent to $8.25/month." style="display: none;"></p>
         </div>
 
         <div class="pricing-card__preview">

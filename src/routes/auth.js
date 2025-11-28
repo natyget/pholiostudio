@@ -307,8 +307,8 @@ router.get('/signup', (req, res) => {
   return res.redirect('/apply');
 });
 
-// GET /partners - Agency signup page
-router.get('/partners', (req, res, next) => {
+// GET /partners/join - Agency signup page
+router.get('/partners/join', (req, res, next) => {
   try {
     if (req.session && req.session.userId) {
       if (req.session.role === 'AGENCY') {
@@ -316,30 +316,30 @@ router.get('/partners', (req, res, next) => {
       }
       return res.redirect('/');
     }
-    res.locals.currentPage = 'partners';
+    res.locals.currentPage = 'partners-join';
     return res.render('auth/partners', {
       title: 'Partner with Pholio',
       values: {},
       errors: {},
       layout: 'layout',
-      currentPage: 'partners'
+      currentPage: 'partners-join'
     });
   } catch (error) {
     return next(error);
   }
 });
 
-// POST /partners - Agency signup (Firebase user should be created client-side first)
-router.post('/partners', async (req, res, next) => {
+// POST /partners/join - Agency signup (Firebase user should be created client-side first)
+router.post('/partners/join', async (req, res, next) => {
   const parsed = agencySignupSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.locals.currentPage = 'partners';
+    res.locals.currentPage = 'partners-join';
     return res.status(422).render('auth/partners', {
       title: 'Partner with Pholio',
       values: req.body,
       errors: parsed.error.flatten().fieldErrors,
       layout: 'layout',
-      currentPage: 'partners'
+      currentPage: 'partners-join'
     });
   }
 
@@ -353,13 +353,13 @@ router.post('/partners', async (req, res, next) => {
 
   if (!idToken) {
     console.log('[Signup/Partners] No Firebase token provided');
-    res.locals.currentPage = 'partners';
+    res.locals.currentPage = 'partners-join';
     return res.status(422).render('auth/partners', {
       title: 'Partner with Pholio',
       values: req.body,
       errors: { email: ['Authentication failed. Please try again.'] },
       layout: 'layout',
-      currentPage: 'partners'
+      currentPage: 'partners-join'
     });
   }
 
@@ -371,13 +371,13 @@ router.post('/partners', async (req, res, next) => {
 
     if (firebaseEmail.toLowerCase().trim() !== normalizedEmail) {
       console.log('[Signup/Partners] Email mismatch:', { firebaseEmail, normalizedEmail });
-      res.locals.currentPage = 'partners';
+      res.locals.currentPage = 'partners-join';
       return res.status(422).render('auth/partners', {
         title: 'Partner with Pholio',
         values: req.body,
         errors: { email: ['Email does not match authenticated account.'] },
         layout: 'layout',
-        currentPage: 'partners'
+        currentPage: 'partners-join'
       });
     }
 
@@ -389,13 +389,13 @@ router.post('/partners', async (req, res, next) => {
 
     if (existing) {
       console.log('[Signup/Partners] User already exists:', { firebaseUid, email: normalizedEmail });
-      res.locals.currentPage = 'partners';
+      res.locals.currentPage = 'partners-join';
       return res.status(422).render('auth/partners', {
         title: 'Partner with Pholio',
         values: req.body,
         errors: { email: ['That email is already registered'] },
         layout: 'layout',
-        currentPage: 'partners'
+        currentPage: 'partners-join'
       });
     }
 
@@ -453,13 +453,13 @@ router.post('/partners', async (req, res, next) => {
 
     // Handle Firebase-specific errors
     if (error.message.includes('Email already exists')) {
-      res.locals.currentPage = 'partners';
+      res.locals.currentPage = 'partners-join';
       return res.status(422).render('auth/partners', {
         title: 'Partner with Pholio',
         values: req.body,
         errors: { email: ['That email is already registered'] },
         layout: 'layout',
-        currentPage: 'partners'
+        currentPage: 'partners-join'
       });
     }
 

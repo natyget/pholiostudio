@@ -22,6 +22,7 @@ const uploadRoutes = require('./routes/upload');
 const agencyRoutes = require('./routes/agency');
 const agencyApiRoutes = require('./routes/api/agency');
 const proRoutes = require('./routes/pro');
+const partnersRoutes = require('./routes/partners');
 const stripeRoutes = require('./routes/stripe');
 
 const app = express();
@@ -641,6 +642,7 @@ app.use('/', uploadRoutes);
 app.use('/', agencyRoutes);
 app.use('/', agencyApiRoutes);
 app.use('/', proRoutes);
+app.use('/', partnersRoutes);
 app.use('/stripe', stripeRoutes);
 
 // Static file serving - AFTER routes so routes take precedence over static HTML files

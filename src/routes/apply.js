@@ -45,6 +45,115 @@ router.get('/api/agencies/search', async (req, res) => {
   }
 });
 
+// Agency-locked application: /apply/agency?agencyId=XXXX
+router.get('/apply/agency', async (req, res) => {
+  // /apply is only for logged-out users (new signups)
+  // If user is logged in, redirect them to their dashboard
+  if (req.session && req.session.userId && req.currentUser) {
+    if (req.session.role === 'TALENT') {
+      return res.redirect('/dashboard/talent');
+    } else if (req.session.role === 'AGENCY') {
+      return res.redirect('/dashboard/agency');
+    } else {
+      return res.redirect('/dashboard');
+    }
+  }
+
+  const { agencyId } = req.query;
+
+  if (!agencyId) {
+    addMessage(req, 'error', 'No agency specified. Redirecting to general application form.');
+    return res.redirect('/apply');
+  }
+
+  try {
+    // Look up agency by ID
+    const agency = await knex('users')
+      .where({ 
+        id: agencyId,
+        role: 'AGENCY'
+      })
+      .first();
+
+    if (!agency) {
+      addMessage(req, 'error', 'Agency not found. Redirecting to general application form.');
+      return res.redirect('/apply');
+    }
+
+    // Agency found - pre-populate and lock
+    const defaults = {
+      first_name: '',
+      last_name: '',
+      city: '',
+      phone: '',
+      height_cm: '',
+      bust: '',
+      waist: '',
+      hips: '',
+      shoe_size: '',
+      eye_color: '',
+      hair_color: '',
+      bio: '',
+      specialties: [],
+      partner_agency_email: '',
+      email: '',
+      password: '',
+      password_confirm: '',
+      // New comprehensive fields
+      gender: '',
+      date_of_birth: '',
+      weight: '',
+      weight_unit: '',
+      weight_kg: '',
+      weight_lbs: '',
+      dress_size: '',
+      hair_length: '',
+      skin_tone: '',
+      languages: [],
+      availability_travel: false,
+      availability_schedule: '',
+      experience_level: '',
+      training: '',
+      portfolio_url: '',
+      instagram_handle: '',
+      twitter_handle: '',
+      tiktok_handle: '',
+      reference_name: '',
+      reference_email: '',
+      reference_phone: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+      emergency_contact_relationship: '',
+      work_eligibility: '',
+      work_status: '',
+      union_membership: '',
+      ethnicity: '',
+      tattoos: false,
+      piercings: false,
+      comfort_levels: [],
+      previous_representations: []
+    };
+
+    return res.render('apply/index', {
+      title: `Apply to ${agency.agency_name || 'Agency'}`,
+      values: defaults,
+      errors: {},
+      layout: 'layout',
+      isLoggedIn: false,
+      lockedAgency: {
+        id: agency.id,
+        name: agency.agency_name || 'Agency',
+        slug: agency.agency_slug
+      },
+      isAgencyLockedFlow: true
+    });
+  } catch (error) {
+    console.error('[Apply] Error loading agency:', error);
+    addMessage(req, 'error', 'Error loading agency information. Redirecting to general application form.');
+    return res.redirect('/apply');
+  }
+});
+
 // Partner-led funnel: /apply/:agencySlug
 router.get('/apply/:agencySlug', async (req, res) => {
   // /apply is only for logged-out users (new signups)

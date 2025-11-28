@@ -130,10 +130,17 @@
       city: 'Stockholm',
       hero_image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80',
       slug: 'hugo-andersson'
+    },
+    {
+      first_name: 'Isla',
+      last_name: 'Chen',
+      city: 'Shanghai',
+      hero_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80',
+      slug: 'isla-chen'
     }
   ];
 
-  // Merge real talents with placeholders, always show 8
+  // Merge real talents with placeholders, always show 9
   var featuredTalents = [];
 
   if (elara && elara.slug) {
@@ -151,20 +158,24 @@
       talent &&
       talent.slug &&
       (!elara || talent.slug !== elara.slug) &&
-      featuredTalents.length < 8
+      featuredTalents.length < 9
     ) {
-      featuredTalents.push({
-        first_name: talent.first_name || '',
-        last_name: talent.last_name || '',
-        city: talent.city || '',
-        slug: talent.slug,
-        hero_image: normalizeImagePath(talent.hero_image || talent.hero_image_path)
-      });
+      // Only add if talent has a valid image
+      var talentImage = normalizeImagePath(talent.hero_image || talent.hero_image_path);
+      if (talentImage && talentImage !== '/images/placeholder.jpg' && talentImage !== '') {
+        featuredTalents.push({
+          first_name: talent.first_name || '',
+          last_name: talent.last_name || '',
+          city: talent.city || '',
+          slug: talent.slug,
+          hero_image: talentImage
+        });
+      }
     }
   });
 
-  // Fill with placeholders to reach 8
-  while (featuredTalents.length < 8) {
+  // Fill with placeholders to reach 9
+  while (featuredTalents.length < 9) {
     var placeholder = placeholderTalents[featuredTalents.length % placeholderTalents.length];
     featuredTalents.push(placeholder);
   }
@@ -271,34 +282,35 @@
       <div class="transformation-hero__center">
         <div class="transformation-zone" id="transformation-zone">
           <div class="transformation-zone__particles"></div>
-          <div class="transformation-zone__flow"></div>
+          
+          <!-- Vertical Gold Border Line -->
+          <div class="transformation-zone__border"></div>
+          
+          <!-- AI Processing Badge -->
           <div class="transformation-zone__indicator">
             <span class="transformation-zone__ai-label">AI</span>
             <span class="transformation-zone__processing">Processing...</span>
           </div>
           
-          <!-- Progress Indicators -->
+          <!-- Progress Steps - Vertical Stepper -->
           <div class="transformation-zone__progress" id="transformation-progress">
             <div class="transformation-zone__progress-steps">
               <div class="transformation-zone__progress-step" data-step="0">
                 <div class="transformation-zone__progress-step-indicator"></div>
-                <span class="transformation-zone__progress-step-label">Analyzing bio</span>
+                <span class="transformation-zone__progress-step-label">Analyzing</span>
               </div>
               <div class="transformation-zone__progress-step" data-step="1">
                 <div class="transformation-zone__progress-step-indicator"></div>
-                <span class="transformation-zone__progress-step-label">Organizing stats</span>
+                <span class="transformation-zone__progress-step-label">Organizing</span>
               </div>
               <div class="transformation-zone__progress-step" data-step="2">
                 <div class="transformation-zone__progress-step-indicator"></div>
-                <span class="transformation-zone__progress-step-label">Formatting presentation</span>
+                <span class="transformation-zone__progress-step-label">Formatting</span>
               </div>
               <div class="transformation-zone__progress-step" data-step="3">
                 <div class="transformation-zone__progress-step-indicator"></div>
-                <span class="transformation-zone__progress-step-label">Finalizing portfolio</span>
+                <span class="transformation-zone__progress-step-label">Finalizing</span>
               </div>
-            </div>
-            <div class="transformation-zone__progress-bar">
-              <div class="transformation-zone__progress-bar-fill" id="transformation-progress-fill"></div>
             </div>
           </div>
         </div>
@@ -347,119 +359,118 @@
       <!-- Right: Curated Output -->
       <div class="transformation-hero__side transformation-hero__side--curated">
         <div class="transformation-hero__label">After</div>
-        <div class="portfolio-card">
-          <!-- Free Badge -->
-          <div class="portfolio-card__free-badge">Free portfolio site</div>
+        <div class="portfolio-card portfolio-card--free" id="curated-portfolio-card">
+          <!-- Skeleton/Scanning State (Step 1) -->
+          <div class="portfolio-card__skeleton" id="portfolio-card-skeleton">
+            <div class="portfolio-card__skeleton-line portfolio-card__skeleton-line--header"></div>
+            <div class="portfolio-card__skeleton-line portfolio-card__skeleton-line--subheader"></div>
+            <div class="portfolio-card__skeleton-line portfolio-card__skeleton-line--tags"></div>
+            <div class="portfolio-card__skeleton-line portfolio-card__skeleton-line--stats"></div>
+            <div class="portfolio-card__skeleton-line portfolio-card__skeleton-line--footer"></div>
+          </div>
           
-          <!-- Split-Panel Layout: Image Left, Info Right -->
-          <div class="portfolio-card__split">
-            <!-- Left Panel: Hero Image -->
-            <div class="portfolio-card__image-panel">
-              <div class="portfolio-card__hero-image">
+          <!-- Hero Image (Full Bleed) -->
+          <div class="portfolio-card__hero-image" data-animation-step="4">
                 <img src="<%= heroTalent.hero_image %>" alt="<%= heroTalent.first_name %> <%= heroTalent.last_name %>" id="curated-hero-image">
-                <div class="portfolio-card__image-overlay"></div>
-              </div>
+            <!-- Free Badge (Inside Image) -->
+            <div class="portfolio-card__free-badge" data-animation-step="4">Free Portfolio Site</div>
             </div>
             
-            <!-- Gold Vertical Divider -->
-            <div class="portfolio-card__divider"></div>
-            
-            <!-- Right Panel: Information -->
-            <div class="portfolio-card__info-panel">
-              <!-- Name and Location -->
-              <div class="portfolio-card__header">
+          <!-- Content Section -->
+          <div class="portfolio-card__content">
+            <!-- Header -->
+            <div class="portfolio-card__header" data-animation-step="2">
                 <h2 class="portfolio-card__name" id="curated-name">
-                  <span class="portfolio-card__name-first"><%= heroTalent.first_name %></span>
-                  <span class="portfolio-card__name-last"><%= heroTalent.last_name %></span>
+                <%= (heroTalent.first_name || 'ELARA').toUpperCase() %> <%= (heroTalent.last_name || 'KEATS').toUpperCase() %>
                 </h2>
-                <div class="portfolio-card__location" id="curated-location">
-                  <%= heroTalent.city.split(',')[0] %>
+              <p class="portfolio-card__location">Los Angeles • New York</p>
+              <!-- Category Tags -->
+              <div class="portfolio-card__category-tags">
+                <span class="portfolio-card__category-tag">Editorial</span>
+                <span class="portfolio-card__category-tag">Runway</span>
+                <span class="portfolio-card__category-tag">Commercial</span>
                 </div>
               </div>
               
-              <!-- Free Version Description -->
-              <div class="portfolio-card__free-description">
-                <p>Clean, modern comp-card style page you can share with agencies. <strong>Upgrade to Studio+</strong> to actively shop agencies and track applications.</p>
+            <!-- Stats Grid (Editorial Layout) -->
+            <div class="portfolio-card__stats-section" data-animation-step="3">
+              <div class="portfolio-card__stats-grid">
+                <!-- Row 1 -->
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Height</span>
+                  <span class="portfolio-card__stat-value">5'11"</span>
+              </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Bust</span>
+                  <span class="portfolio-card__stat-value">32"</span>
+                </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Waist</span>
+                  <span class="portfolio-card__stat-value">25"</span>
+                </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Hips</span>
+                  <span class="portfolio-card__stat-value">35"</span>
+                </div>
+                <!-- Row 2 -->
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Dress</span>
+                  <span class="portfolio-card__stat-value">2</span>
+                </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Shoe</span>
+                  <span class="portfolio-card__stat-value">9</span>
+                </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Hair</span>
+                  <span class="portfolio-card__stat-value">Brown</span>
+              </div>
+                <div class="portfolio-card__stat-item">
+                  <span class="portfolio-card__stat-label">Eyes</span>
+                  <span class="portfolio-card__stat-value">Green</span>
+              </div>
+              </div>
               </div>
               
-              <!-- Stats Section -->
-              <div class="portfolio-card__stats">
-                <div class="portfolio-card__stat">
-                  <span class="portfolio-card__stat-label">HEIGHT</span>
-                  <span class="portfolio-card__stat-value" id="curated-height"><%= formatHeight(heroTalent.height_cm || 180) %> / <%= heroTalent.height_cm || 180 %>cm</span>
-                </div>
-                <div class="portfolio-card__stat">
-                  <span class="portfolio-card__stat-label">MEASUREMENTS</span>
-                  <span class="portfolio-card__stat-value" id="curated-measurements"><%= heroTalent.measurements || '32-25-35' %></span>
-                </div>
-                <div class="portfolio-card__stat">
-                  <span class="portfolio-card__stat-label">SHOE</span>
-                  <span class="portfolio-card__stat-value" id="curated-shoe">9 US</span>
-                </div>
-                <div class="portfolio-card__stat">
-                  <span class="portfolio-card__stat-label">EYES</span>
-                  <span class="portfolio-card__stat-value" id="curated-eyes">Green</span>
-                </div>
-                <div class="portfolio-card__stat">
-                  <span class="portfolio-card__stat-label">HAIR</span>
-                  <span class="portfolio-card__stat-value" id="curated-hair">Brown</span>
-                </div>
-              </div>
-              
-              <!-- Specializations -->
-              <div class="portfolio-card__specializations">
-                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--editorial">Editorial</div>
-                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--runway">Runway</div>
-                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--commercial">Commercial</div>
-              </div>
-              
-              <!-- Bio Preview -->
-              <div class="portfolio-card__bio-preview" id="curated-bio-preview">
-                <% 
-                  // Extract first 1-2 sentences or ~100 characters from curated bio
-                  var bioText = heroTalent.bio_curated || '';
-                  var bioPreview = '';
-                  if (bioText.length > 0) {
-                    // Try to get first sentence(s)
-                    var sentences = bioText.match(/[^.!?]+[.!?]+/g);
-                    if (sentences && sentences.length > 0) {
-                      bioPreview = sentences[0];
-                      if (sentences.length > 1 && bioPreview.length < 70) {
-                        bioPreview += ' ' + sentences[1];
-                      }
-                      // Limit to ~100 characters
-                      if (bioPreview.length > 100) {
-                        bioPreview = bioPreview.substring(0, 97) + '...';
-                      }
-                    } else {
-                      // Fallback: just truncate to 100 chars
-                      bioPreview = bioText.length > 100 ? bioText.substring(0, 97) + '...' : bioText;
-                    }
-                  }
-                %>
-                <%= bioPreview %>
-              </div>
-              
-              <!-- Portfolio Access -->
-              <div class="portfolio-card__portfolio-access">
-                <div class="portfolio-card__portfolio-url">
-                  <span class="portfolio-card__portfolio-label">Portfolio</span>
-                  <a href="/portfolio/<%= heroTalent.slug %>" class="portfolio-card__portfolio-link" id="curated-portfolio-url">
-                    <%= heroTalent.slug %>.pholio.studio
+            <!-- Social Media Handles -->
+            <div class="portfolio-card__social" data-animation-step="4">
+              <a href="#" class="portfolio-card__social-link portfolio-card__social-link--no-redirect" aria-label="Instagram" data-social="instagram">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                <span>@elara.k</span>
+              </a>
+              <a href="#" class="portfolio-card__social-link portfolio-card__social-link--no-redirect" aria-label="TikTok" data-social="tiktok">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"></path>
+                </svg>
+                <span>@elara.model</span>
                   </a>
                 </div>
+            
+            <!-- Signature Watermark -->
+            <div class="portfolio-card__signature">
+              <%= (heroTalent.first_name || 'Elara') %> <%= (heroTalent.last_name || 'K').charAt(0) %>.
               </div>
               
-              <!-- Contact Section -->
-              <div class="portfolio-card__contact">
-                <a href="#" class="portfolio-card__contact-card portfolio-card__contact-card--instagram" aria-label="Instagram">
-                  <div class="portfolio-card__contact-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162 0 3.403 2.759 6.162 6.162 6.162 3.403 0 6.162-2.759 6.162-6.162 0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4 2.209 0 4 1.791 4 4 0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="currentColor"/>
-                    </svg>
-                  </div>
-                  <span class="portfolio-card__contact-handle">@<%= heroTalent.first_name.toLowerCase() %>.<%= heroTalent.last_name.toLowerCase().charAt(0) %></span>
+            <!-- Footer URL with Status -->
+            <div class="portfolio-card__url-footer" data-animation-step="4">
+              <div class="portfolio-card__url-left">
+                <a href="/portfolio/<%= (heroTalent.slug || 'elara-k').toLowerCase() %>" class="portfolio-card__url-link">
+                  <span class="portfolio-card__url-text"><%= (heroTalent.slug || 'elara-k').toLowerCase() %>.pholio.studio</span>
                 </a>
+                <button class="portfolio-card__copy-btn" aria-label="Copy link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+                  </div>
+              <div class="portfolio-card__status">
+                <span class="portfolio-card__status-dot"></span>
+                <span class="portfolio-card__status-text">Available for Booking</span>
               </div>
             </div>
           </div>
@@ -473,54 +484,412 @@
 <section class="dashboard-showcase" id="dashboard-showcase">
   <div class="dashboard-showcase__container">
     <div class="dashboard-showcase__header">
-      <h2 class="dashboard-showcase__title">Your Dashboard, Your Way</h2>
-      <p class="dashboard-showcase__subtitle">Experience the power of Pholio from both perspectives</p>
+      <span class="dashboard-showcase__badge">Dashboards</span>
+      <h2 class="dashboard-showcase__title">
+        <span class="dashboard-showcase__title-fashion">Real tools.</span>
+        <span class="dashboard-showcase__title-ai">Real results.</span>
+      </h2>
+      <p class="dashboard-showcase__subtitle">See exactly what you'll get with Pholio—powerful dashboards designed for talent and agencies</p>
+      <div class="dashboard-showcase__accent"></div>
     </div>
 
-    <div class="dashboard-showcase__content">
-      <!-- Talent Dashboard Preview -->
-      <div class="dashboard-showcase__panel dashboard-showcase__panel--talent">
-        <div class="dashboard-showcase__panel-header">
-          <div class="dashboard-showcase__panel-badge dashboard-showcase__panel-badge--talent">For Talent</div>
-          <h3 class="dashboard-showcase__panel-title">Manage Your Portfolio</h3>
+    <!-- Side-by-Side Browser Windows -->
+    <div class="dashboard-showcase__comparison">
+      <!-- Talent Dashboard Browser Window (Left) -->
+      <div class="browser-window browser-window--talent">
+        <div class="browser-window__header">
+          <div class="browser-window__controls">
+            <span class="browser-window__control browser-window__control--close"></span>
+            <span class="browser-window__control browser-window__control--minimize"></span>
+            <span class="browser-window__control browser-window__control--maximize"></span>
         </div>
-        
-        <div class="dashboard-showcase__mockup">
-          <!-- Talent Hero Section -->
-          <div class="dashboard-showcase__talent-hero">
-            <div class="dashboard-showcase__talent-image">
-              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80" alt="Talent profile" loading="lazy">
+          <div class="browser-window__address-bar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <span>pholio.studio/dashboard/talent</span>
+          </div>
+        </div>
+        <div class="browser-window__content">
+          <!-- Actual Talent Dashboard UI - Exact Structure -->
+          <div class="dashboard-preview dashboard-preview--talent">
+            <!-- Hero Section - Exact Match -->
+            <section class="dash-hero" id="overview" data-section="overview">
+              <div class="dash-hero__image">
+                <img src="<%= heroTalent.hero_image || 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80' %>" 
+                     alt="<%= (heroTalent.first_name || 'Elara') %> <%= (heroTalent.last_name || 'Keats') %>"
+                     class="is-loaded">
+              </div>
+              <div class="dash-hero__copy">
+                <div class="dash-hero__title-wrapper">
+                  <h1 class="dash-hero__title">
+                    <%= (heroTalent.first_name || 'Elara') %> <%= (heroTalent.last_name || 'Keats') %>
+                  </h1>
+                  <span class="badge badge-free">Free</span>
+                </div>
+                <p class="dash-hero__subtitle">
+                  <%= heroTalent.city || 'Los Angeles, CA' %>
+                </p>
+                <div class="dash-hero__stats">
+                  <div class="dash-hero__stat">
+                    <span class="dash-hero__stat-label">Height</span>
+                    <span class="dash-hero__stat-value">180 cm</span>
+                  </div>
+                  <div class="dash-hero__stat">
+                    <span class="dash-hero__stat-label">Measurements</span>
+                    <span class="dash-hero__stat-value">32"-25"-35"</span>
+                  </div>
+                  <div class="dash-hero__stat">
+                    <span class="dash-hero__stat-label">Images</span>
+                    <span class="dash-hero__stat-value">8</span>
+                  </div>
+                </div>
+                <div class="dash-hero__actions">
+                  <button type="button" class="button button-primary dash-hero__action">
+                    <span>Download Comp Card</span>
+                  </button>
+                  <a href="#" class="button button-secondary dash-hero__action">
+                    <span>View Portfolio</span>
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <!-- Main Dashboard Grid - Exact Match -->
+            <div class="dash-grid">
+              <!-- Left Column: Main Content -->
+              <div class="dash-grid__column">
+                <!-- Profile Sections Accordion -->
+                <div class="talent-accordion">
+                  <!-- Personal Info Section -->
+                  <div class="talent-accordion__item talent-accordion__item--expanded" data-section="personal-info">
+                    <button class="talent-accordion__header" type="button" aria-expanded="true">
+                      <div class="talent-accordion__header-content">
+                        <h3 class="talent-accordion__title">Personal Info</h3>
+                        <span class="talent-accordion__status talent-accordion__status--complete">Complete</span>
             </div>
-            <div class="dashboard-showcase__talent-info">
-              <div class="dashboard-showcase__talent-name-wrapper">
-                <h4 class="dashboard-showcase__talent-name">Elara Keats</h4>
-                <span class="dashboard-showcase__badge dashboard-showcase__badge--pro">STUDIO+</span>
+                      <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                    <div class="talent-accordion__content">
+                      <div class="talent-accordion__body">
+                        <form method="post" action="/dashboard/talent" class="form-stacked">
+                          <div class="form-grid">
+                            <div class="form-field">
+                              <label for="preview-first-name">First Name</label>
+                              <input id="preview-first-name" name="first_name" type="text" value="<%= heroTalent.first_name || 'Elara' %>" readonly>
               </div>
-              <p class="dashboard-showcase__talent-location">Los Angeles, CA</p>
-              <div class="dashboard-showcase__talent-stats">
-                <div class="dashboard-showcase__stat">
-                  <span class="dashboard-showcase__stat-label">Height</span>
-                  <span class="dashboard-showcase__stat-value">180 cm</span>
+                            <div class="form-field">
+                              <label for="preview-last-name">Last Name</label>
+                              <input id="preview-last-name" name="last_name" type="text" value="<%= heroTalent.last_name || 'Keats' %>" readonly>
                 </div>
-                <div class="dashboard-showcase__stat">
-                  <span class="dashboard-showcase__stat-label">Images</span>
-                  <span class="dashboard-showcase__stat-value">8</span>
+                            <div class="form-field">
+                              <label for="preview-city">City</label>
+                              <input id="preview-city" name="city" type="text" value="<%= heroTalent.city || 'Los Angeles, CA' %>" readonly>
                 </div>
-                <div class="dashboard-showcase__stat">
-                  <span class="dashboard-showcase__stat-label">Profile</span>
-                  <span class="dashboard-showcase__stat-value dashboard-showcase__stat-value--complete" data-target="95">
-                    <span class="stat-counter-skeleton"></span>
-                  </span>
                 </div>
+                        </form>
               </div>
-              <div class="dashboard-showcase__talent-actions">
-                <button class="dashboard-showcase__button dashboard-showcase__button--primary">Download Comp Card</button>
-                <button class="dashboard-showcase__button dashboard-showcase__button--secondary">View Portfolio</button>
+                    </div>
+                  </div>
+
+                  <!-- Physical Profile Section -->
+                  <div class="talent-accordion__item" data-section="physical-profile">
+                    <button class="talent-accordion__header" type="button" aria-expanded="false">
+                      <div class="talent-accordion__header-content">
+                        <h3 class="talent-accordion__title">Physical Profile</h3>
+                        <span class="talent-accordion__status talent-accordion__status--complete">Complete</span>
+                      </div>
+                      <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                    <div class="talent-accordion__content">
+                      <div class="talent-accordion__body">
+                        <form class="form-stacked">
+                          <div class="form-grid">
+                            <div class="form-field">
+                              <label>Height</label>
+                              <input type="text" value="180 cm (5'11")" readonly>
+                            </div>
+                            <div class="form-field">
+                              <label>Measurements</label>
+                              <input type="text" value="32-25-35" readonly>
+                            </div>
+                          </div>
+                        </form>
               </div>
             </div>
           </div>
 
-          <!-- Profile Progress with Animation -->
+                  <!-- Media Section -->
+                  <div class="talent-accordion__item" data-section="media">
+                    <button class="talent-accordion__header" type="button" aria-expanded="false">
+                      <div class="talent-accordion__header-content">
+                        <h3 class="talent-accordion__title">Media</h3>
+                        <span class="talent-accordion__status talent-accordion__status--complete">8 images</span>
+                      </div>
+                      <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                    <div class="talent-accordion__content">
+                      <div class="talent-accordion__body">
+                        <div class="media-grid" data-media-grid>
+                          <article class="media-card">
+                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" class="is-loaded">
+                          </article>
+                          <article class="media-card">
+                            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" class="is-loaded">
+                          </article>
+                          <article class="media-card">
+                            <img src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" class="is-loaded">
+                          </article>
+                          <article class="media-card">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" class="is-loaded">
+                          </article>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Sidebar -->
+              <div class="dash-grid__column dash-sidebar">
+                <!-- Profile Status & Stats -->
+                <div class="dash-panel dash-panel--compact dash-sidebar__status">
+                  <header class="dash-panel__header">
+                    <h3>Profile Status</h3>
+                  </header>
+                  <div class="dash-panel__body">
+                    <!-- Progress Bar -->
+                    <div class="profile-progress">
+                      <div class="profile-progress__header">
+                        <span class="profile-progress__label">Profile Complete</span>
+                        <span class="profile-progress__percentage">95%</span>
+                      </div>
+                      <div class="profile-progress__bar">
+                        <div class="profile-progress__fill" style="width: 95%"></div>
+                      </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="profile-quick-stats">
+                      <div class="profile-quick-stat">
+                        <span class="profile-quick-stat__value">8</span>
+                        <span class="profile-quick-stat__label">Images</span>
+                      </div>
+                      <div class="profile-quick-stat">
+                        <span class="profile-quick-stat__value">Dec 15</span>
+                        <span class="profile-quick-stat__label">Updated</span>
+                      </div>
+                    </div>
+
+                    <!-- Completion Checklist -->
+                    <div class="completion-checklist">
+                      <div class="completion-item is-complete">
+                        <div class="completion-item__icon">✓</div>
+                        <span class="completion-item__label">Personal Info</span>
+                      </div>
+                      <div class="completion-item is-complete">
+                        <div class="completion-item__icon">✓</div>
+                        <span class="completion-item__label">Physical Profile</span>
+                      </div>
+                      <div class="completion-item is-complete">
+                        <div class="completion-item__icon">✓</div>
+                        <span class="completion-item__label">2+ Images</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agency Dashboard Browser Window (Right) -->
+      <div class="browser-window browser-window--agency">
+        <div class="browser-window__header">
+          <div class="browser-window__controls">
+            <span class="browser-window__control browser-window__control--close"></span>
+            <span class="browser-window__control browser-window__control--minimize"></span>
+            <span class="browser-window__control browser-window__control--maximize"></span>
+          </div>
+          <div class="browser-window__address-bar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <span>pholio.studio/dashboard/agency</span>
+          </div>
+        </div>
+        <div class="browser-window__content">
+          <!-- Actual Agency Dashboard UI - Exact Structure -->
+          <section class="agency-overview" id="overview-dashboard">
+            <!-- Personalized Greeting -->
+            <div class="agency-overview__greeting">
+              <h1 class="agency-overview__greeting-title">True Modeling Agency</h1>
+              <p class="agency-overview__greeting-subtitle">Here is your daily overview</p>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="agency-overview__kpi-grid">
+              <div class="agency-overview__kpi-card agency-overview__kpi-card--highlight">
+                <div class="agency-overview__kpi-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span class="agency-overview__kpi-label">Pending Applications</span>
+                </div>
+                <div class="agency-overview__kpi-value">5</div>
+                <div class="agency-overview__kpi-subtext">
+                  <span class="agency-overview__kpi-trend">3 new today</span>
+                </div>
+              </div>
+
+              <div class="agency-overview__kpi-card">
+                <div class="agency-overview__kpi-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span class="agency-overview__kpi-label">Active Boards</span>
+                </div>
+                <div class="agency-overview__kpi-value">3</div>
+                <div class="agency-overview__kpi-subtext">
+                  <span class="agency-overview__kpi-trend">+1 this month</span>
+                </div>
+              </div>
+
+              <div class="agency-overview__kpi-card">
+                <div class="agency-overview__kpi-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span class="agency-overview__kpi-label">Total Talent Pool</span>
+                </div>
+                <div class="agency-overview__kpi-value">24</div>
+                <div class="agency-overview__kpi-subtext">Available talent</div>
+              </div>
+            </div>
+
+            <!-- Recent Applicants Section -->
+            <div class="agency-overview__recent-applicants">
+              <div class="agency-overview__section-header">
+                <h2 class="agency-overview__section-title">Recent Applicants</h2>
+                <a href="/dashboard/agency/applicants" class="agency-overview__section-link">View All</a>
+              </div>
+              <div class="agency-overview__recent-list" id="overview-recent-applicants">
+                <div class="agency-overview__recent-item" data-application-id="" data-profile-id="">
+                  <div class="agency-overview__recent-avatar">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="Sofia Martinez">
+                  </div>
+                  <div class="agency-overview__recent-info">
+                    <div class="agency-overview__recent-name">Sofia Martinez</div>
+                    <div class="agency-overview__recent-meta">Los Angeles, CA • 175 cm • Age 22</div>
+                  </div>
+                  <div class="agency-overview__recent-badges">
+                    <span class="agency-overview__recent-badge">New Face</span>
+                    <span class="agency-overview__recent-badge agency-overview__recent-badge--match">94% Match</span>
+                  </div>
+                </div>
+                <div class="agency-overview__recent-item" data-application-id="" data-profile-id="">
+                  <div class="agency-overview__recent-avatar">
+                    <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=100&q=80" alt="Emma Chen">
+                  </div>
+                  <div class="agency-overview__recent-info">
+                    <div class="agency-overview__recent-name">Emma Chen</div>
+                    <div class="agency-overview__recent-meta">New York, NY • 170 cm • Age 24</div>
+                  </div>
+                  <div class="agency-overview__recent-badges">
+                    <span class="agency-overview__recent-badge">New Face</span>
+                    <span class="agency-overview__recent-badge agency-overview__recent-badge--match">91% Match</span>
+                  </div>
+                </div>
+                <div class="agency-overview__recent-item" data-application-id="" data-profile-id="">
+                  <div class="agency-overview__recent-avatar">
+                    <img src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=100&q=80" alt="Isabella Taylor">
+                  </div>
+                  <div class="agency-overview__recent-info">
+                    <div class="agency-overview__recent-name">Isabella Taylor</div>
+                    <div class="agency-overview__recent-meta">Miami, FL • 178 cm • Age 21</div>
+                  </div>
+                  <div class="agency-overview__recent-badges">
+                    <span class="agency-overview__recent-badge">New Face</span>
+                    <span class="agency-overview__recent-badge agency-overview__recent-badge--match">89% Match</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="agency-overview__quick-actions">
+              <div class="agency-overview__section-header">
+                <h2 class="agency-overview__section-title">Quick Actions</h2>
+              </div>
+              <div class="agency-overview__quick-actions-grid">
+                <button class="agency-overview__quick-action-card" id="quick-action-create-board">
+                  <div class="agency-overview__quick-action-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </div>
+                  <div class="agency-overview__quick-action-content">
+                    <h3 class="agency-overview__quick-action-title">Create New Board</h3>
+                    <p class="agency-overview__quick-action-description">Organize talent for upcoming shows</p>
+                  </div>
+                </button>
+                <a href="/dashboard/agency/discover" class="agency-overview__quick-action-card">
+                  <div class="agency-overview__quick-action-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                  </div>
+                  <div class="agency-overview__quick-action-content">
+                    <h3 class="agency-overview__quick-action-title">Discover Talent</h3>
+                    <p class="agency-overview__quick-action-description">Browse the global directory</p>
+                  </div>
+                </a>
+                <a href="/dashboard/agency/applicants" class="agency-overview__quick-action-card">
+                  <div class="agency-overview__quick-action-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="agency-overview__quick-action-content">
+                    <h3 class="agency-overview__quick-action-title">Review Inbox</h3>
+                    <p class="agency-overview__quick-action-description">You have 5 pending applications</p>
+                  </div>
+                  <span class="agency-overview__quick-action-badge">5</span>
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Old content (to be removed) -->
+    <div class="dashboard-showcase__content" style="display: none;">
+      <!-- Talent Dashboard Preview -->
+      <div class="dashboard-showcase__panel dashboard-showcase__panel--talent" data-panel="talent">
+        <div class="dashboard-showcase__mockup">
+          <!-- Sidebar: Profile Status -->
+          <div class="dashboard-showcase__sidebar">
+            <div class="dashboard-showcase__profile-status">
+              <h3 class="dashboard-showcase__status-title">Profile Status</h3>
+              <!-- Profile Progress -->
           <div class="dashboard-showcase__progress" id="talent-profile-progress">
             <div class="dashboard-showcase__progress-header">
               <span class="dashboard-showcase__progress-label">Profile Complete</span>
@@ -529,24 +898,119 @@
             <div class="dashboard-showcase__progress-bar">
               <div class="dashboard-showcase__progress-fill" id="progress-fill" style="width: 0%"></div>
             </div>
+              </div>
+              
+              <!-- Quick Stats -->
+              <div class="dashboard-showcase__quick-stats">
+                <div class="dashboard-showcase__quick-stat">
+                  <span class="dashboard-showcase__quick-stat-value" id="sidebar-image-count" data-target="8">0</span>
+                  <span class="dashboard-showcase__quick-stat-label">Images</span>
+                </div>
+                <div class="dashboard-showcase__quick-stat">
+                  <span class="dashboard-showcase__quick-stat-value">Dec 15</span>
+                  <span class="dashboard-showcase__quick-stat-label">Updated</span>
+                </div>
+              </div>
+
             <!-- Completion Checklist -->
             <div class="dashboard-showcase__completion-checklist">
               <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
-                <span class="dashboard-showcase__completion-icon">✓</span>
-                <span class="dashboard-showcase__completion-label">Profile Details</span>
+                  <svg class="dashboard-showcase__completion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span class="dashboard-showcase__completion-label">Personal Info</span>
               </div>
               <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
-                <span class="dashboard-showcase__completion-icon">✓</span>
+                  <svg class="dashboard-showcase__completion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span class="dashboard-showcase__completion-label">Physical Profile</span>
+                </div>
+                <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
+                  <svg class="dashboard-showcase__completion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                 <span class="dashboard-showcase__completion-label">2+ Images</span>
               </div>
               <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
-                <span class="dashboard-showcase__completion-icon">✓</span>
+                  <svg class="dashboard-showcase__completion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                 <span class="dashboard-showcase__completion-label">Hero Image</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Media Grid Preview -->
+          <!-- Main Content: Accordion Sections -->
+          <div class="dashboard-showcase__main">
+            <div class="dashboard-showcase__accordion">
+              <!-- Personal Info Section (Expanded) -->
+              <div class="dashboard-showcase__accordion-item dashboard-showcase__accordion-item--expanded">
+                <button class="dashboard-showcase__accordion-header" type="button">
+                  <div class="dashboard-showcase__accordion-header-content">
+                    <h3 class="dashboard-showcase__accordion-title">Personal Info</h3>
+                    <span class="dashboard-showcase__accordion-status dashboard-showcase__accordion-status--complete">Complete</span>
+                  </div>
+                  <svg class="dashboard-showcase__accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="dashboard-showcase__accordion-content">
+                  <div class="dashboard-showcase__form-preview">
+                    <div class="dashboard-showcase__form-field">
+                      <label class="dashboard-showcase__form-label">First Name</label>
+                      <div class="dashboard-showcase__form-value">Elara</div>
+                    </div>
+                    <div class="dashboard-showcase__form-field">
+                      <label class="dashboard-showcase__form-label">Last Name</label>
+                      <div class="dashboard-showcase__form-value">Keats</div>
+                    </div>
+                    <div class="dashboard-showcase__form-field">
+                      <label class="dashboard-showcase__form-label">Location</label>
+                      <div class="dashboard-showcase__form-value">Los Angeles, CA</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Physical Profile Section -->
+              <div class="dashboard-showcase__accordion-item">
+                <button class="dashboard-showcase__accordion-header" type="button">
+                  <div class="dashboard-showcase__accordion-header-content">
+                    <h3 class="dashboard-showcase__accordion-title">Physical Profile</h3>
+                    <span class="dashboard-showcase__accordion-status dashboard-showcase__accordion-status--complete">Complete</span>
+                  </div>
+                  <svg class="dashboard-showcase__accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="dashboard-showcase__accordion-content">
+                  <div class="dashboard-showcase__form-preview">
+                    <div class="dashboard-showcase__form-field">
+                      <label class="dashboard-showcase__form-label">Height</label>
+                      <div class="dashboard-showcase__form-value">180 cm (5'11")</div>
+                    </div>
+                    <div class="dashboard-showcase__form-field">
+                      <label class="dashboard-showcase__form-label">Measurements</label>
+                      <div class="dashboard-showcase__form-value">32-25-35</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Media Section -->
+              <div class="dashboard-showcase__accordion-item">
+                <button class="dashboard-showcase__accordion-header" type="button">
+                  <div class="dashboard-showcase__accordion-header-content">
+                    <h3 class="dashboard-showcase__accordion-title">Media</h3>
+                    <span class="dashboard-showcase__accordion-status dashboard-showcase__accordion-status--complete">8 images</span>
+                  </div>
+                  <svg class="dashboard-showcase__accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="dashboard-showcase__accordion-content">
           <div class="dashboard-showcase__media-grid">
             <div class="dashboard-showcase__media-item">
               <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
@@ -561,186 +1025,180 @@
               <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
             </div>
           </div>
-
-          <!-- Quick Analytics -->
-          <div class="dashboard-showcase__analytics">
-            <div class="dashboard-showcase__analytics-card">
-              <div class="dashboard-showcase__analytics-icon">👁</div>
-              <div class="dashboard-showcase__analytics-value">1,247</div>
-              <div class="dashboard-showcase__analytics-label">Total Views</div>
             </div>
-            <div class="dashboard-showcase__analytics-card">
-              <div class="dashboard-showcase__analytics-icon">📄</div>
-              <div class="dashboard-showcase__analytics-value">89</div>
-              <div class="dashboard-showcase__analytics-label">PDF Downloads</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Agency Dashboard Preview -->
-      <div class="dashboard-showcase__panel dashboard-showcase__panel--agency">
-        <div class="dashboard-showcase__panel-header">
-          <div class="dashboard-showcase__panel-badge dashboard-showcase__panel-badge--agency">For Agencies</div>
-          <h3 class="dashboard-showcase__panel-title">Discover & Manage Talent</h3>
+      <div class="dashboard-showcase__panel dashboard-showcase__panel--agency" data-panel="agency">
+        <div class="dashboard-showcase__mockup">
+          <!-- Greeting Section -->
+          <div class="dashboard-showcase__agency-greeting">
+            <h1 class="dashboard-showcase__agency-greeting-title">True Modeling Agency</h1>
+            <p class="dashboard-showcase__agency-greeting-subtitle">Here is your daily overview</p>
         </div>
         
-        <div class="dashboard-showcase__mockup">
-          <!-- Agency Hero Section -->
-          <div class="dashboard-showcase__agency-hero">
-            <div class="dashboard-showcase__agency-hero-main">
-              <div class="dashboard-showcase__agency-hero-header">
-                <div class="dashboard-showcase__agency-logo">T</div>
-                <div class="dashboard-showcase__agency-info">
-                  <div class="dashboard-showcase__agency-title-wrapper">
-                    <h4 class="dashboard-showcase__agency-title">True Modeling Agency</h4>
-                    <span class="dashboard-showcase__badge dashboard-showcase__badge--verified">Verified Partner</span>
+          <!-- KPI Cards Grid -->
+          <div class="dashboard-showcase__kpi-grid">
+            <div class="dashboard-showcase__kpi-card dashboard-showcase__kpi-card--highlight">
+              <div class="dashboard-showcase__kpi-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span class="dashboard-showcase__kpi-label">Pending Applications</span>
                   </div>
-                  <p class="dashboard-showcase__agency-subtitle">Los Angeles, CA</p>
+              <div class="dashboard-showcase__kpi-value" data-target="5">0</div>
+              <div class="dashboard-showcase__kpi-subtext">
+                <span class="dashboard-showcase__kpi-trend">3 new today</span>
                 </div>
               </div>
-              <div class="dashboard-showcase__agency-stats">
-                <div class="dashboard-showcase__agency-stat">
-                  <span class="dashboard-showcase__agency-stat-value" data-target="24">
-                    <span class="stat-counter-skeleton"></span>
-                  </span>
-                  <span class="dashboard-showcase__agency-stat-label">Total</span>
+
+            <div class="dashboard-showcase__kpi-card">
+              <div class="dashboard-showcase__kpi-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span class="dashboard-showcase__kpi-label">Active Boards</span>
                 </div>
-                <div class="dashboard-showcase__agency-stat">
-                  <span class="dashboard-showcase__agency-stat-value" data-target="8">
-                    <span class="stat-counter-skeleton"></span>
-                  </span>
-                  <span class="dashboard-showcase__agency-stat-label">Accepted</span>
+              <div class="dashboard-showcase__kpi-value" data-target="3">0</div>
+              <div class="dashboard-showcase__kpi-subtext">
+                <span class="dashboard-showcase__kpi-trend">+1 this month</span>
                 </div>
-                <div class="dashboard-showcase__agency-stat">
-                  <span class="dashboard-showcase__agency-stat-value" data-target="5">
-                    <span class="stat-counter-skeleton"></span>
-                  </span>
-                  <span class="dashboard-showcase__agency-stat-label">Pending</span>
                 </div>
+
+            <div class="dashboard-showcase__kpi-card">
+              <div class="dashboard-showcase__kpi-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span class="dashboard-showcase__kpi-label">Total Talent Pool</span>
               </div>
+              <div class="dashboard-showcase__kpi-value" data-target="24">0</div>
+              <div class="dashboard-showcase__kpi-subtext">Available talent</div>
             </div>
           </div>
 
-          <!-- Agency Info Panel -->
-          <div class="dashboard-showcase__agency-info">
-            <div class="dashboard-showcase__agency-info-card">
-              <div class="dashboard-showcase__agency-info-icon">📊</div>
-              <div class="dashboard-showcase__agency-info-content">
-                <h5 class="dashboard-showcase__agency-info-title">Application Activity</h5>
-                <p class="dashboard-showcase__agency-info-text">3 new today, 12 this week</p>
+          <!-- Recent Applicants Section -->
+          <div class="dashboard-showcase__recent-applicants">
+            <div class="dashboard-showcase__section-header">
+              <h2 class="dashboard-showcase__section-title">Recent Applicants</h2>
+              <a href="#" class="dashboard-showcase__section-link">View All</a>
+              </div>
+            <div class="dashboard-showcase__recent-list">
+              <div class="dashboard-showcase__recent-item">
+                <div class="dashboard-showcase__recent-avatar">
+                  <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=100&q=80" alt="Elara Keats">
+            </div>
+                <div class="dashboard-showcase__recent-info">
+                  <div class="dashboard-showcase__recent-name">Elara Keats</div>
+                  <div class="dashboard-showcase__recent-meta">Los Angeles • 180 cm • Age 23</div>
+              </div>
+                <div class="dashboard-showcase__recent-badges">
+                  <span class="dashboard-showcase__recent-badge">New Face</span>
+                  <span class="dashboard-showcase__recent-badge dashboard-showcase__recent-badge--match">94% Match</span>
+            </div>
+              </div>
+              <div class="dashboard-showcase__recent-item">
+                <div class="dashboard-showcase__recent-avatar">
+                  <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=100&q=80" alt="Aiko Ren">
+            </div>
+                <div class="dashboard-showcase__recent-info">
+                  <div class="dashboard-showcase__recent-name">Aiko Ren</div>
+                  <div class="dashboard-showcase__recent-meta">Tokyo / New York • 175 cm • Age 21</div>
+          </div>
+                <div class="dashboard-showcase__recent-badges">
+                  <span class="dashboard-showcase__recent-badge dashboard-showcase__recent-badge--match">88% Match</span>
+                </div>
+              </div>
+              <div class="dashboard-showcase__recent-item">
+                <div class="dashboard-showcase__recent-avatar">
+                  <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=100&q=80" alt="Bianca Cole">
+            </div>
+                <div class="dashboard-showcase__recent-info">
+                  <div class="dashboard-showcase__recent-name">Bianca Cole</div>
+                  <div class="dashboard-showcase__recent-meta">Los Angeles • 178 cm • Age 25</div>
+                </div>
+                <div class="dashboard-showcase__recent-badges">
+                  <span class="dashboard-showcase__recent-badge">New Face</span>
+                  <span class="dashboard-showcase__recent-badge dashboard-showcase__recent-badge--match">91% Match</span>
               </div>
             </div>
-            <div class="dashboard-showcase__agency-info-card">
-              <div class="dashboard-showcase__agency-info-icon">⭐</div>
-              <div class="dashboard-showcase__agency-info-content">
-                <h5 class="dashboard-showcase__agency-info-title">Accepted Talent</h5>
-                <p class="dashboard-showcase__agency-info-text">8 talent profiles in roster</p>
-              </div>
-            </div>
-            <div class="dashboard-showcase__agency-info-card">
-              <div class="dashboard-showcase__agency-info-icon">💼</div>
-              <div class="dashboard-showcase__agency-info-content">
-                <h5 class="dashboard-showcase__agency-info-title">Partnership Status</h5>
-                <p class="dashboard-showcase__agency-info-text">Verified partner agency</p>
-              </div>
             </div>
           </div>
 
-          <!-- Stats Cards -->
-          <div class="dashboard-showcase__agency-dashboard-stats">
-            <div class="dashboard-showcase__agency-stat-card dashboard-showcase__agency-stat-card--highlight">
-              <div class="dashboard-showcase__agency-stat-card-icon">📥</div>
-              <div class="dashboard-showcase__agency-stat-card-content">
-                <div class="dashboard-showcase__agency-stat-card-value" data-target="3">
-                  <span class="stat-counter-skeleton"></span>
-                </div>
-                <div class="dashboard-showcase__agency-stat-card-label">New Today</div>
+          <!-- Quick Actions Section -->
+          <div class="dashboard-showcase__quick-actions">
+            <div class="dashboard-showcase__section-header">
+              <h2 class="dashboard-showcase__section-title">Quick Actions</h2>
               </div>
-            </div>
-            <div class="dashboard-showcase__agency-stat-card">
-              <div class="dashboard-showcase__agency-stat-card-icon">⏳</div>
-              <div class="dashboard-showcase__agency-stat-card-content">
-                <div class="dashboard-showcase__agency-stat-card-value" data-target="5">
-                  <span class="stat-counter-skeleton"></span>
-                </div>
-                <div class="dashboard-showcase__agency-stat-card-label">Awaiting Review</div>
-              </div>
-            </div>
-            <div class="dashboard-showcase__agency-stat-card">
-              <div class="dashboard-showcase__agency-stat-card-icon">✅</div>
-              <div class="dashboard-showcase__agency-stat-card-content">
-                <div class="dashboard-showcase__agency-stat-card-value" data-target="8">
-                  <span class="stat-counter-skeleton"></span>
-                </div>
-                <div class="dashboard-showcase__agency-stat-card-label">Accepted</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Kanban Board Preview -->
-          <div class="dashboard-showcase__kanban">
-            <div class="dashboard-showcase__kanban-column">
-              <div class="dashboard-showcase__kanban-header">
-                <h5 class="dashboard-showcase__kanban-title">New Applications</h5>
-                <span class="dashboard-showcase__kanban-count">3</span>
-              </div>
-              <div class="dashboard-showcase__kanban-cards">
-                <div class="dashboard-showcase__kanban-card">
-                  <div class="dashboard-showcase__kanban-card-image">
-                    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=200&q=80" alt="Elara Keats" loading="lazy">
-                    <div class="dashboard-showcase__kanban-card-score">92</div>
+            <div class="dashboard-showcase__quick-actions-grid">
+              <button class="dashboard-showcase__quick-action-card">
+                <div class="dashboard-showcase__quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
                   </div>
-                  <div class="dashboard-showcase__kanban-card-content">
-                    <h6 class="dashboard-showcase__kanban-card-name">Elara Keats</h6>
-                    <p class="dashboard-showcase__kanban-card-meta">Los Angeles • 180 cm</p>
-                    <div class="dashboard-showcase__kanban-card-tags">
-                      <span class="dashboard-showcase__tag dashboard-showcase__tag--purple">Editorial</span>
-                      <span class="dashboard-showcase__tag dashboard-showcase__tag--green">Runway</span>
+                <div class="dashboard-showcase__quick-action-content">
+                  <h3 class="dashboard-showcase__quick-action-title">Create New Board</h3>
+                  <p class="dashboard-showcase__quick-action-description">Organize talent for upcoming shows</p>
                     </div>
+              </button>
+              <a href="#" class="dashboard-showcase__quick-action-card">
+                <div class="dashboard-showcase__quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
                   </div>
+                <div class="dashboard-showcase__quick-action-content">
+                  <h3 class="dashboard-showcase__quick-action-title">Discover Talent</h3>
+                  <p class="dashboard-showcase__quick-action-description">Browse the global directory</p>
                 </div>
+              </a>
+              <a href="#" class="dashboard-showcase__quick-action-card">
+                <div class="dashboard-showcase__quick-action-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
               </div>
+                <div class="dashboard-showcase__quick-action-content">
+                  <h3 class="dashboard-showcase__quick-action-title">Review Inbox</h3>
+                  <p class="dashboard-showcase__quick-action-description">You have 5 pending applications</p>
             </div>
-            <div class="dashboard-showcase__kanban-column">
-              <div class="dashboard-showcase__kanban-header">
-                <h5 class="dashboard-showcase__kanban-title">Accepted</h5>
-                <span class="dashboard-showcase__kanban-count">8</span>
+                <span class="dashboard-showcase__quick-action-badge">5</span>
+              </a>
               </div>
-              <div class="dashboard-showcase__kanban-cards">
-                <div class="dashboard-showcase__kanban-card">
-                  <div class="dashboard-showcase__kanban-card-image">
-                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="Aiko Ren" loading="lazy">
-                    <div class="dashboard-showcase__kanban-card-score">88</div>
-                  </div>
-                  <div class="dashboard-showcase__kanban-card-content">
-                    <h6 class="dashboard-showcase__kanban-card-name">Aiko Ren</h6>
-                    <p class="dashboard-showcase__kanban-card-meta">Tokyo / New York • 175 cm</p>
-                    <div class="dashboard-showcase__kanban-card-tags">
-                      <span class="dashboard-showcase__tag dashboard-showcase__tag--blue">Commercial</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="dashboard-showcase__cta">
+      <p class="dashboard-showcase__cta-text">Ready to experience these dashboards?</p>
+      <div class="dashboard-showcase__cta-links">
       <a href="/apply" class="dashboard-showcase__cta-link dashboard-showcase__cta-link--talent">
         <span>Start as Talent</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
       </a>
       <a href="/partners" class="dashboard-showcase__cta-link dashboard-showcase__cta-link--agency">
         <span>Partner as Agency</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
       </a>
+      </div>
     </div>
   </div>
 </section>
@@ -749,117 +1207,168 @@
 <section class="homepage-how-it-works" id="homepage-how-it-works">
   <div class="homepage-how-it-works__container">
     <div class="homepage-how-it-works__header">
+      <span class="homepage-how-it-works__badge">Simple Process</span>
       <h2 class="homepage-how-it-works__title">How It Works</h2>
       <p class="homepage-how-it-works__subtitle">Three simple steps to your publication-ready portfolio</p>
+      <div class="homepage-how-it-works__accent"></div>
     </div>
     
       <div class="homepage-how-it-works__steps">
-      <div class="homepage-how-it-works__step feature-card" data-tooltip="Support for photos, PDFs, text files, and more. We handle any format.">
-        <div class="homepage-how-it-works__step-number">1</div>
-        <div class="homepage-how-it-works__step-icon">📤</div>
-        <h3 class="homepage-how-it-works__step-title">Submit</h3>
-        <p class="homepage-how-it-works__step-description">
-          Upload your data—photos, stats, bio, and contact info. No formatting required. Just send us what you have.
-        </p>
-        <div class="feature-card__details">
-          <p>Drag and drop or browse files. We accept images, documents, and text in any format. Your messy data is welcome.</p>
+        <!-- Step 1: Submit -->
+        <div class="homepage-how-it-works__step">
+          <div class="homepage-how-it-works__step-content">
+            <div class="homepage-how-it-works__step-number-watermark">01</div>
+            <div class="homepage-how-it-works__step-icon-wrapper">
+              <div class="homepage-how-it-works__step-icon">
+                <!-- UploadCloud Icon -->
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                  <path d="M12 12v9"></path>
+                  <path d="m16 16-4-4-4 4"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="homepage-how-it-works__step-title">Submit</h3>
+            <p class="homepage-how-it-works__step-description">
+              Upload your data—photos, stats, bio, and contact info. No formatting required.
+            </p>
+          </div>
         </div>
-        <div class="feature-card__badge">Easy Upload</div>
-      </div>
-      
-      <div class="homepage-how-it-works__connector">
-        <svg width="100" height="2" viewBox="0 0 100 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 1h100" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
-        </svg>
-      </div>
-      
-      <div class="homepage-how-it-works__step feature-card" data-tooltip="Advanced AI algorithms trained on editorial standards.">
-        <div class="homepage-how-it-works__step-number">2</div>
-        <div class="homepage-how-it-works__step-icon">✨</div>
-        <h3 class="homepage-how-it-works__step-title">AI Curates</h3>
-        <p class="homepage-how-it-works__step-description">
-          Our AI refines and organizes everything. Bios are enhanced, stats are formatted, and images are curated with editorial precision.
-        </p>
-        <div class="feature-card__details">
-          <p>Our AI analyzes your content, enhances bios with professional language, formats measurements consistently, and selects your best images.</p>
+        
+        <!-- Step 2: AI Curates -->
+        <div class="homepage-how-it-works__step">
+          <div class="homepage-how-it-works__step-content">
+            <div class="homepage-how-it-works__step-number-watermark">02</div>
+            <div class="homepage-how-it-works__step-icon-wrapper">
+              <div class="homepage-how-it-works__step-icon">
+                <!-- Sparkles/Wand Icon -->
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5.64 5.64l1.41 1.41M16.95 16.95l1.41 1.41M5.64 18.36l1.41-1.41M16.95 7.05l1.41-1.41"></path>
+                  <circle cx="12" cy="12" r="2"></circle>
+                  <path d="M9 9l1.5 1.5M15 15l1.5 1.5M15 9l-1.5 1.5M9 15l-1.5 1.5"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="homepage-how-it-works__step-title">AI Curates</h3>
+            <p class="homepage-how-it-works__step-description">
+              Our AI refines and organizes everything with editorial precision.
+            </p>
+          </div>
         </div>
-        <div class="feature-card__badge">AI-Powered</div>
-      </div>
-      
-      <div class="homepage-how-it-works__connector">
-        <svg width="100" height="2" viewBox="0 0 100 2" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 1h100" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
-        </svg>
-      </div>
-      
-      <div class="homepage-how-it-works__step feature-card" data-tooltip="Download PDF comp card or share your live portfolio URL instantly.">
-        <div class="homepage-how-it-works__step-number">3</div>
-        <div class="homepage-how-it-works__step-icon">🚀</div>
-        <h3 class="homepage-how-it-works__step-title">Publish</h3>
-        <p class="homepage-how-it-works__step-description">
-          Get your publication-ready portfolio. Download your comp card, share your live portfolio, or both. Ready in minutes.
-        </p>
-        <div class="feature-card__details">
-          <p>Download a professional PDF comp card or share your live portfolio URL. Both options are available instantly after processing.</p>
+        
+        <!-- Step 3: Publish -->
+        <div class="homepage-how-it-works__step">
+          <div class="homepage-how-it-works__step-content">
+            <div class="homepage-how-it-works__step-number-watermark">03</div>
+            <div class="homepage-how-it-works__step-icon-wrapper">
+              <div class="homepage-how-it-works__step-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="homepage-how-it-works__step-title">Publish</h3>
+            <p class="homepage-how-it-works__step-description">
+              Get your publication-ready portfolio. Download comp card or share live URL.
+            </p>
+          </div>
         </div>
-        <div class="feature-card__badge">Instant</div>
       </div>
-    </div>
-    
-    <div class="homepage-how-it-works__cta">
-      <a href="/apply" class="button button-primary">Get Started Free</a>
-    </div>
   </div>
 </section>
 
-<!-- Value Proposition Section -->
+<!-- Zig-Zag Feature List Section -->
 <section class="homepage-value-prop" id="homepage-value-prop">
-  <div class="homepage-value-prop__inner">
-    <div class="homepage-value-prop__content">
-      <div class="homepage-value-prop__icon">✨</div>
-      <h2 class="homepage-value-prop__headline">
-        See the magic?<br>
-        That's AI curation.
-      </h2>
-      <p class="homepage-value-prop__description">
-        Pholio's AI transforms raw talent data into publication-ready comp cards. Refined bios, organized stats, and editorial-quality presentation—all in minutes.
-      </p>
-      <div class="homepage-value-prop__benefits">
-        <div class="homepage-value-prop__benefit feature-card" data-tooltip="No manual formatting needed. Our AI handles everything automatically.">
-          <div class="feature-card__icon">
-            <span class="homepage-value-prop__benefit-icon">⚡</span>
-          </div>
-          <div class="feature-card__content">
-            <span class="homepage-value-prop__benefit-text">Publication-ready in minutes</span>
-            <div class="feature-card__details">
-              <p>Transform raw data into polished comp cards instantly. No design skills required.</p>
-            </div>
-          </div>
-          <div class="feature-card__badge">Fast</div>
+  <div class="homepage-value-prop__container">
+    <!-- Visual Connector -->
+    <div class="homepage-value-prop__connector"></div>
+    
+    <!-- Zig-Zag Feature List -->
+    <div class="homepage-value-prop__zigzag">
+      <!-- Row 1: Text Left, Visual Right -->
+      <div class="homepage-value-prop__zigzag-row homepage-value-prop__zigzag-row--text-left">
+        <div class="homepage-value-prop__zigzag-content">
+          <h3 class="homepage-value-prop__zigzag-title homepage-value-prop__zigzag-title--first">Publication-ready in minutes</h3>
+          <p class="homepage-value-prop__zigzag-description">
+            Transform raw data into polished comp cards instantly. Our AI analyzes your photos, extracts key information, and structures everything into a publication-ready format. No design skills required—just upload your content and watch as Pholio creates a professional portfolio that meets industry standards. The entire process takes minutes, not hours or days.
+          </p>
         </div>
-        <div class="homepage-value-prop__benefit feature-card" data-tooltip="Professional layouts that match industry standards.">
-          <div class="feature-card__icon">
-            <span class="homepage-value-prop__benefit-icon">🎨</span>
-          </div>
-          <div class="feature-card__content">
-            <span class="homepage-value-prop__benefit-text">Editorial-quality presentation</span>
-            <div class="feature-card__details">
-              <p>Every portfolio meets publication standards. Ready for agency submissions and casting calls.</p>
+        <div class="homepage-value-prop__zigzag-visual">
+          <div class="homepage-value-prop__zigzag-visual-shape homepage-value-prop__zigzag-visual-shape--1">
+            <div class="homepage-value-prop__zigzag-visual-inner">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
             </div>
           </div>
-          <div class="feature-card__badge">Premium</div>
         </div>
-        <div class="homepage-value-prop__benefit feature-card" data-tooltip="All your stats organized and formatted consistently.">
-          <div class="feature-card__icon">
-            <span class="homepage-value-prop__benefit-icon">📊</span>
-          </div>
-          <div class="feature-card__content">
-            <span class="homepage-value-prop__benefit-text">Organized stats and metrics</span>
-            <div class="feature-card__details">
-              <p>Height, measurements, experience—all formatted consistently and professionally.</p>
+      </div>
+
+      <!-- Row 2: Visual Left, Text Right -->
+      <div class="homepage-value-prop__zigzag-row homepage-value-prop__zigzag-row--visual-left">
+        <div class="homepage-value-prop__zigzag-visual">
+          <div class="homepage-value-prop__zigzag-visual-shape homepage-value-prop__zigzag-visual-shape--2">
+            <div class="homepage-value-prop__zigzag-visual-inner">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.1 12.4a1.5 1.5 0 0 1 0-2.8c.7-.4 1.4-.7 2.1-.9a1.5 1.5 0 0 1 1.5 1.5v.3c0 .7-.5 1.3-1.2 1.5-.7.2-1.4.5-2.1.9Z"></path>
+                <path d="M17.9 11.6a1.5 1.5 0 0 1 0 2.8c-.7.4-1.4.7-2.1.9a1.5 1.5 0 0 1-1.5-1.5v-.3c0-.7.5-1.3 1.2-1.5.7-.2 1.4-.5 2.1-.9Z"></path>
+                <path d="M12 2.1a1.5 1.5 0 0 1 2.8 0c.4.7.7 1.4.9 2.1a1.5 1.5 0 0 1-1.5 1.5h-.3c-.7 0-1.3-.5-1.5-1.2-.2-.7-.5-1.4-.9-2.1Z"></path>
+                <path d="M11.6 17.9a1.5 1.5 0 0 1-2.8 0c-.4-.7-.7-1.4-.9-2.1a1.5 1.5 0 0 1 1.5-1.5h.3c.7 0 1.3.5 1.5 1.2.2.7.5 1.4.9 2.1Z"></path>
+                <path d="M19.8 8.6a1.5 1.5 0 0 1 0 2.8c-.7.4-1.4.7-2.1.9a1.5 1.5 0 0 1-1.5-1.5v-.3c0-.7.5-1.3 1.2-1.5.7-.2 1.4-.5 2.1-.9Z"></path>
+                <path d="M4.2 15.4a1.5 1.5 0 0 1 0-2.8c.7-.4 1.4-.7 2.1-.9a1.5 1.5 0 0 1 1.5 1.5v.3c0 .7-.5 1.3-1.2 1.5-.7.2-1.4.5-2.1.9Z"></path>
+                <path d="M15.4 4.2a1.5 1.5 0 0 1-2.8 0c-.4.7-.7 1.4-.9 2.1a1.5 1.5 0 0 1 1.5 1.5h.3c.7 0 1.3-.5 1.5-1.2.2-.7.5-1.4.9-2.1Z"></path>
+                <path d="M8.6 19.8a1.5 1.5 0 0 1 2.8 0c.4-.7.7-1.4.9-2.1a1.5 1.5 0 0 1-1.5-1.5h-.3c-.7 0-1.3.5-1.5 1.2-.2.7-.5 1.4-.9 2.1Z"></path>
+              </svg>
             </div>
           </div>
-          <div class="feature-card__badge">Organized</div>
+        </div>
+        <div class="homepage-value-prop__zigzag-content">
+          <h3 class="homepage-value-prop__zigzag-title">Editorial-quality presentation</h3>
+          <p class="homepage-value-prop__zigzag-description">
+            Every portfolio meets publication standards. Our AI doesn't just organize your data—it curates it with editorial precision. From typography choices to layout structure, each element is carefully considered to create a cohesive, professional presentation. Whether you're submitting to agencies, casting directors, or publications, your portfolio will stand out with its polished, magazine-ready aesthetic.
+          </p>
+        </div>
+      </div>
+
+      <!-- Row 3: Text Left, Visual Right -->
+      <div class="homepage-value-prop__zigzag-row homepage-value-prop__zigzag-row--text-left">
+        <div class="homepage-value-prop__zigzag-content">
+          <h3 class="homepage-value-prop__zigzag-title">Organized stats and metrics</h3>
+          <p class="homepage-value-prop__zigzag-description homepage-value-prop__zigzag-description--narrow">
+            Height, measurements, experience—all formatted consistently and professionally. Our AI extracts and standardizes every detail from your submissions, ensuring that agencies and casting directors can quickly find the information they need. No more inconsistent formatting or missing data. Every stat is presented clearly, with proper units and industry-standard terminology, making it easy for professionals to evaluate your profile at a glance.
+          </p>
+        </div>
+        <div class="homepage-value-prop__zigzag-visual">
+          <!-- Floating UI Card showing Stats Grid -->
+          <div class="homepage-value-prop__stats-card">
+            <div class="homepage-value-prop__stats-card-header">
+              <div class="homepage-value-prop__stats-card-dot"></div>
+              <div class="homepage-value-prop__stats-card-dot"></div>
+              <div class="homepage-value-prop__stats-card-dot"></div>
+            </div>
+            <div class="homepage-value-prop__stats-grid">
+              <div class="homepage-value-prop__stat-item">
+                <div class="homepage-value-prop__stat-label">Height</div>
+                <div class="homepage-value-prop__stat-value">5'11"</div>
+              </div>
+              <div class="homepage-value-prop__stat-item">
+                <div class="homepage-value-prop__stat-label">Bust</div>
+                <div class="homepage-value-prop__stat-value">32"</div>
+              </div>
+              <div class="homepage-value-prop__stat-item">
+                <div class="homepage-value-prop__stat-label">Waist</div>
+                <div class="homepage-value-prop__stat-value">25"</div>
+              </div>
+              <div class="homepage-value-prop__stat-item">
+                <div class="homepage-value-prop__stat-label">Shoes</div>
+                <div class="homepage-value-prop__stat-value">9</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -869,31 +1378,49 @@
 <!-- Portfolio Showcase Grid -->
 <section class="homepage-portfolio-showcase" id="homepage-portfolio-showcase">
   <div class="homepage-portfolio-showcase__container">
-    <div class="homepage-portfolio-showcase__intro">
-      <h2 class="homepage-portfolio-showcase__title">See Pholio in Action</h2>
-      <p class="homepage-portfolio-showcase__subtitle">Real portfolios from our community</p>
-      <p class="homepage-portfolio-showcase__description">
-        Explore how Pholio transforms talent profiles into publication-ready portfolios. Each portfolio showcases AI-curated bios, organized stats, and editorial-quality presentation.
-      </p>
+    <div class="homepage-portfolio-showcase__header">
+      <div class="homepage-portfolio-showcase__header-content">
+        <span class="homepage-portfolio-showcase__badge">Portfolio Showcase</span>
+        <div class="homepage-portfolio-showcase__headline-wrapper">
+          <h2 class="homepage-portfolio-showcase__headline">
+            <span class="homepage-portfolio-showcase__headline-fashion">See Pholio</span>
+            <span class="homepage-portfolio-showcase__headline-ai">in action.</span>
+          </h2>
+          <div class="homepage-portfolio-showcase__accent-line"></div>
+        </div>
+        <p class="homepage-portfolio-showcase__subheadline">Real portfolios from our community showcasing AI-curated bios, organized stats, and editorial-quality presentation.</p>
+      </div>
     </div>
     
     <div class="homepage-portfolio-showcase__grid">
-      <% featuredTalents.slice(0, 8).forEach((talent, index) => { %>
+      <% featuredTalents.slice(0, 9).forEach((talent, index) => { %>
+        <% 
+          // Vary aspect ratios: alternate between portrait (3:4) and landscape (4:3)
+          // For 9 items in 3x3 grid: indices 1, 4, 7 are landscape (every 3rd starting from 1)
+          const isPortrait = index % 3 !== 1; // Most are portrait, every 3rd one (index 1, 4, 7) is landscape
+          const aspectClass = isPortrait ? 'homepage-portfolio-showcase__card--portrait' : 'homepage-portfolio-showcase__card--landscape';
+          
+          // Ensure we have a valid image URL, fallback to placeholder if missing
+          const imageUrl = talent.hero_image && talent.hero_image !== '' && talent.hero_image !== '/images/placeholder.jpg' 
+            ? talent.hero_image 
+            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80';
+        %>
         <a 
-          href="/portfolio/<%= talent.slug %>" 
-          class="homepage-portfolio-showcase__card" 
+          href="<%= talent.slug ? '/portfolio/' + talent.slug : '#' %>" 
+          class="homepage-portfolio-showcase__card <%= aspectClass %>" 
           data-index="<%= index %>"
-          data-talent-slug="<%= talent.slug %>"
+          data-talent-slug="<%= talent.slug || '' %>"
           data-talent-name="<%= talent.first_name %> <%= talent.last_name %>"
-          data-talent-city="<%= talent.city %>"
-          data-talent-image="<%= talent.hero_image %>"
+          data-talent-city="<%= talent.city || '' %>"
+          data-talent-image="<%= imageUrl %>"
         >
           <div class="homepage-portfolio-showcase__image-wrapper">
             <img 
-              src="<%= talent.hero_image %>" 
+              src="<%= imageUrl %>" 
               alt="<%= talent.first_name %> <%= talent.last_name %>"
               class="homepage-portfolio-showcase__image"
-              loading="lazy">
+              loading="lazy"
+              onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80'">
             <div class="homepage-portfolio-showcase__overlay">
               <div class="homepage-portfolio-showcase__overlay-content">
                 <h3 class="homepage-portfolio-showcase__name">
@@ -914,97 +1441,189 @@
 <!-- Agency Partnership Section -->
 <section class="homepage-agency" id="homepage-agency">
   <div class="homepage-agency__container">
-    <div class="homepage-agency__content">
-      <div class="homepage-agency__header">
-        <span class="homepage-agency__badge">For Agencies</span>
-        <h2 class="homepage-agency__title">Free Talent Management Dashboard</h2>
-        <p class="homepage-agency__description">
-          Pholio provides verified agencies with a free, premium dashboard to manage incoming talent applications. Review, organize, and discover talent with AI-powered insights—all at no cost.
-        </p>
+    <!-- Editorial Header -->
+    <div class="homepage-agency__header">
+      <span class="homepage-agency__badge">For Agencies</span>
+      <h2 class="homepage-agency__headline">
+        <span class="homepage-agency__headline-main">Free Talent</span>
+        <span class="homepage-agency__headline-accent">Management Dashboard</span>
+      </h2>
+      <p class="homepage-agency__subheadline">A premium dashboard to manage, review, and discover talent—completely free for verified partner agencies.</p>
+      <div class="homepage-agency__accent"></div>
+    </div>
+
+    <!-- Split Layout: Visual + Features -->
+    <div class="homepage-agency__split">
+      <!-- Left: Dashboard Preview -->
+      <div class="homepage-agency__visual">
+        <div class="homepage-agency__dashboard-preview">
+          <div class="homepage-agency__dashboard-header">
+            <div class="homepage-agency__dashboard-controls">
+              <span class="homepage-agency__dashboard-dot homepage-agency__dashboard-dot--red"></span>
+              <span class="homepage-agency__dashboard-dot homepage-agency__dashboard-dot--yellow"></span>
+              <span class="homepage-agency__dashboard-dot homepage-agency__dashboard-dot--green"></span>
+            </div>
+            <div class="homepage-agency__dashboard-title">Talent Pipeline</div>
+          </div>
+          <div class="homepage-agency__dashboard-content">
+            <!-- Kanban Board Preview -->
+            <div class="homepage-agency__kanban">
+              <div class="homepage-agency__kanban-column">
+                <div class="homepage-agency__kanban-header">
+                  <span class="homepage-agency__kanban-title">New</span>
+                  <span class="homepage-agency__kanban-count">5</span>
+                </div>
+                <div class="homepage-agency__kanban-card">
+                  <div class="homepage-agency__kanban-avatar"></div>
+                  <div class="homepage-agency__kanban-info">
+                    <div class="homepage-agency__kanban-name">Elara Keats</div>
+                    <div class="homepage-agency__kanban-match">Match: 92%</div>
+                  </div>
+                </div>
+                <div class="homepage-agency__kanban-card">
+                  <div class="homepage-agency__kanban-avatar"></div>
+                  <div class="homepage-agency__kanban-info">
+                    <div class="homepage-agency__kanban-name">Aiko Ren</div>
+                    <div class="homepage-agency__kanban-match">Match: 88%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="homepage-agency__kanban-column">
+                <div class="homepage-agency__kanban-header">
+                  <span class="homepage-agency__kanban-title">Reviewing</span>
+                  <span class="homepage-agency__kanban-count">3</span>
+                </div>
+                <div class="homepage-agency__kanban-card">
+                  <div class="homepage-agency__kanban-avatar"></div>
+                  <div class="homepage-agency__kanban-info">
+                    <div class="homepage-agency__kanban-name">Bianca Cole</div>
+                    <div class="homepage-agency__kanban-match">Match: 85%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="homepage-agency__kanban-column">
+                <div class="homepage-agency__kanban-header">
+                  <span class="homepage-agency__kanban-title">Accepted</span>
+                  <span class="homepage-agency__kanban-count">12</span>
+                </div>
+                <div class="homepage-agency__kanban-card">
+                  <div class="homepage-agency__kanban-avatar"></div>
+                  <div class="homepage-agency__kanban-info">
+                    <div class="homepage-agency__kanban-name">Cruz Vega</div>
+                    <div class="homepage-agency__kanban-match">Match: 95%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      
+
+      <!-- Right: Key Features -->
       <div class="homepage-agency__features">
-        <div class="homepage-agency__feature feature-card" data-tooltip="Drag and drop applications between status columns. Add notes and tags for organization.">
-          <div class="homepage-agency__feature-icon-wrapper feature-card__icon">
-            <span class="homepage-agency__feature-icon">📋</span>
-          </div>
-          <div class="homepage-agency__feature-content feature-card__content">
-            <h3 class="homepage-agency__feature-title">Application Management</h3>
-            <p class="homepage-agency__feature-text">Review and organize all incoming talent applications in one place. Use our Kanban board to track applications from submission to acceptance.</p>
-            <div class="feature-card__details">
-              <p>Organize applications by status, add custom notes, tag talent by type, and filter by match score. Everything you need to manage your pipeline efficiently.</p>
-            </div>
-            <div class="homepage-agency__feature-highlight feature-card__badge">
-              <span>Streamlined review process</span>
-            </div>
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-number">01</div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">Kanban Pipeline</h3>
+            <p class="homepage-agency__feature-text">Drag and drop applications through your review process. Organize by status, add notes, and tag talent—all in one intuitive board.</p>
           </div>
         </div>
-        <div class="homepage-agency__feature feature-card" data-tooltip="Match scores calculated based on your board requirements and scoring weights.">
-          <div class="homepage-agency__feature-icon-wrapper feature-card__icon">
-            <span class="homepage-agency__feature-icon">🤖</span>
-          </div>
-          <div class="homepage-agency__feature-content feature-card__content">
-            <h3 class="homepage-agency__feature-title">AI-Powered Insights</h3>
-            <p class="homepage-agency__feature-text">Get AI-generated match scores and tags to quickly identify talent that fits your agency's needs. Save time on initial screening.</p>
-            <div class="feature-card__details">
-              <p>Our AI analyzes talent profiles against your board requirements and generates match scores. Auto-tagging helps you quickly identify editorial, runway, or commercial talent.</p>
-            </div>
-            <div class="homepage-agency__feature-highlight feature-card__badge">
-              <span>Smart talent discovery</span>
-            </div>
+
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-number">02</div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">AI Match Scores</h3>
+            <p class="homepage-agency__feature-text">Get instant match scores based on your board requirements. AI analyzes profiles and auto-tags talent by category.</p>
           </div>
         </div>
-        <div class="homepage-agency__feature feature-card" data-tooltip="No credit card required. Free access to all dashboard features forever.">
-          <div class="homepage-agency__feature-icon-wrapper feature-card__icon">
-            <span class="homepage-agency__feature-icon">💼</span>
-          </div>
-          <div class="homepage-agency__feature-content feature-card__content">
-            <h3 class="homepage-agency__feature-title">100% Free for Agencies</h3>
-            <p class="homepage-agency__feature-text">Our dashboard is completely free for verified partner agencies. No subscription fees, no hidden costs—just powerful tools to manage your talent pipeline.</p>
-            <div class="feature-card__details">
-              <p>Full access to application management, AI insights, talent discovery, and analytics. No limits, no trials, no hidden fees. Free forever for verified agencies.</p>
-            </div>
-            <div class="homepage-agency__feature-highlight feature-card__badge">
-              <span>Free forever</span>
-            </div>
+
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-number">03</div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">Free Forever</h3>
+            <p class="homepage-agency__feature-text">No subscription fees, no hidden costs. Full access to all features for verified partner agencies—forever.</p>
           </div>
         </div>
       </div>
-      
-      <div class="homepage-agency__cta-wrapper">
-        <a href="/partners" class="homepage-agency__cta">
-          <span class="homepage-agency__cta-text">Become a Partner Agency</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </a>
-      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="homepage-agency__cta-wrapper">
+      <a href="/partners" class="homepage-agency__cta">
+        <span class="homepage-agency__cta-text">Become a Partner Agency</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
     </div>
   </div>
 </section>
 
 <!-- Testimonials Section -->
 <section class="homepage-testimonials" id="homepage-testimonials">
-  <div class="homepage-testimonials__inner">
+  <div class="homepage-testimonials__container">
     <div class="homepage-testimonials__header">
-      <h2 class="homepage-testimonials__title">Trusted by Talent & Agencies</h2>
-      <p class="homepage-testimonials__subtitle">See what our community says about Pholio</p>
+      <span class="homepage-testimonials__badge">Testimonials</span>
+      <h2 class="homepage-testimonials__headline">
+        <span class="homepage-testimonials__headline-fashion">Trusted by</span>
+        <span class="homepage-testimonials__headline-ai">talent & agencies.</span>
+      </h2>
+      <p class="homepage-testimonials__subheadline">See what our community says about Pholio</p>
+      <div class="homepage-testimonials__accent"></div>
     </div>
     
-    <div class="testimonial__image-wrapper">
-      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80" alt="Sarah Chen, Creative Director at Elite Model Management" class="testimonial__image" loading="lazy" width="120" height="120">
-      <span class="testimonial__badge testimonial__badge--agency" aria-label="Agency testimonial">Agency</span>
+    <!-- Trust Metrics -->
+    <div class="homepage-testimonials__metrics">
+      <div class="homepage-testimonials__metric">
+        <div class="homepage-testimonials__metric-value">500+</div>
+        <div class="homepage-testimonials__metric-label">Active Talent</div>
+      </div>
+      <div class="homepage-testimonials__metric">
+        <div class="homepage-testimonials__metric-value">50+</div>
+        <div class="homepage-testimonials__metric-label">Partner Agencies</div>
+      </div>
+      <div class="homepage-testimonials__metric">
+        <div class="homepage-testimonials__metric-value">10K+</div>
+        <div class="homepage-testimonials__metric-label">Portfolio Views</div>
+      </div>
     </div>
     
-    <blockquote class="testimonial" cite="Sarah Chen, Elite Model Management">
-      <p class="testimonial__text">
+    <!-- Testimonials Grid -->
+    <div class="homepage-testimonials__grid">
+      <!-- Agency Testimonial -->
+      <div class="homepage-testimonials__testimonial homepage-testimonials__testimonial--agency">
+        <div class="homepage-testimonials__testimonial-image-wrapper">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80" alt="Sarah Chen" class="homepage-testimonials__testimonial-image" loading="lazy">
+          <span class="homepage-testimonials__testimonial-badge">Agency</span>
+        </div>
+        <blockquote class="homepage-testimonials__testimonial-quote">
+          <p class="homepage-testimonials__testimonial-text">
         "Pholio transformed how we manage our talent roster. The AI curation maintains editorial standards while saving hours of manual work. Every comp card is publication-ready."
       </p>
-      <footer class="testimonial__author">
-        <span class="testimonial__name">Sarah Chen</span>
-        <span class="testimonial__role">Creative Director, Elite Model Management</span>
+          <footer class="homepage-testimonials__testimonial-author">
+            <span class="homepage-testimonials__testimonial-name">Sarah Chen</span>
+            <span class="homepage-testimonials__testimonial-role">Creative Director, Elite Model Management</span>
       </footer>
     </blockquote>
+      </div>
+
+      <!-- Talent Testimonial -->
+      <div class="homepage-testimonials__testimonial homepage-testimonials__testimonial--talent">
+        <div class="homepage-testimonials__testimonial-image-wrapper">
+          <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80" alt="Elara Keats" class="homepage-testimonials__testimonial-image" loading="lazy">
+          <span class="homepage-testimonials__testimonial-badge">Talent</span>
+        </div>
+        <blockquote class="homepage-testimonials__testimonial-quote">
+          <p class="homepage-testimonials__testimonial-text">
+            "Getting my portfolio ready used to take days. With Pholio, I had a publication-ready comp card in minutes. The AI really understands what agencies are looking for."
+          </p>
+          <footer class="homepage-testimonials__testimonial-author">
+            <span class="homepage-testimonials__testimonial-name">Elara Keats</span>
+            <span class="homepage-testimonials__testimonial-role">Model, Los Angeles</span>
+          </footer>
+        </blockquote>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1014,6 +1633,18 @@
     <div class="homepage-pricing__header">
       <h2 class="homepage-pricing__title">Choose Your Plan</h2>
       <p class="homepage-pricing__subtitle">Start free, upgrade when you're ready</p>
+    </div>
+
+    <!-- Pricing Toggle -->
+    <div class="pricing-toggle">
+      <label class="pricing-toggle__label pricing-toggle__label--monthly">Monthly</label>
+      <button type="button" class="pricing-toggle__switch" id="homepage-pricing-toggle" aria-label="Toggle between monthly and yearly pricing" aria-pressed="false">
+        <span class="pricing-toggle__slider"></span>
+      </button>
+      <label class="pricing-toggle__label pricing-toggle__label--yearly">
+        Yearly
+        <span class="pricing-toggle__badge">Save 17%</span>
+      </label>
     </div>
     
     <div class="homepage-pricing__grid">
@@ -1080,10 +1711,11 @@
         
         <div class="homepage-pricing__card-header">
           <div class="homepage-pricing__price">
-            <span class="homepage-pricing__price-amount">$9.99</span>
-            <span class="homepage-pricing__price-period">/month</span>
+            <span class="homepage-pricing__price-amount" data-monthly="9.99" data-yearly="99.00">$9.99</span>
+            <span class="homepage-pricing__price-period" data-monthly="/month" data-yearly="/year">/month</span>
           </div>
           <p class="homepage-pricing__tagline">Everything you need for a professional portfolio</p>
+          <p class="homepage-pricing__billing-note" data-yearly="Billed annually. Equivalent to $8.25/month." style="display: none;"></p>
         </div>
 
         <div class="homepage-pricing__features">
@@ -1209,7 +1841,12 @@
 <script>
   // Pass talent data to JavaScript
   window.heroTalent = <%- JSON.stringify(heroTalent) %>;
-  window.featuredTalents = <%- JSON.stringify(featuredTalents.slice(0, 8)) %>;
+  window.featuredTalents = <%- JSON.stringify(featuredTalents.slice(0, 9)) %>;
 </script>
+<!-- Dashboard CSS for preview sections -->
+<link rel="stylesheet" href="/styles/dashboard.css?v=<%= Date.now() %>">
+<link rel="stylesheet" href="/styles/agency-dashboard.css?v=<%= Date.now() %>">
+
+<script src="/scripts/pricing.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>" defer></script>
 <script src="/scripts/homepage.js?v=<%= Date.now() %>" defer></script>
 

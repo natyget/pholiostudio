@@ -39,6 +39,42 @@
         if (window.AgencyDashboard.Boards) window.AgencyDashboard.Boards.init();
         if (window.AgencyDashboard.Analytics) window.AgencyDashboard.Analytics.init();
       }
+
+      this.fetchLocation();
+    },
+
+    async fetchLocation() {
+      const locationEl = document.querySelector('.agency-sidebar__user-location');
+      if (!locationEl) return;
+
+      // Check if we already have a valid location (not the placeholder)
+      // If it's just "Location", we definitely want to update it.
+      const currentText = locationEl.textContent.trim();
+      if (currentText !== 'Location' && currentText !== '') {
+          // If it's already set (e.g. from DB), we might want to keep it, 
+          // BUT the user specifically asked to show location based on IP.
+          // So we will overwrite it to ensure accuracy as requested.
+      }
+
+      try {
+        // Show loading state subtly
+        if (currentText === 'Location') locationEl.textContent = 'Locating...';
+
+        const res = await fetch('https://ipapi.co/json/');
+        if (!res.ok) throw new Error('Location fetch failed');
+        const data = await res.json();
+        
+        if (data.city && data.country_name) {
+          const locationString = `${data.city}, ${data.country_name}`;
+          locationEl.textContent = locationString;
+        } else {
+            // Revert if data is incomplete
+            if (locationEl.textContent === 'Locating...') locationEl.textContent = 'Location';
+        }
+      } catch (err) {
+        console.error('Failed to fetch location:', err);
+        if (locationEl.textContent === 'Locating...') locationEl.textContent = 'Location';
+      }
     },
 
     initNavigation() {

@@ -83,34 +83,27 @@
           <!-- Charts Section -->
           <div class="agency-dashboard__analytics-charts">
             <div class="agency-dashboard__analytics-chart-card">
-              <h3 class="agency-dashboard__analytics-chart-title">Weekly overview of incoming talent traffic.</h3>
+              <div class="agency-dashboard__analytics-chart-header">
+                <h3 class="agency-dashboard__analytics-chart-title">Traffic & Applications</h3>
+                <p class="agency-dashboard__analytics-chart-subtitle">Weekly overview of incoming talent traffic.</p>
+              </div>
               <div class="agency-dashboard__analytics-chart-container" id="analytics-traffic-chart">
                 <!-- Chart will be rendered here -->
               </div>
             </div>
 
             <div class="agency-dashboard__analytics-chart-card">
-              <h3 class="agency-dashboard__analytics-chart-title">Distribution by experience level.</h3>
-              <div class="agency-dashboard__analytics-chart-container" id="analytics-distribution-chart">
-                <!-- Chart will be rendered here -->
+              <div class="agency-dashboard__analytics-chart-header">
+                <h3 class="agency-dashboard__analytics-chart-title">Talent Pool Breakdown</h3>
+                <p class="agency-dashboard__analytics-chart-subtitle">Distribution by experience level.</p>
               </div>
-              <div class="agency-dashboard__analytics-legend">
-                <div class="agency-dashboard__analytics-legend-item">
-                  <span class="agency-dashboard__analytics-legend-dot" style="background-color: #1a1a1a;"></span>
-                  <span>New Faces</span>
+              <div class="agency-dashboard__analytics-chart-wrapper">
+                <div class="agency-dashboard__analytics-chart-donut" id="analytics-distribution-chart">
+                  <!-- Donut Chart -->
                 </div>
-                <div class="agency-dashboard__analytics-legend-item">
-                  <span class="agency-dashboard__analytics-legend-dot" style="background-color: #666;"></span>
-                  <span>Developing</span>
-                </div>
-                <div class="agency-dashboard__analytics-legend-item">
-                  <span class="agency-dashboard__analytics-legend-dot" style="background-color: #999;"></span>
-                  <span>Professional</span>
-                </div>
-                <div class="agency-dashboard__analytics-legend-item">
-                  <span class="agency-dashboard__analytics-legend-dot" style="background-color: #ccc;"></span>
-                  <span>Top Talent</span>
-                </div>
+              </div>
+              <div class="agency-dashboard__analytics-legend" id="analytics-distribution-legend">
+                <!-- Legend populated by JS -->
               </div>
             </div>
           </div>

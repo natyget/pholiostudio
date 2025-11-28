@@ -16,98 +16,153 @@
     return fallback || '';
   }
 %>
-<section class="auth-page">
-  <div class="auth-page__visual">
-    <div class="auth-page__visual-content">
-      <span class="auth-page__visual-badge">Partners</span>
-      <h1 class="auth-page__visual-headline">
-        <span class="auth-page__visual-headline-fashion">Join as a partner agency.</span>
-        <span class="auth-page__visual-headline-ai">Professional portal.</span>
-      </h1>
-      <p class="auth-page__visual-tagline">Access our free talent discovery platform. Filter, review, and manage applications from verified talent—all in one place.</p>
-      <div class="auth-page__visual-accent"></div>
+
+<!-- Editorial Header: Matching features/pricing style -->
+<section class="partners-header" id="partners-header">
+  <div class="partners-header__container">
+    <span class="partners-header__badge">Partner Program</span>
+    <h1 class="partners-header__headline">
+      <span class="partners-header__headline-fashion">Join as a partner agency.</span>
+      <span class="partners-header__headline-ai">Professional portal.</span>
+    </h1>
+    <p class="partners-header__subheadline">Access our free talent discovery platform. Filter, review, and manage applications from verified talent—all in one place.</p>
+    <div class="partners-header__accent"></div>
+  </div>
+</section>
+
+<!-- Benefits Showcase Section -->
+<section class="partners-benefits" id="partners-benefits">
+  <div class="partners-benefits__container">
+    <div class="partners-benefits__grid">
+      <div class="partners-benefits__card">
+        <div class="partners-benefits__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </div>
+        <h3 class="partners-benefits__title">Free Talent Discovery</h3>
+        <p class="partners-benefits__description">Access verified talent applications from our growing network of models and actors.</p>
+      </div>
+
+      <div class="partners-benefits__card">
+        <div class="partners-benefits__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+        </div>
+        <h3 class="partners-benefits__title">Advanced Filtering</h3>
+        <p class="partners-benefits__description">Filter by location, measurements, experience level, and more to find the perfect match.</p>
+      </div>
+
+      <div class="partners-benefits__card">
+        <div class="partners-benefits__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <h3 class="partners-benefits__title">Application Management</h3>
+        <p class="partners-benefits__description">Review, organize, and manage applications with powerful tools designed for agencies.</p>
+      </div>
+
+      <div class="partners-benefits__card">
+        <div class="partners-benefits__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        </div>
+        <h3 class="partners-benefits__title">Analytics Dashboard</h3>
+        <p class="partners-benefits__description">Track traffic, application metrics, and talent pool insights with comprehensive analytics.</p>
+      </div>
     </div>
   </div>
-  
-  <div class="auth-page__form">
-    <div class="auth-page__form-container">
-      <div class="auth-page__form-header">
-        <h2 class="auth-page__form-title">Partner Registration</h2>
-        <p class="auth-page__form-subtitle">Create your agency account to start discovering talent</p>
-      </div>
-      
-      <div class="auth-card" role="form">
-        <form method="post" action="/partners" class="form" data-async>
-          <div class="form-field <%= fieldError('agency_name') ? 'has-error' : '' %>">
-            <label for="agency_name">Agency Name</label>
-            <input id="agency_name" name="agency_name" type="text" autocomplete="organization" required value="<%= valueFor('agency_name', '') %>" placeholder="True Modeling Agency">
-            <% if (fieldError('agency_name')) { %>
-              <p class="field-error" role="alert"><%= fieldError('agency_name') %></p>
-            <% } %>
-          </div>
-          
-          <div class="form-field <%= fieldError('company_website') ? 'has-error' : '' %>">
-            <label for="company_website">Company Website <span class="muted">(optional)</span></label>
-            <input id="company_website" name="company_website" type="url" autocomplete="url" value="<%= valueFor('company_website', '') %>" placeholder="https://example.com">
-            <% if (fieldError('company_website')) { %>
-              <p class="field-error" role="alert"><%= fieldError('company_website') %></p>
-            <% } %>
-            <p class="form-field__help">Help us verify your agency</p>
-          </div>
-          
-          <div class="form-grid">
-            <div class="form-field <%= fieldError('contact_name') ? 'has-error' : '' %>">
-              <label for="contact_name">Your Full Name</label>
-              <input id="contact_name" name="contact_name" type="text" autocomplete="name" required value="<%= valueFor('contact_name', '') %>" placeholder="John Smith">
-              <% if (fieldError('contact_name')) { %>
-                <p class="field-error" role="alert"><%= fieldError('contact_name') %></p>
-              <% } %>
-            </div>
-            <div class="form-field <%= fieldError('contact_role') ? 'has-error' : '' %>">
-              <label for="contact_role">Your Role</label>
-              <select id="contact_role" name="contact_role" required>
-                <option value="">Select role</option>
-                <option value="Booker" <%= valueFor('contact_role') === 'Booker' ? 'selected' : '' %>>Booker</option>
-                <option value="Director" <%= valueFor('contact_role') === 'Director' ? 'selected' : '' %>>Director</option>
-                <option value="Scout" <%= valueFor('contact_role') === 'Scout' ? 'selected' : '' %>>Scout</option>
-                <option value="Other" <%= valueFor('contact_role') === 'Other' ? 'selected' : '' %>>Other</option>
-              </select>
-              <% if (fieldError('contact_role')) { %>
-                <p class="field-error" role="alert"><%= fieldError('contact_role') %></p>
-              <% } %>
-            </div>
-          </div>
-          
-          <div class="form-field <%= fieldError('email') ? 'has-error' : '' %>">
-            <label for="email">Work Email</label>
-            <input id="email" name="email" type="email" autocomplete="email" required value="<%= valueFor('email', '') %>" placeholder="you@agency.com">
-            <% if (fieldError('email')) { %>
-              <p class="field-error" role="alert"><%= fieldError('email') %></p>
-            <% } %>
-          </div>
-          
-          <div class="form-field <%= fieldError('password') ? 'has-error' : '' %>">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" value="<%= valueFor('password', '') %>">
-            <% if (fieldError('password')) { %>
-              <p class="field-error" role="alert"><%= fieldError('password') %></p>
-            <% } %>
-            <p class="form-field__help">Minimum 8 characters</p>
-          </div>
-          
-          <input type="hidden" name="firebase_token" id="firebase_token">
-          <button type="submit" class="button button-primary button-block" data-loading-text="Creating account…">Create Agency Account</button>
-        </form>
+</section>
+
+<!-- Form Section -->
+<section class="partners-form" id="partners-form">
+  <div class="partners-form__container">
+    <div class="partners-form__header">
+      <h2 class="partners-form__title">Partner Registration</h2>
+      <p class="partners-form__subtitle">Create your agency account to start discovering talent</p>
+    </div>
+    
+    <div class="partners-form__card" role="form">
+      <form method="post" action="/partners/join" class="form" data-async>
+        <div class="form-field <%= fieldError('agency_name') ? 'has-error' : '' %>">
+          <label for="agency_name">Agency Name</label>
+          <input id="agency_name" name="agency_name" type="text" autocomplete="organization" required value="<%= valueFor('agency_name', '') %>" placeholder="True Modeling Agency">
+          <% if (fieldError('agency_name')) { %>
+            <p class="field-error" role="alert"><%= fieldError('agency_name') %></p>
+          <% } %>
+        </div>
         
-        <p class="auth-switch">Already have an account? <a href="/login">Sign in</a>.</p>
-      </div>
+        <div class="form-field <%= fieldError('company_website') ? 'has-error' : '' %>">
+          <label for="company_website">Company Website <span class="muted">(optional)</span></label>
+          <input id="company_website" name="company_website" type="url" autocomplete="url" value="<%= valueFor('company_website', '') %>" placeholder="https://example.com">
+          <% if (fieldError('company_website')) { %>
+            <p class="field-error" role="alert"><%= fieldError('company_website') %></p>
+          <% } %>
+          <p class="form-field__help">Help us verify your agency</p>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-field <%= fieldError('contact_name') ? 'has-error' : '' %>">
+            <label for="contact_name">Your Full Name</label>
+            <input id="contact_name" name="contact_name" type="text" autocomplete="name" required value="<%= valueFor('contact_name', '') %>" placeholder="John Smith">
+            <% if (fieldError('contact_name')) { %>
+              <p class="field-error" role="alert"><%= fieldError('contact_name') %></p>
+            <% } %>
+          </div>
+          <div class="form-field <%= fieldError('contact_role') ? 'has-error' : '' %>">
+            <label for="contact_role">Your Role</label>
+            <select id="contact_role" name="contact_role" required>
+              <option value="">Select role</option>
+              <option value="Booker" <%= valueFor('contact_role') === 'Booker' ? 'selected' : '' %>>Booker</option>
+              <option value="Director" <%= valueFor('contact_role') === 'Director' ? 'selected' : '' %>>Director</option>
+              <option value="Scout" <%= valueFor('contact_role') === 'Scout' ? 'selected' : '' %>>Scout</option>
+              <option value="Other" <%= valueFor('contact_role') === 'Other' ? 'selected' : '' %>>Other</option>
+            </select>
+            <% if (fieldError('contact_role')) { %>
+              <p class="field-error" role="alert"><%= fieldError('contact_role') %></p>
+            <% } %>
+          </div>
+        </div>
+        
+        <div class="form-field <%= fieldError('email') ? 'has-error' : '' %>">
+          <label for="email">Work Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required value="<%= valueFor('email', '') %>" placeholder="you@agency.com">
+          <% if (fieldError('email')) { %>
+            <p class="field-error" role="alert"><%= fieldError('email') %></p>
+          <% } %>
+        </div>
+        
+        <div class="form-field <%= fieldError('password') ? 'has-error' : '' %>">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" value="<%= valueFor('password', '') %>">
+          <% if (fieldError('password')) { %>
+            <p class="field-error" role="alert"><%= fieldError('password') %></p>
+          <% } %>
+          <p class="form-field__help">Minimum 8 characters</p>
+        </div>
+        
+        <input type="hidden" name="firebase_token" id="firebase_token">
+        <button type="submit" class="button button-primary button-block" data-loading-text="Creating account…">Create Agency Account</button>
+      </form>
+      
+      <p class="partners-form__switch">Already have an account? <a href="/login">Sign in</a>.</p>
     </div>
   </div>
 </section>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const partnersForm = document.querySelector('form[action="/partners"]');
+  const partnersForm = document.querySelector('form[action="/partners/join"]');
   if (!partnersForm) return;
 
   partnersForm.addEventListener('submit', async function(e) {
@@ -171,4 +226,3 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
-

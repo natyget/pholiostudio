@@ -77,44 +77,39 @@
     },
 
     initTabs() {
-      const tabs = document.querySelectorAll('.board-editor-modal__tab');
-      const tabContents = document.querySelectorAll('.board-editor-modal__tab-content');
-
+      const tabs = document.querySelectorAll('.board-editor-modal__nav-item');
+      
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           const targetTab = tab.dataset.tab;
           this.switchTab(targetTab);
         });
+      });
 
-        // Keyboard navigation for tabs
-        tab.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            this.switchTab(tab.dataset.tab);
-          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            e.preventDefault();
-            const currentIndex = Array.from(tabs).indexOf(tab);
-            const direction = e.key === 'ArrowLeft' ? -1 : 1;
-            const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
-            tabs[nextIndex].focus();
-            this.switchTab(tabs[nextIndex].dataset.tab);
+      // Next button handler
+      const nextBtn = document.getElementById('board-editor-next');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          const tabOrder = ['basic', 'requirements', 'weights'];
+          const currentIndex = tabOrder.indexOf(this.currentTab);
+          if (currentIndex < tabOrder.length - 1) {
+            this.switchTab(tabOrder[currentIndex + 1]);
           }
         });
-      });
+      }
     },
 
     switchTab(tabName) {
-      const tabs = document.querySelectorAll('.board-editor-modal__tab');
+      const tabs = document.querySelectorAll('.board-editor-modal__nav-item');
       const tabContents = document.querySelectorAll('.board-editor-modal__tab-content');
+      const nextBtn = document.getElementById('board-editor-next');
+      const saveBtn = document.getElementById('board-editor-save');
 
       // Update tab buttons
       tabs.forEach(tab => {
         const isActive = tab.dataset.tab === tabName;
-        tab.classList.toggle('board-editor-modal__tab--active', isActive);
+        tab.classList.toggle('board-editor-modal__nav-item--active', isActive);
         tab.setAttribute('aria-selected', isActive);
-        if (isActive) {
-          tab.focus();
-        }
       });
 
       // Update tab content
@@ -125,6 +120,17 @@
       });
 
       this.currentTab = tabName;
+
+      // Update Footer Buttons
+      if (nextBtn && saveBtn) {
+        if (tabName === 'weights') {
+          nextBtn.style.display = 'none';
+          saveBtn.style.display = 'block';
+        } else {
+          nextBtn.style.display = 'block';
+          saveBtn.style.display = 'none';
+        }
+      }
     },
 
     initWeightSliders() {
@@ -134,7 +140,10 @@
         // Update display value on input
         slider.addEventListener('input', (e) => {
           const value = parseFloat(e.target.value);
-          const valueDisplay = e.target.nextElementSibling;
+          const sliderId = e.target.id; // e.g. weight-height
+          const valueId = sliderId.replace('weight-', 'val-');
+          const valueDisplay = document.getElementById(valueId);
+          
           if (valueDisplay) {
             valueDisplay.textContent = value.toFixed(1);
             e.target.setAttribute('aria-valuenow', value);
@@ -143,7 +152,10 @@
 
         // Initial value display
         const value = parseFloat(slider.value);
-        const valueDisplay = slider.nextElementSibling;
+        const sliderId = slider.id;
+        const valueId = sliderId.replace('weight-', 'val-');
+        const valueDisplay = document.getElementById(valueId);
+        
         if (valueDisplay) {
           valueDisplay.textContent = value.toFixed(1);
         }
