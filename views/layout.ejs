@@ -119,28 +119,44 @@
                         let app;
                         let auth;
                         
-                        try {
-                          app = initializeApp(firebaseConfig);
-                          auth = getAuth(app);
-                          
-                          // Export auth instance to window for use by other scripts
-                          window.firebaseAuth = auth;
-                          window.firebaseApp = app;
-                          
-                          console.log('[Firebase] Initialized successfully:', {
-                            hasApiKey: !!firebaseConfig.apiKey,
-                            hasAuthDomain: !!firebaseConfig.authDomain,
-                            hasProjectId: !!firebaseConfig.projectId,
-                            authReady: !!auth
-                          });
-                        } catch (error) {
-                          console.error('[Firebase] Initialization error:', error);
-                          console.error('[Firebase] Config used:', {
-                            apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
-                            authDomain: firebaseConfig.authDomain ? 'SET' : 'MISSING',
-                            projectId: firebaseConfig.projectId ? 'SET' : 'MISSING'
-                          });
-                        }
+              try {
+                // Validate Firebase config before initializing
+                if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+                  console.error('[Firebase] ❌ Missing required configuration:', {
+                    apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
+                    authDomain: firebaseConfig.authDomain ? 'SET' : 'MISSING',
+                    projectId: firebaseConfig.projectId ? 'SET' : 'MISSING'
+                  });
+                  window.firebaseConfigError = 'Firebase configuration is incomplete. Please check environment variables.';
+                  throw new Error('Firebase configuration incomplete');
+                }
+                
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                
+                // Export auth instance to window for use by other scripts
+                window.firebaseAuth = auth;
+                window.firebaseApp = app;
+                window.firebaseConfigError = null; // Clear any previous errors
+                
+                console.log('[Firebase] Initialized successfully:', {
+                  hasApiKey: !!firebaseConfig.apiKey,
+                  hasAuthDomain: !!firebaseConfig.authDomain,
+                  hasProjectId: !!firebaseConfig.projectId,
+                  authReady: !!auth
+                });
+              } catch (error) {
+                console.error('[Firebase] Initialization error:', error);
+                console.error('[Firebase] Config used:', {
+                  apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
+                  authDomain: firebaseConfig.authDomain ? 'SET' : 'MISSING',
+                  projectId: firebaseConfig.projectId ? 'SET' : 'MISSING'
+                });
+                // Set error flag for other scripts to check
+                window.firebaseConfigError = error.message || 'Firebase initialization failed';
+                window.firebaseAuth = null;
+                window.firebaseApp = null;
+              }
                       </script>
                       <script type="module" src="/scripts/firebase-auth.js"></script>
                       

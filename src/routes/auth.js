@@ -122,7 +122,59 @@ router.post('/login', async (req, res, next) => {
 
   try {
     // Verify Firebase ID token
-    const decodedToken = await verifyIdToken(idToken);
+    let decodedToken;
+    try {
+      decodedToken = await verifyIdToken(idToken);
+    } catch (verifyError) {
+      console.error('[Login] Token verification failed:', verifyError.message);
+      
+      // Check if Firebase Admin is initialized
+      const { getAuth } = require('../lib/firebase-admin');
+      const adminAuth = getAuth();
+      if (!adminAuth) {
+        console.error('[Login] Firebase Admin not initialized - server configuration issue');
+        const contentType = req.headers['content-type'] || '';
+        if (contentType.includes('application/json')) {
+          return res.status(500).json({
+            success: false,
+            errors: { firebase: ['Server configuration error. Please contact support.'] }
+          });
+        }
+        res.locals.currentPage = 'login';
+        return res.status(500).render('auth/login', {
+          title: 'Sign in',
+          values: req.body,
+          errors: { firebase: ['Server configuration error. Please contact support.'] },
+          layout: 'layout',
+          currentPage: 'login'
+        });
+      }
+      
+      // Token verification failed for other reasons
+      const contentType = req.headers['content-type'] || '';
+      const errorMessage = verifyError.message.includes('expired') 
+        ? 'Your session has expired. Please sign in again.'
+        : verifyError.message.includes('revoked')
+        ? 'Your session has been revoked. Please sign in again.'
+        : 'Invalid authentication token. Please try signing in again.';
+      
+      if (contentType.includes('application/json')) {
+        return res.status(401).json({
+          success: false,
+          errors: { firebase: [errorMessage] }
+        });
+      }
+      
+      res.locals.currentPage = 'login';
+      return res.status(401).render('auth/login', {
+        title: 'Sign in',
+        values: req.body,
+        errors: { firebase: [errorMessage] },
+        layout: 'layout',
+        currentPage: 'login'
+      });
+    }
+    
     const firebaseUid = decodedToken.uid;
     const email = decodedToken.email;
 
@@ -174,6 +226,26 @@ router.post('/login', async (req, res, next) => {
         const role = determineRole(null, req.path || req.url);
         
         console.log('[Login] Creating new user with role:', role);
+        
+        // Validate email before creating user
+        if (!email || !email.includes('@')) {
+          console.error('[Login] Invalid email from token:', email);
+          const contentType = req.headers['content-type'] || '';
+          if (contentType.includes('application/json')) {
+            return res.status(400).json({
+              success: false,
+              errors: { email: ['Invalid email address from authentication provider.'] }
+            });
+          }
+          res.locals.currentPage = 'login';
+          return res.status(400).render('auth/login', {
+            title: 'Sign in',
+            values: req.body,
+            errors: { email: ['Invalid email address from authentication provider.'] },
+            layout: 'layout',
+            currentPage: 'login'
+          });
+        }
         
         // Create minimal user (no profile for now - they can complete it later)
         user = await createUserHelper({

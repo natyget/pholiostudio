@@ -320,7 +320,13 @@ window.getFirebaseErrorMessage = function(error) {
     'auth/popup-blocked': 'Sign-in popup was blocked. Please allow popups for this site.',
     'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
     'auth/network-request-failed': 'Network error. Please check your connection.',
-    'auth/requires-recent-login': 'Please sign in again to complete this action.'
+    'auth/requires-recent-login': 'Please sign in again to complete this action.',
+    'auth/unauthorized-domain': 'This domain is not authorized for sign-in. Please contact support.',
+    'auth/configuration-not-found': 'Firebase configuration is missing. Please contact support.',
+    'auth/invalid-api-key': 'Firebase API key is invalid. Please contact support.',
+    'auth/app-not-authorized': 'Firebase app is not authorized. Please contact support.',
+    'auth/account-exists-with-different-credential': 'An account already exists with a different sign-in method.',
+    'auth/credential-already-in-use': 'This credential is already associated with a different account.'
   };
 
   return errorMessages[error.code] || error.message || 'An authentication error occurred. Please try again.';
