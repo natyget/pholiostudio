@@ -133,14 +133,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('[Login] onAuthStateChanged fired:', user ? `User authenticated: ${user.uid}` : 'User signed out');
         
         // If redirect result check hasn't completed yet, store the user and wait
-        if (!redirectResultCheckComplete) {
+        // BUT only if user is authenticated (we want to check if they came from redirect)
+        if (!redirectResultCheckComplete && user) {
           console.log('[Login] Redirect result check not complete yet, storing user for later processing...');
           pendingAuthStateUser = user;
           return; // Wait for redirect check to complete
         }
         
-        // Now process the auth state change
-        await processAuthStateChange(user);
+        // If redirect check is complete, process the auth state change
+        if (redirectResultCheckComplete) {
+          await processAuthStateChange(user);
+        }
+        // If user signed out before redirect check completes, process immediately
+        else if (!user) {
+          await processAuthStateChange(user);
+        }
       });
       
       authStateListenerUnsubscribe = unsubscribe;
@@ -164,8 +171,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Show loading state and user feedback
             showInfoMessage('Processing authentication...');
             
-            if (googleSignInBtn) {
-              googleSignInBtn.disabled = true;
+        if (googleSignInBtn) {
+          googleSignInBtn.disabled = true;
               googleSignInBtn.innerHTML = '<span>Processing…</span>';
             }
             if (instagramSignInBtn) {
@@ -173,10 +180,10 @@ document.addEventListener('DOMContentLoaded', async function() {
               instagramSignInBtn.innerHTML = '<span>Processing…</span>';
             }
             
-            // Get ID token
+          // Get ID token
             const idToken = await user.getIdToken();
             const email = user.email;
-            
+          
             console.log('[Login] Got Firebase token from auth state:', {
             hasToken: !!idToken,
             tokenLength: idToken ? idToken.length : 0,
@@ -228,14 +235,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (user && !hasRedirectResult) {
       // User is authenticated but NOT returning from OAuth redirect
       // This means they're already logged in and just visiting the login page
-      // Redirect them to dashboard without processing login again
-      console.log('[Login] User already authenticated (not from redirect), redirecting to dashboard...');
-      try {
-        // Use a simple redirect to dashboard instead of processing login
-        // The backend will handle session if needed
-        window.location.href = '/dashboard/talent';
-      } catch (redirectError) {
-        console.error('[Login] Error redirecting authenticated user:', redirectError);
+      // Only redirect if we're not already processing a login and redirect check is complete
+      if (redirectResultCheckComplete && !isProcessingLogin) {
+        console.log('[Login] User already authenticated (not from redirect), redirecting to dashboard...');
+        
+        // Show a brief message before redirecting
+        showInfoMessage('You are already signed in. Redirecting to dashboard...');
+        
+        // Small delay to show message, then redirect
+        setTimeout(() => {
+          try {
+            // Use a simple redirect to dashboard instead of processing login
+            // The backend will handle session if needed
+            window.location.href = '/dashboard/talent';
+          } catch (redirectError) {
+            console.error('[Login] Error redirecting authenticated user:', redirectError);
+          }
+        }, 1000); // 1 second delay
       }
     } else if (!user) {
       // User signed out - reset processing flag
@@ -302,9 +318,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('[Login] Redirect result check complete, hasRedirectResult:', hasRedirectResult);
     
     // If we stored a user while waiting, process it now
-    if (pendingAuthStateUser) {
-      console.log('[Login] Processing pending auth state user...');
+    // Only process if there was a redirect result (meaning they came from OAuth)
+    if (pendingAuthStateUser && hasRedirectResult) {
+      console.log('[Login] Processing pending auth state user from redirect...');
       await processAuthStateChange(pendingAuthStateUser);
+      pendingAuthStateUser = null;
+    } else if (pendingAuthStateUser) {
+      // User is authenticated but NOT from redirect - let onAuthStateChanged handle it
+      // Don't process here, just clear the pending user
+      console.log('[Login] Pending user is authenticated but not from redirect - onAuthStateChanged will handle redirect');
       pendingAuthStateUser = null;
     }
   }
