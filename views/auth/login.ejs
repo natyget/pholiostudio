@@ -274,9 +274,26 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('[Login] Checking for redirect result...');
       const redirectResult = await window.FirebaseAuth.getRedirectResult();
       
+      console.log('[Login] Redirect result:', {
+        hasResult: !!redirectResult,
+        hasUser: !!(redirectResult && redirectResult.user),
+        providerId: redirectResult?.providerId,
+        operationType: redirectResult?.operationType
+      });
+      
       if (redirectResult && redirectResult.user) {
         hasRedirectResult = true;
         console.log('[Login] ✅ Redirect result detected (provider:', redirectResult.providerId, ') - user returning from OAuth');
+        
+        // Also check if user is currently authenticated (might have been set by onAuthStateChanged)
+        const currentUser = await window.FirebaseAuth.getCurrentUser();
+        if (currentUser && currentUser.uid === redirectResult.user.uid) {
+          console.log('[Login] User is authenticated, will process login...');
+          // Process immediately since we have both redirect result and authenticated user
+          if (!isProcessingLogin) {
+            await processAuthStateChange(currentUser);
+          }
+        }
       } else {
         // Check if there was an error in the redirect
         // Errors might be in the URL parameters
@@ -302,6 +319,24 @@ document.addEventListener('DOMContentLoaded', async function() {
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
           console.log('[Login] No redirect result - user visiting page normally');
+          
+          // Even if no redirect result, check if user is authenticated
+          // This handles cases where redirect result was consumed but user is still authenticated
+          const currentUser = await window.FirebaseAuth.getCurrentUser();
+          if (currentUser && redirectResultCheckComplete) {
+            console.log('[Login] No redirect result but user is authenticated - might be returning from OAuth');
+            // Check if this looks like an OAuth return (has providerData)
+            if (currentUser.providerData && currentUser.providerData.length > 0) {
+              const providerId = currentUser.providerData[0].providerId;
+              if (providerId === 'google.com' || providerId.includes('instagram')) {
+                console.log('[Login] User has OAuth provider data, treating as OAuth redirect');
+                hasRedirectResult = true;
+                if (!isProcessingLogin) {
+                  await processAuthStateChange(currentUser);
+                }
+              }
+            }
+          }
         }
       }
     }
