@@ -24,6 +24,7 @@ const agencyApiRoutes = require('./routes/api/agency');
 const proRoutes = require('./routes/pro');
 const partnersRoutes = require('./routes/partners');
 const stripeRoutes = require('./routes/stripe');
+const onboardingRoutes = require('./routes/onboarding');
 
 const app = express();
 
@@ -644,6 +645,8 @@ app.use('/', agencyApiRoutes);
 app.use('/', proRoutes);
 app.use('/', partnersRoutes);
 app.use('/stripe', stripeRoutes);
+app.use('/onboarding', onboardingRoutes);
+app.use('/api/user', require('./routes/api/user'));
 
 // Static file serving - AFTER routes so routes take precedence over static HTML files
 // Disable caching for CSS/JS in development

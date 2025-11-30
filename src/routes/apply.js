@@ -47,16 +47,27 @@ router.get('/api/agencies/search', async (req, res) => {
 
 // Agency-locked application: /apply/agency?agencyId=XXXX
 router.get('/apply/agency', async (req, res) => {
-  // /apply is only for logged-out users (new signups)
-  // If user is logged in, redirect them to their dashboard
+  // Check if user is logged in
   if (req.session && req.session.userId && req.currentUser) {
-    if (req.session.role === 'TALENT') {
-      return res.redirect('/dashboard/talent');
-    } else if (req.session.role === 'AGENCY') {
-      return res.redirect('/dashboard/agency');
-    } else {
-      return res.redirect('/dashboard');
+    const user = await knex('users').where({ id: req.session.userId }).first();
+    
+    // If user has no role, redirect to role selection
+    if (!user.role || user.role === null) {
+      return res.redirect('/onboarding/select-role');
     }
+    
+    // If user is AGENCY, redirect to agency dashboard
+    if (user.role === 'AGENCY') {
+      return res.redirect('/dashboard/agency');
+    }
+    
+    // If user is TALENT, redirect to talent dashboard
+    if (user.role === 'TALENT') {
+      return res.redirect('/dashboard/talent');
+    }
+    
+    // Fallback
+    return res.redirect('/dashboard');
   }
 
   const { agencyId } = req.query;
@@ -140,6 +151,8 @@ router.get('/apply/agency', async (req, res) => {
       errors: {},
       layout: 'layout',
       isLoggedIn: false,
+      userRole: null,
+      showTalentForm: true,
       lockedAgency: {
         id: agency.id,
         name: agency.agency_name || 'Agency',
@@ -156,16 +169,27 @@ router.get('/apply/agency', async (req, res) => {
 
 // Partner-led funnel: /apply/:agencySlug
 router.get('/apply/:agencySlug', async (req, res) => {
-  // /apply is only for logged-out users (new signups)
-  // If user is logged in, redirect them to their dashboard
+  // Check if user is logged in
   if (req.session && req.session.userId && req.currentUser) {
-    if (req.session.role === 'TALENT') {
-      return res.redirect('/dashboard/talent');
-    } else if (req.session.role === 'AGENCY') {
-      return res.redirect('/dashboard/agency');
-    } else {
-      return res.redirect('/dashboard');
+    const user = await knex('users').where({ id: req.session.userId }).first();
+    
+    // If user has no role, redirect to role selection
+    if (!user.role || user.role === null) {
+      return res.redirect('/onboarding/select-role');
     }
+    
+    // If user is AGENCY, redirect to agency dashboard
+    if (user.role === 'AGENCY') {
+      return res.redirect('/dashboard/agency');
+    }
+    
+    // If user is TALENT, redirect to talent dashboard
+    if (user.role === 'TALENT') {
+      return res.redirect('/dashboard/talent');
+    }
+    
+    // Fallback
+    return res.redirect('/dashboard');
   }
 
   const { agencySlug } = req.params;
@@ -244,6 +268,8 @@ router.get('/apply/:agencySlug', async (req, res) => {
       errors: {},
       layout: 'layout',
       isLoggedIn: false,
+      userRole: null,
+      showTalentForm: true,
       lockedAgency: {
         id: agency.id,
         name: agency.agency_name || 'Agency',
@@ -257,18 +283,28 @@ router.get('/apply/:agencySlug', async (req, res) => {
   }
 });
 
-router.get('/apply', (req, res) => {
-  // /apply is only for logged-out users (new signups)
-  // If user is logged in, redirect them to their dashboard
+router.get('/apply', async (req, res) => {
+  // Check if user is logged in
   if (req.session && req.session.userId && req.currentUser) {
-    // Logged-in users should go to their dashboard, not /apply
-    if (req.session.role === 'TALENT') {
-      return res.redirect('/dashboard/talent');
-    } else if (req.session.role === 'AGENCY') {
-      return res.redirect('/dashboard/agency');
-    } else {
-      return res.redirect('/dashboard');
+    const user = await knex('users').where({ id: req.session.userId }).first();
+    
+    // If user has no role, redirect to role selection
+    if (!user.role || user.role === null) {
+      return res.redirect('/onboarding/select-role');
     }
+    
+    // If user is AGENCY, redirect to agency dashboard
+    if (user.role === 'AGENCY') {
+      return res.redirect('/dashboard/agency');
+    }
+    
+    // If user is TALENT, redirect to talent dashboard
+    if (user.role === 'TALENT') {
+      return res.redirect('/dashboard/talent');
+    }
+    
+    // Fallback
+    return res.redirect('/dashboard');
   }
 
   // Only logged-out users can access /apply
@@ -331,7 +367,9 @@ router.get('/apply', (req, res) => {
     errors: {},
     layout: 'layout',
     isLoggedIn: false,
-    lockedAgency: null
+    userRole: null,
+    lockedAgency: null,
+    showTalentForm: true // Show form for logged-out users
   });
 });
 

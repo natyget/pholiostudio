@@ -1,0 +1,435 @@
+<%- include('../partials/header-universal') %>
+
+<style>
+  :root {
+    --cream-bg: #faf9f7;
+    --serif-font: 'Noto Serif Display', 'Times New Roman', serif;
+    --sans-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  body {
+    background: var(--cream-bg);
+    font-family: var(--sans-font);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+  
+  .onboarding-container {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+  
+  .onboarding-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .onboarding-title {
+    font-family: var(--serif-font);
+    font-size: 2.25rem;
+    font-weight: 400;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+  }
+  
+  .onboarding-subtitle {
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    color: #475569;
+    margin: 0 0 1rem 0;
+  }
+  
+  .onboarding-note {
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    color: #64748b;
+    font-style: italic;
+    margin: 0;
+  }
+  
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .step-dot.active {
+    background: var(--color-accent);
+    width: 24px;
+    border-radius: 4px;
+  }
+  
+  .onboarding-form {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  
+  .verification-options {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .verification-option {
+    border: 2px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .verification-option:hover {
+    border-color: var(--color-accent);
+    background: #fefbf5;
+  }
+  
+  .verification-option.selected {
+    border-color: var(--color-accent);
+    background: #fefbf5;
+  }
+  
+  .verification-option-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .verification-option-title {
+    font-family: var(--sans-font);
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #0f172a;
+    margin: 0;
+  }
+  
+  .verification-option-description {
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+  }
+  
+  .form-group {
+    margin-top: 1rem;
+    display: none;
+  }
+  
+  .form-group.show {
+    display: block;
+  }
+  
+  .form-label {
+    display: block;
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(201, 165, 90, 0.1);
+  }
+  
+  .file-upload-area {
+    border: 2px dashed rgba(15, 23, 42, 0.2);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #faf9f7;
+  }
+  
+  .file-upload-area:hover {
+    border-color: var(--color-accent);
+    background: #fefbf5;
+  }
+  
+  .skip-link {
+    display: inline-block;
+    margin-top: 1rem;
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    color: #64748b;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .skip-link:hover {
+    color: #475569;
+    text-decoration: underline;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    gap: 1rem;
+  }
+  
+  .btn {
+    padding: 0.875rem 2rem;
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary {
+    background: #0f172a;
+    color: #ffffff;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    color: #475569;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(15, 23, 42, 0.05);
+  }
+</style>
+
+<div class="onboarding-container">
+  <div class="onboarding-header">
+    <h1 class="onboarding-title">Verification</h1>
+    <p class="onboarding-subtitle">Help us verify your agency</p>
+    <p class="onboarding-note">You can skip this step for now, but verification may be required to access certain features.</p>
+    
+    <div class="step-indicator">
+      <div class="step-dot active"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+  </div>
+  
+  <form id="agency-step2-form" class="onboarding-form">
+    <div class="verification-options">
+      <div class="verification-option" data-type="linkedin">
+        <div class="verification-option-header">
+          <input type="radio" name="verification_type" value="linkedin" id="verify_linkedin" style="width: 20px; height: 20px;">
+          <label for="verify_linkedin" class="verification-option-title" style="cursor: pointer; flex: 1;">LinkedIn Profile</label>
+        </div>
+        <p class="verification-option-description">Share your LinkedIn profile URL to verify your identity as the agency owner.</p>
+        <div class="form-group" id="linkedin-group">
+          <label class="form-label" for="verification_linkedin_url">LinkedIn Profile URL</label>
+          <input 
+            type="url" 
+            id="verification_linkedin_url" 
+            name="verification_linkedin_url" 
+            class="form-input"
+            placeholder="https://linkedin.com/in/your-profile"
+          >
+        </div>
+      </div>
+      
+      <div class="verification-option" data-type="document">
+        <div class="verification-option-header">
+          <input type="radio" name="verification_type" value="document" id="verify_document" style="width: 20px; height: 20px;">
+          <label for="verify_document" class="verification-option-title" style="cursor: pointer; flex: 1;">Business License</label>
+        </div>
+        <p class="verification-option-description">Upload a business license or registration document to verify your agency.</p>
+        <div class="form-group" id="document-group">
+          <label class="form-label">Business License Document</label>
+          <div class="file-upload-area" id="document-upload-area">
+            <input type="file" id="document-file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto; color: #475569;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: #475569;">Click to upload (PDF, JPG, PNG, max 5MB)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <a href="#" class="skip-link" id="skip-link">Skip for now →</a>
+    
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" onclick="window.location.href='/onboarding/agency'">Back</button>
+      <button type="submit" class="btn btn-primary" id="submit-btn">Continue</button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('agency-step2-form');
+  const verificationOptions = document.querySelectorAll('.verification-option');
+  const submitBtn = document.getElementById('submit-btn');
+  const skipLink = document.getElementById('skip-link');
+  
+  // Handle verification option selection
+  verificationOptions.forEach(option => {
+    const radio = option.querySelector('input[type="radio"]');
+    const type = option.dataset.type;
+    
+    option.addEventListener('click', function(e) {
+      if (e.target.type !== 'radio' && e.target.tagName !== 'INPUT') {
+        radio.checked = true;
+      }
+      
+      // Update UI
+      verificationOptions.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      
+      // Show/hide form groups
+      document.querySelectorAll('.form-group').forEach(group => group.classList.remove('show'));
+      if (type === 'linkedin') {
+        document.getElementById('linkedin-group').classList.add('show');
+      } else if (type === 'document') {
+        document.getElementById('document-group').classList.add('show');
+      }
+    });
+    
+    radio.addEventListener('change', function() {
+      if (radio.checked) {
+        verificationOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        document.querySelectorAll('.form-group').forEach(group => group.classList.remove('show'));
+        if (type === 'linkedin') {
+          document.getElementById('linkedin-group').classList.add('show');
+        } else if (type === 'document') {
+          document.getElementById('document-group').classList.add('show');
+        }
+      }
+    });
+  });
+  
+  // File upload
+  const documentUploadArea = document.getElementById('document-upload-area');
+  const documentFileInput = document.getElementById('document-file');
+  documentUploadArea.addEventListener('click', () => documentFileInput.click());
+  
+  // Skip link
+  skipLink.addEventListener('click', async function(e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    try {
+      const response = await fetch('/onboarding/agency/step2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verification_type: 'skip' })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        window.location.href = data.redirect;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Continue';
+    }
+  });
+  
+  // Form submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    try {
+      const formData = new FormData();
+      const verificationType = form.querySelector('input[name="verification_type"]:checked')?.value;
+      
+      if (verificationType === 'linkedin') {
+        const linkedinUrl = document.getElementById('verification_linkedin_url').value.trim();
+        if (!linkedinUrl) {
+          alert('Please enter your LinkedIn profile URL');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Continue';
+          return;
+        }
+        formData.append('verification_type', 'linkedin');
+        formData.append('verification_linkedin_url', linkedinUrl);
+      } else if (verificationType === 'document') {
+        if (!documentFileInput.files[0]) {
+          alert('Please upload a business license document');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Continue';
+          return;
+        }
+        formData.append('verification_type', 'document');
+        formData.append('verification_document', documentFileInput.files[0]);
+      }
+      
+      const response = await fetch('/onboarding/agency/step2', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        window.location.href = data.redirect;
+      } else {
+        alert(data.errors?.general?.[0] || 'An error occurred. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Continue';
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('An error occurred. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Continue';
+    }
+  });
+});
+</script>
+
+<%- include('../partials/footer-universal') %>
+

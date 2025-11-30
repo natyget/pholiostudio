@@ -1491,8 +1491,42 @@
             emailInput.value = email;
           }
           
-          // Update UI to show authenticated state
-          updateAuthenticatedUI(email);
+          // Check user role after sign-in
+          try {
+            const roleCheckResponse = await fetch('/api/user/role', {
+              method: 'GET',
+              credentials: 'include'
+            });
+            
+            if (roleCheckResponse.ok) {
+              const roleData = await roleCheckResponse.json();
+              const userRole = roleData.role;
+              
+              // If user has no role, redirect to role selection
+              if (!userRole || userRole === null) {
+                console.log('[Apply Form] User has no role, redirecting to role selection...');
+                window.location.href = '/onboarding/select-role';
+                return;
+              }
+              
+              // If user is AGENCY, redirect to agency dashboard
+              if (userRole === 'AGENCY') {
+                console.log('[Apply Form] User is AGENCY, redirecting to agency dashboard...');
+                window.location.href = '/dashboard/agency';
+                return;
+              }
+              
+              // If user is TALENT, continue with form
+              if (userRole === 'TALENT') {
+                console.log('[Apply Form] User is TALENT, continuing with application form');
+                updateAuthenticatedUI(email);
+              }
+            }
+          } catch (roleError) {
+            console.error('[Apply Form] Error checking user role:', roleError);
+            // Continue anyway - might be a network issue
+            updateAuthenticatedUI(email);
+          }
           
           // Reset button
           googleBtn.disabled = false;
@@ -1605,8 +1639,42 @@
             emailInput.value = email;
           }
           
-          // Update UI to show authenticated state
-          updateAuthenticatedUI(email);
+          // Check user role after sign-in
+          try {
+            const roleCheckResponse = await fetch('/api/user/role', {
+              method: 'GET',
+              credentials: 'include'
+            });
+            
+            if (roleCheckResponse.ok) {
+              const roleData = await roleCheckResponse.json();
+              const userRole = roleData.role;
+              
+              // If user has no role, redirect to role selection
+              if (!userRole || userRole === null) {
+                console.log('[Apply Form] User has no role, redirecting to role selection...');
+                window.location.href = '/onboarding/select-role';
+                return;
+              }
+              
+              // If user is AGENCY, redirect to agency dashboard
+              if (userRole === 'AGENCY') {
+                console.log('[Apply Form] User is AGENCY, redirecting to agency dashboard...');
+                window.location.href = '/dashboard/agency';
+                return;
+              }
+              
+              // If user is TALENT, continue with form
+              if (userRole === 'TALENT') {
+                console.log('[Apply Form] User is TALENT, continuing with application form');
+                updateAuthenticatedUI(email);
+              }
+            }
+          } catch (roleError) {
+            console.error('[Apply Form] Error checking user role:', roleError);
+            // Continue anyway - might be a network issue
+            updateAuthenticatedUI(email);
+          }
           
           // Reset button
           instagramBtn.disabled = false;

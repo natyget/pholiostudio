@@ -69,39 +69,59 @@
 
       <div class="apply-form-wrapper">
         <div class="apply-form-card">
-          <% const userIsLoggedIn = typeof isLoggedIn !== 'undefined' ? isLoggedIn : false; %>
-          <div class="apply-form-header">
-            <ol class="apply-steps">
-              <li class="is-active" data-step="1"><%= userIsLoggedIn ? '1 BASIC INFO' : '1 ACCOUNT' %></li>
-              <li data-step="2">2 EXPERIENCE</li>
-              <li data-step="3">3 PHOTOS</li>
-              <li data-step="4">4 REVIEW</li>
-            </ol>
-          </div>
+          <% 
+            const userIsLoggedIn = typeof isLoggedIn !== 'undefined' ? isLoggedIn : false;
+            const currentUserRole = typeof userRole !== 'undefined' ? userRole : null;
+            const shouldShowTalentForm = typeof showTalentForm !== 'undefined' ? showTalentForm : true;
+          %>
+          
+          <% if (userIsLoggedIn && currentUserRole === 'AGENCY') { %>
+            <!-- User is AGENCY - show message -->
+            <div style="padding: 3rem 2rem; text-align: center; background: #ffffff; border-radius: 18px;">
+              <h2 style="font-family: 'Noto Serif Display', serif; font-size: 1.75rem; margin: 0 0 1rem; color: #0f172a;">
+                This form is for Talent applications
+              </h2>
+              <p style="color: #475569; margin: 0 0 2rem;">
+                As an agency, you can view and manage applications from your dashboard.
+              </p>
+              <a href="/dashboard/agency" class="button button-primary" style="display: inline-block; padding: 0.875rem 2rem; background: #0f172a; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">
+                Go to Agency Dashboard
+              </a>
+            </div>
+          <% } else { %>
+            <!-- Show Talent form for logged-out users or TALENT users -->
+            <div class="apply-form-header">
+              <ol class="apply-steps">
+                <li class="is-active" data-step="1"><%= userIsLoggedIn ? '1 BASIC INFO' : '1 ACCOUNT' %></li>
+                <li data-step="2">2 EXPERIENCE</li>
+                <li data-step="3">3 PHOTOS</li>
+                <li data-step="4">4 REVIEW</li>
+              </ol>
+            </div>
 
-          <form method="post" action="/apply" enctype="multipart/form-data" class="form" id="apply-form">
-            <input type="hidden" name="firebase_token" id="firebase_token">
-            
-            <!-- Step 1: VITALS -->
-            <div class="form-step" data-step="1">
-              <div class="form-grid">
-                <div class="form-field <%= fieldError('first_name') ? 'has-error' : '' %>">
-                  <label for="first_name">FIRST NAME</label>
-                  <input id="first_name" name="first_name" value="<%= valueFor('first_name', '') %>" required>
-                  <% if (fieldError('first_name')) { %>
-                    <p class="field-error" role="alert"><%= fieldError('first_name') %></p>
-                  <% } %>
+            <form method="post" action="/apply" enctype="multipart/form-data" class="form" id="apply-form">
+              <input type="hidden" name="firebase_token" id="firebase_token">
+              
+              <!-- Step 1: VITALS -->
+              <div class="form-step" data-step="1">
+                <div class="form-grid">
+                  <div class="form-field <%= fieldError('first_name') ? 'has-error' : '' %>">
+                    <label for="first_name">FIRST NAME</label>
+                    <input id="first_name" name="first_name" value="<%= valueFor('first_name', '') %>" required>
+                    <% if (fieldError('first_name')) { %>
+                      <p class="field-error" role="alert"><%= fieldError('first_name') %></p>
+                    <% } %>
+                  </div>
+                  <div class="form-field <%= fieldError('last_name') ? 'has-error' : '' %>">
+                    <label for="last_name">LAST NAME</label>
+                    <input id="last_name" name="last_name" value="<%= valueFor('last_name', '') %>" required>
+                    <% if (fieldError('last_name')) { %>
+                      <p class="field-error" role="alert"><%= fieldError('last_name') %></p>
+                    <% } %>
+                  </div>
                 </div>
-                <div class="form-field <%= fieldError('last_name') ? 'has-error' : '' %>">
-                  <label for="last_name">LAST NAME</label>
-                  <input id="last_name" name="last_name" value="<%= valueFor('last_name', '') %>" required>
-                  <% if (fieldError('last_name')) { %>
-                    <p class="field-error" role="alert"><%= fieldError('last_name') %></p>
-                  <% } %>
-                </div>
-              </div>
 
-              <% if (!userIsLoggedIn) { %>
+                <% if (!userIsLoggedIn) { %>
               <div style="margin: 2rem 0;">
                 <button type="button" id="google-signin-step1" class="button button-google button-block" data-loading-text="Signing in…">
                   <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px; vertical-align: middle;">
@@ -968,6 +988,7 @@
               <button type="button" class="button button-primary" id="next-button" data-loading-text="<%= userIsLoggedIn ? 'Saving application…' : 'Creating account…' %>">Next</button>
             </div>
           </form>
+          <% } %>
 
           <p class="apply-note">Uploads happen next—have 2-6 high-resolution portraits ready for the dashboard.</p>
         </div>

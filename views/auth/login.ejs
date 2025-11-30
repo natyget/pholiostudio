@@ -235,23 +235,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (user && !hasRedirectResult) {
       // User is authenticated but NOT returning from OAuth redirect
       // This means they're already logged in and just visiting the login page
-      // Only redirect if we're not already processing a login and redirect check is complete
+      // We still need to ensure the session exists by calling handleLogin
       if (redirectResultCheckComplete && !isProcessingLogin) {
-        console.log('[Login] User already authenticated (not from redirect), redirecting to dashboard...');
+        isProcessingLogin = true;
+        console.log('[Login] User already authenticated (not from redirect), ensuring session exists...');
         
-        // Show a brief message before redirecting
-        showInfoMessage('You are already signed in. Redirecting to dashboard...');
-        
-        // Small delay to show message, then redirect
-        setTimeout(() => {
-          try {
-            // Use a simple redirect to dashboard instead of processing login
-            // The backend will handle session if needed
-            window.location.href = '/dashboard/talent';
-          } catch (redirectError) {
-            console.error('[Login] Error redirecting authenticated user:', redirectError);
+        try {
+          // Show loading state
+          showInfoMessage('Verifying your session...');
+          
+          // Get ID token to verify/create session
+          const idToken = await user.getIdToken();
+          if (!idToken) {
+            throw new Error('Failed to get authentication token');
           }
-        }, 1000); // 1 second delay
+          
+          // Call handleLogin to ensure session exists (it will redirect to dashboard)
+          console.log('[Login] Calling handleLogin to ensure session exists...');
+          await handleLogin(idToken);
+        } catch (sessionError) {
+          console.error('[Login] Error ensuring session:', sessionError);
+          resetButtons();
+          showError('Failed to verify session. Please try signing in again.');
+          isProcessingLogin = false;
+        }
       }
     } else if (!user) {
       // User signed out - reset processing flag
@@ -318,15 +325,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('[Login] Redirect result check complete, hasRedirectResult:', hasRedirectResult);
     
     // If we stored a user while waiting, process it now
-    // Only process if there was a redirect result (meaning they came from OAuth)
-    if (pendingAuthStateUser && hasRedirectResult) {
-      console.log('[Login] Processing pending auth state user from redirect...');
-      await processAuthStateChange(pendingAuthStateUser);
-      pendingAuthStateUser = null;
-    } else if (pendingAuthStateUser) {
-      // User is authenticated but NOT from redirect - let onAuthStateChanged handle it
-      // Don't process here, just clear the pending user
-      console.log('[Login] Pending user is authenticated but not from redirect - onAuthStateChanged will handle redirect');
+    if (pendingAuthStateUser) {
+      if (hasRedirectResult) {
+        // User came from OAuth redirect - process login
+        console.log('[Login] Processing pending auth state user from redirect...');
+        await processAuthStateChange(pendingAuthStateUser);
+      } else {
+        // User is authenticated but NOT from redirect - they're already logged in
+        // Process to trigger redirect to dashboard
+        console.log('[Login] Pending user is authenticated but not from redirect - processing to redirect to dashboard');
+        await processAuthStateChange(pendingAuthStateUser);
+      }
       pendingAuthStateUser = null;
     }
   }

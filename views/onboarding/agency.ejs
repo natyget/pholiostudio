@@ -1,0 +1,404 @@
+<%- include('../partials/header-universal') %>
+
+<style>
+  :root {
+    --cream-bg: #faf9f7;
+    --serif-font: 'Noto Serif Display', 'Times New Roman', serif;
+    --sans-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  body {
+    background: var(--cream-bg);
+    font-family: var(--sans-font);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+  
+  .onboarding-container {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+  
+  .onboarding-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .onboarding-title {
+    font-family: var(--serif-font);
+    font-size: 2.25rem;
+    font-weight: 400;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+  }
+  
+  .onboarding-subtitle {
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    color: #475569;
+    margin: 0;
+  }
+  
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .step-dot.active {
+    background: var(--color-accent);
+    width: 24px;
+    border-radius: 4px;
+  }
+  
+  .onboarding-form {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    display: block;
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(201, 165, 90, 0.1);
+  }
+  
+  .logo-upload-area {
+    border: 2px dashed rgba(15, 23, 42, 0.2);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #faf9f7;
+  }
+  
+  .logo-upload-area:hover {
+    border-color: var(--color-accent);
+    background: #fefbf5;
+  }
+  
+  .logo-upload-area.has-image {
+    border-style: solid;
+    padding: 1rem;
+  }
+  
+  .logo-preview {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 8px;
+    margin: 0 auto 1rem;
+    display: none;
+  }
+  
+  .logo-preview.show {
+    display: block;
+  }
+  
+  .logo-upload-text {
+    font-family: var(--sans-font);
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0.5rem 0 0;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    gap: 1rem;
+  }
+  
+  .btn {
+    padding: 0.875rem 2rem;
+    font-family: var(--sans-font);
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary {
+    background: #0f172a;
+    color: #ffffff;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    color: #475569;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(15, 23, 42, 0.05);
+  }
+  
+  .error-message {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: none;
+  }
+  
+  .error-message.show {
+    display: block;
+  }
+  
+  @media (max-width: 640px) {
+    .onboarding-container {
+      padding: 2rem 1rem;
+    }
+    
+    .onboarding-title {
+      font-size: 1.75rem;
+    }
+    
+    .onboarding-form {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
+<div class="onboarding-container">
+  <div class="onboarding-header">
+    <h1 class="onboarding-title">Agency Identity</h1>
+    <p class="onboarding-subtitle">Tell us about your agency</p>
+    
+    <div class="step-indicator">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+  </div>
+  
+  <form id="agency-step1-form" class="onboarding-form">
+    <div class="form-group">
+      <label class="form-label" for="agency_name">Agency Name *</label>
+      <input 
+        type="text" 
+        id="agency_name" 
+        name="agency_name" 
+        class="form-input" 
+        required
+        value="<%= user && user.agency_name ? user.agency_name : '' %>"
+        placeholder="e.g., Elite Model Management"
+      >
+      <div class="error-message" id="agency_name_error"></div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="agency_website">Website URL</label>
+      <input 
+        type="url" 
+        id="agency_website" 
+        name="agency_website" 
+        class="form-input"
+        value="<%= user && user.agency_website ? user.agency_website : '' %>"
+        placeholder="https://your-agency.com"
+      >
+      <div class="error-message" id="agency_website_error"></div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="agency_instagram_handle">Instagram Handle</label>
+      <input 
+        type="text" 
+        id="agency_instagram_handle" 
+        name="agency_instagram_handle" 
+        class="form-input"
+        value="<%= user && user.agency_instagram_handle ? user.agency_instagram_handle : '' %>"
+        placeholder="@your-agency"
+      >
+      <div class="error-message" id="agency_instagram_handle_error"></div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label" for="agency_location">Primary Location</label>
+      <input 
+        type="text" 
+        id="agency_location" 
+        name="agency_location" 
+        class="form-input"
+        value="<%= user && user.agency_location ? user.agency_location : '' %>"
+        placeholder="e.g., New York"
+      >
+      <div class="error-message" id="agency_location_error"></div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Agency Logo</label>
+      <div class="logo-upload-area" id="logo-upload-area">
+        <img id="logo-preview" class="logo-preview" alt="Logo preview">
+        <div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto; color: #475569;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <p class="logo-upload-text">Click to upload logo (Square, max 2MB)</p>
+        </div>
+        <input type="file" id="logo-file" accept="image/*" style="display: none;">
+      </div>
+      <div class="error-message" id="logo_error"></div>
+    </div>
+    
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" onclick="window.location.href='/onboarding/select-role'">Back</button>
+      <button type="submit" class="btn btn-primary" id="submit-btn">Continue</button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('agency-step1-form');
+  const logoUploadArea = document.getElementById('logo-upload-area');
+  const logoFileInput = document.getElementById('logo-file');
+  const logoPreview = document.getElementById('logo-preview');
+  const submitBtn = document.getElementById('submit-btn');
+  
+  // Logo upload handling
+  logoUploadArea.addEventListener('click', () => logoFileInput.click());
+  
+  logoFileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showError('logo_error', 'File size must be less than 2MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        logoPreview.src = e.target.result;
+        logoPreview.classList.add('show');
+        logoUploadArea.classList.add('has-image');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Form submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Clear previous errors
+    document.querySelectorAll('.error-message').forEach(el => {
+      el.classList.remove('show');
+      el.textContent = '';
+    });
+    
+    // Validate
+    const agencyName = document.getElementById('agency_name').value.trim();
+    if (!agencyName) {
+      showError('agency_name_error', 'Agency name is required');
+      return;
+    }
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    try {
+      const formData = new FormData();
+      formData.append('agency_name', agencyName);
+      formData.append('agency_website', document.getElementById('agency_website').value.trim());
+      formData.append('agency_instagram_handle', document.getElementById('agency_instagram_handle').value.trim());
+      formData.append('agency_location', document.getElementById('agency_location').value.trim());
+      
+      if (logoFileInput.files[0]) {
+        formData.append('logo', logoFileInput.files[0]);
+      }
+      
+      const response = await fetch('/onboarding/agency/step1', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        window.location.href = data.redirect;
+      } else {
+        // Show errors
+        if (data.errors) {
+          Object.keys(data.errors).forEach(key => {
+            showError(key + '_error', data.errors[key][0]);
+          });
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Continue';
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      showError('general_error', 'An error occurred. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Continue';
+    }
+  });
+  
+  function showError(elementId, message) {
+    const errorEl = document.getElementById(elementId);
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+    }
+  }
+});
+</script>
+
+<%- include('../partials/footer-universal') %>
+

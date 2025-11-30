@@ -11,6 +11,11 @@ const { createUser: createUserHelper, determineRole } = require('../lib/user-hel
 const router = express.Router();
 
 function redirectForRole(role) {
+  // If user has no role, redirect to role selection
+  // Check for null, undefined, empty string, or the string 'null'
+  if (!role || role === null || role === 'null' || role === '') {
+    return '/onboarding/select-role';
+  }
   if (role === 'TALENT') return '/dashboard/talent';
   if (role === 'AGENCY') return '/dashboard/agency';
   return '/';
@@ -247,11 +252,12 @@ router.post('/login', async (req, res, next) => {
           });
         }
         
-        // Create minimal user (no profile for now - they can complete it later)
+        // Create minimal user with NULL role - they'll select role in onboarding
+        // Don't assign role automatically - let user choose
         user = await createUserHelper({
           firebaseUid: firebaseUid,
           email: email,
-          role: role
+          role: null // NULL role - user will select in onboarding
         });
         
         console.log('[Login] User auto-created successfully:', {
@@ -288,7 +294,8 @@ router.post('/login', async (req, res, next) => {
     console.log('[Login] Login successful for user:', { id: user.id, email: user.email, role: user.role });
 
     req.session.userId = user.id;
-    req.session.role = user.role;
+    // Set role to null if user hasn't selected one yet (don't set to undefined)
+    req.session.role = user.role || null;
 
     // Save session before redirect
     await new Promise((resolve, reject) => {

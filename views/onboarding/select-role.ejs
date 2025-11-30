@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How will you use Pholio? — Pholio</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@200;300;400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/styles/global.css">
+  
+  <style>
+    :root {
+      --cream-bg: #faf9f7;
+      --serif-font: 'Noto Serif Display', 'Times New Roman', serif;
+      --sans-font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    body {
+      background: var(--cream-bg);
+      font-family: var(--sans-font);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .role-selection-container {
+      max-width: 800px;
+      width: 100%;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .role-selection-headline {
+      font-family: var(--serif-font);
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: #0f172a;
+      margin: 0 0 3rem 0;
+      letter-spacing: -0.02em;
+    }
+    
+    .role-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    
+    .role-card {
+      background: #ffffff;
+      border: 2px solid rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      padding: 2.5rem 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .role-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--color-accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .role-card:hover {
+      border-color: var(--color-accent);
+      box-shadow: 0 24px 60px -40px rgba(15, 23, 42, 0.25);
+      transform: translateY(-4px);
+    }
+    
+    .role-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .role-card.selected {
+      border-color: var(--color-accent);
+      background: #fefbf5;
+    }
+    
+    .role-card.selected::before {
+      transform: scaleX(1);
+    }
+    
+    .role-card-title {
+      font-family: var(--serif-font);
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: #0f172a;
+      margin: 0 0 0.75rem 0;
+      letter-spacing: -0.01em;
+    }
+    
+    .role-card-subtext {
+      font-family: var(--sans-font);
+      font-size: 1rem;
+      color: #475569;
+      line-height: 1.6;
+      margin: 0;
+    }
+    
+    .role-selection-form {
+      margin-top: 3rem;
+    }
+    
+    .continue-button {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 1rem 3rem;
+      font-size: 1rem;
+      font-weight: 500;
+      font-family: var(--sans-font);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .continue-button.enabled {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .continue-button.enabled:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    
+    .error-message {
+      color: #dc2626;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    @media (max-width: 640px) {
+      .role-selection-headline {
+        font-size: 2rem;
+      }
+      
+      .role-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="role-selection-container">
+    <h1 class="role-selection-headline">How will you use Pholio?</h1>
+    
+    <form id="role-selection-form" class="role-selection-form" method="POST" action="/onboarding/select-role">
+      <div class="role-cards">
+        <div class="role-card" data-role="TALENT">
+          <h2 class="role-card-title">I am Talent</h2>
+          <p class="role-card-subtext">Build my portfolio and find representation.</p>
+        </div>
+        
+        <div class="role-card" data-role="AGENCY">
+          <h2 class="role-card-title">I am an Agency</h2>
+          <p class="role-card-subtext">Scout talent and manage my roster.</p>
+        </div>
+      </div>
+      
+      <input type="hidden" name="role" id="role-input" value="">
+      
+      <button type="submit" class="continue-button" id="continue-button">
+        Continue
+      </button>
+      
+      <div class="error-message" id="error-message"></div>
+    </form>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('role-selection-form');
+      const roleCards = document.querySelectorAll('.role-card');
+      const roleInput = document.getElementById('role-input');
+      const continueButton = document.getElementById('continue-button');
+      const errorMessage = document.getElementById('error-message');
+      
+      let selectedRole = null;
+      
+      // Handle card selection
+      roleCards.forEach(card => {
+        card.addEventListener('click', function() {
+          // Remove selected class from all cards
+          roleCards.forEach(c => c.classList.remove('selected'));
+          
+          // Add selected class to clicked card
+          card.classList.add('selected');
+          
+          // Set selected role
+          selectedRole = card.dataset.role;
+          roleInput.value = selectedRole;
+          
+          // Enable continue button
+          continueButton.classList.add('enabled');
+          
+          // Hide error message
+          errorMessage.classList.remove('show');
+        });
+      });
+      
+      // Handle form submission
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!selectedRole) {
+          errorMessage.textContent = 'Please select how you will use Pholio.';
+          errorMessage.classList.add('show');
+          return;
+        }
+        
+        // Disable button and show loading state
+        continueButton.disabled = true;
+        continueButton.textContent = 'Loading...';
+        
+        try {
+          const response = await fetch('/onboarding/select-role', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ role: selectedRole })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Redirect to appropriate onboarding flow
+            window.location.href = data.redirect;
+          } else {
+            // Show error
+            errorMessage.textContent = data.errors?.role?.[0] || 'An error occurred. Please try again.';
+            errorMessage.classList.add('show');
+            continueButton.disabled = false;
+            continueButton.textContent = 'Continue';
+          }
+        } catch (error) {
+          console.error('Error submitting role selection:', error);
+          errorMessage.textContent = 'An error occurred. Please try again.';
+          errorMessage.classList.add('show');
+          continueButton.disabled = false;
+          continueButton.textContent = 'Continue';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
