@@ -90,6 +90,31 @@ document.addEventListener('DOMContentLoaded', async function() {
   const instagramSignInBtn = document.getElementById('instagram-signin-btn');
   if (!loginForm) return;
 
+  // Check for OAuth errors in URL parameters (from Google redirect)
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorParam = urlParams.get('error');
+  const errorDescription = urlParams.get('error_description');
+  
+  if (errorParam) {
+    console.error('[Login] OAuth error detected in URL:', errorParam, errorDescription);
+    
+    // Show error message based on error type
+    if (errorParam === 'access_denied') {
+      showError('Sign-in was cancelled. Please try again.');
+    } else if (errorParam.includes('rate') || errorParam.includes('quota') || 
+               errorDescription?.toLowerCase().includes('too many') ||
+               errorDescription?.toLowerCase().includes('rate limit')) {
+      showError('Too many sign-in attempts. Please wait 5-10 minutes and try again.');
+    } else if (errorDescription) {
+      showError(`Sign-in error: ${errorDescription}`);
+    } else {
+      showError('Sign-in failed. Please try again.');
+    }
+    
+    // Clean up URL to remove error parameters
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   // Track if we're processing any login to avoid duplicate processing
   let isProcessingLogin = false;
   let authStateListenerUnsubscribe = null;
@@ -187,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (providerId.includes('instagram')) {
               passwordInput.value = 'instagram-sign-in';
             } else {
-              passwordInput.value = 'google-sign-in';
+            passwordInput.value = 'google-sign-in';
             }
           }
           
@@ -230,11 +255,47 @@ document.addEventListener('DOMContentLoaded', async function() {
         hasRedirectResult = true;
         console.log('[Login] ✅ Redirect result detected (provider:', redirectResult.providerId, ') - user returning from OAuth');
       } else {
-        console.log('[Login] No redirect result - user visiting page normally');
+        // Check if there was an error in the redirect
+        // Errors might be in the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+        
+        if (errorParam) {
+          console.error('[Login] OAuth error detected in URL:', errorParam, errorDescription);
+          
+          // Handle specific OAuth errors
+          if (errorParam === 'access_denied') {
+            showError('Sign-in was cancelled. Please try again.');
+          } else if (errorParam.includes('rate') || errorParam.includes('quota') || errorDescription?.toLowerCase().includes('too many')) {
+            showError('Too many sign-in attempts. Please wait a few minutes and try again.');
+          } else if (errorDescription) {
+            showError(`Sign-in error: ${errorDescription}`);
+          } else {
+            showError('Sign-in failed. Please try again.');
+          }
+          
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          console.log('[Login] No redirect result - user visiting page normally');
+        }
       }
     }
   } catch (redirectError) {
-    console.log('[Login] Error checking redirect result (non-critical):', redirectError);
+    console.error('[Login] Error checking redirect result:', redirectError);
+    
+    // Check if it's a rate limiting error
+    if (redirectError.code === 'auth/too-many-requests' || 
+        redirectError.message?.toLowerCase().includes('too many requests') ||
+        redirectError.message?.toLowerCase().includes('quota')) {
+      showError('Too many sign-in attempts. Please wait a few minutes and try again.');
+    } else if (redirectError.code === 'auth/unauthorized-domain') {
+      showError('This domain is not authorized for Google Sign-In. Please contact support.');
+    } else {
+      // Don't show error for normal cases (user just visiting page)
+      console.log('[Login] Error checking redirect result (non-critical):', redirectError.message);
+    }
   } finally {
     // Mark redirect check as complete
     redirectResultCheckComplete = true;
@@ -669,6 +730,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         // The result will be handled by getRedirectResult on page load (see DOMContentLoaded handler above)
         return;
       } catch (error) {
+        console.error('[Login] Google Sign-In error caught:', error);
+        console.error('[Login] Error code:', error.code);
+        console.error('[Login] Error message:', error.message);
+        
         // Reset button state first
         resetButtons();
 
@@ -816,6 +881,18 @@ document.addEventListener('DOMContentLoaded', async function() {
           // Network error
           console.error('[Login] Network error during Google Sign-In');
           showError('Network error. Please check your internet connection and try again.');
+        } else if (error.code === 'auth/too-many-requests') {
+          // Rate limiting error
+          console.error('[Login] Too many requests error');
+          showError('Too many sign-in attempts. Please wait a few minutes and try again.');
+        } else if (error.code === 'auth/quota-exceeded') {
+          // Quota exceeded
+          console.error('[Login] Quota exceeded error');
+          showError('Service temporarily unavailable due to high demand. Please try again in a few minutes.');
+        } else if (error.message && error.message.includes('Too many requests')) {
+          // Catch "Too many requests" in error message (may not have code)
+          console.error('[Login] Too many requests detected in error message');
+          showError('Too many sign-in attempts. Please wait a few minutes and try again.');
         } else if (error.code === 'auth/operation-not-allowed') {
           // Google provider not enabled
           console.error('[Login] Google Sign-In not enabled');

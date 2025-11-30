@@ -197,10 +197,17 @@ window.FirebaseAuth = {
       // Use redirect if requested or if popup is likely blocked
       if (useRedirect) {
         console.log('[Firebase Auth] Using redirect flow for Google Sign-In');
-        await signInWithRedirect(auth, provider);
-        // Redirect will happen, so we won't return here
-        // The result will be handled by getRedirectResult on page load
-        return null;
+        try {
+          await signInWithRedirect(auth, provider);
+          // Redirect will happen, so we won't return here
+          // The result will be handled by getRedirectResult on page load
+          return null;
+        } catch (redirectError) {
+          // Catch errors during redirect setup (e.g., rate limiting, unauthorized domain)
+          console.error('[Firebase Auth] Redirect setup error:', redirectError);
+          // Re-throw so calling code can handle it
+          throw redirectError;
+        }
       }
       
       // Try popup sign-in first
@@ -318,7 +325,8 @@ window.getFirebaseErrorMessage = function(error) {
     'auth/invalid-credential': 'Invalid email or password.',
     'auth/popup-closed-by-user': 'Sign-in popup was closed. Please try again.',
     'auth/popup-blocked': 'Sign-in popup was blocked. Please allow popups for this site.',
-    'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+    'auth/too-many-requests': 'Too many sign-in attempts. Please wait a few minutes and try again.',
+    'auth/quota-exceeded': 'Service temporarily unavailable due to high demand. Please try again in a few minutes.',
     'auth/network-request-failed': 'Network error. Please check your connection.',
     'auth/requires-recent-login': 'Please sign in again to complete this action.',
     'auth/unauthorized-domain': 'This domain is not authorized for sign-in. Please contact support.',
