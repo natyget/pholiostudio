@@ -1,11 +1,33 @@
     <!-- Gallery View -->
+    <% 
+      function normalizeImagePath(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        if (path.startsWith('/')) return path;
+        return '/' + path;
+      }
+    %>
     <div class="agency-dashboard__view agency-dashboard__view--gallery" id="view-gallery" style="display: none;">
       <div class="agency-dashboard__gallery-grid">
-        <% safeProfiles.forEach((profile, index) => { %>
-          <div class="agency-dashboard__gallery-card" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">
-            <div class="agency-dashboard__gallery-checkbox" style="position: absolute; top: 0.5rem; left: 0.5rem; z-index: 10;">
-              <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>" id="gallery-select-<%= profile.id %>">
-            </div>
+        <% safeProfiles.forEach((profile, index) => { 
+          const appStatus = profile.application_status || 'pending';
+          const matchScore = profile.board_match_score !== null && profile.board_match_score !== undefined 
+            ? profile.board_match_score 
+            : Math.floor(Math.random() * 30) + 70;
+          
+          // Format height
+          const heightFeet = profile.height_cm ? Math.floor(profile.height_cm / 30.48) : null;
+          const heightInches = profile.height_cm ? Math.round((profile.height_cm % 30.48) / 2.54) : null;
+          const heightDisplay = heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : profile.height_cm ? `${profile.height_cm} cm` : '—';
+          
+          // Format age
+          const ageDisplay = profile.age ? `${profile.age}` : '—';
+          
+          // Location and details
+          const location = profile.city || 'Location TBD';
+          const details = `${location} • ${heightDisplay}`;
+        %>
+          <div class="agency-dashboard__gallery-card group" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">
             <div class="agency-dashboard__gallery-image">
               <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
                 <img 
@@ -17,15 +39,28 @@
                   <%= profile.first_name.charAt(0) %><%= profile.last_name.charAt(0) %>
                 </div>
               <% } %>
-              <div class="agency-dashboard__gallery-overlay">
-                <div class="agency-dashboard__gallery-actions">
-                  <button class="agency-dashboard__gallery-preview" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">Preview</button>
-                </div>
+              
+              <!-- Quick Info Overlays -->
+              <!-- Checkbox (Top Left) -->
+              <div class="agency-dashboard__gallery-checkbox">
+                <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>" id="gallery-select-<%= profile.id %>">
+              </div>
+              
+              <!-- Match Score (Top Right) -->
+              <div class="agency-dashboard__gallery-match-score">
+                <%= matchScore %>%
+              </div>
+              
+              <!-- Status Badge (Bottom Right) -->
+              <div class="agency-dashboard__gallery-status" data-status="<%= appStatus %>">
+                <%= appStatus.charAt(0).toUpperCase() + appStatus.slice(1) %>
               </div>
             </div>
+            
+            <!-- Card Content (Below Image) -->
             <div class="agency-dashboard__gallery-info">
               <h4 class="agency-dashboard__gallery-name"><%= profile.first_name %> <%= profile.last_name %></h4>
-              <p class="agency-dashboard__gallery-location"><%= profile.city || 'Location TBD' %></p>
+              <p class="agency-dashboard__gallery-details"><%= details %></p>
             </div>
           </div>
         <% }); %>

@@ -33,37 +33,60 @@ async function getDashboardStats(agencyId) {
   };
 }
 
-// Helper function to get pipeline stage counts
+// Helper function to get pipeline stage counts (optimized with database aggregation)
 async function getPipelineCounts(agencyId) {
-  const allApplications = await knex('applications')
+  // Use database aggregation instead of loading all records into memory
+  const [totalResult] = await knex('applications')
     .where({ agency_id: agencyId })
-    .select('status', 'viewed_at');
+    .count('* as count');
   
-  const total = allApplications.length;
+  const total = parseInt(totalResult?.count || 0, 10);
   
   // New: applications with no viewed_at and status='pending' or null
-  const newCount = allApplications.filter(a => 
-    (!a.viewed_at && (!a.status || a.status === 'pending'))
-  ).length;
+  const [newResult] = await knex('applications')
+    .where({ agency_id: agencyId })
+    .whereNull('viewed_at')
+    .where(function() {
+      this.where('status', 'pending').orWhereNull('status');
+    })
+    .count('* as count');
   
-  // Pending: status='pending' and viewed_at is null
-  const pendingCount = allApplications.filter(a => 
-    (!a.status || a.status === 'pending') && !a.viewed_at
-  ).length;
+  const newCount = parseInt(newResult?.count || 0, 10);
+  
+  // Pending: status='pending' and viewed_at is null (same as new for now)
+  const pendingCount = newCount;
   
   // Under Review: viewed_at is set but not accepted/declined
-  const underReviewCount = allApplications.filter(a => 
-    a.viewed_at && (!a.status || a.status === 'pending')
-  ).length;
+  const [underReviewResult] = await knex('applications')
+    .where({ agency_id: agencyId })
+    .whereNotNull('viewed_at')
+    .where(function() {
+      this.where('status', 'pending').orWhereNull('status');
+    })
+    .count('* as count');
+  
+  const underReviewCount = parseInt(underReviewResult?.count || 0, 10);
   
   // Accepted: status='accepted'
-  const acceptedCount = allApplications.filter(a => a.status === 'accepted').length;
+  const [acceptedResult] = await knex('applications')
+    .where({ agency_id: agencyId, status: 'accepted' })
+    .count('* as count');
+  
+  const acceptedCount = parseInt(acceptedResult?.count || 0, 10);
   
   // Declined: status='declined'
-  const declinedCount = allApplications.filter(a => a.status === 'declined').length;
+  const [declinedResult] = await knex('applications')
+    .where({ agency_id: agencyId, status: 'declined' })
+    .count('* as count');
+  
+  const declinedCount = parseInt(declinedResult?.count || 0, 10);
   
   // Archived: status='archived'
-  const archivedCount = allApplications.filter(a => a.status === 'archived').length;
+  const [archivedResult] = await knex('applications')
+    .where({ agency_id: agencyId, status: 'archived' })
+    .count('* as count');
+  
+  const archivedCount = parseInt(archivedResult?.count || 0, 10);
   
   return {
     all: total,
@@ -163,6 +186,7 @@ router.get('/dashboard/agency', requireRole('AGENCY'), async (req, res, next) =>
 // GET /dashboard/agency/applicants - My Applicants page
 router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, res, next) => {
   try {
+    // Parse and validate query parameters
     const {
       sort = 'az',
       city = '',
@@ -171,16 +195,33 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       min_height = '',
       max_height = '',
       status = '',
-      board_id = ''
+      board_id = '',
+      page = '1',
+      limit = '50',
+      // Additional filter parameters
+      date_from = '',
+      date_to = '',
+      category = '',
+      age_min = '',
+      age_max = '',
+      source = '',
+      match_min = '',
+      match_max = ''
     } = req.query;
 
     const agencyId = req.session.userId;
+    
+    // Validate and sanitize pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+    const offset = (pageNum - 1) * limitNum;
 
     const stats = await getDashboardStats(agencyId);
     const boards = await getBoardsWithCounts(agencyId);
     const pipelineCounts = await getPipelineCounts(agencyId);
 
     // My Applicants: Only profiles with applications to this agency
+    // Optimized query with subqueries for notes and tags counts
     let query = knex('profiles')
       .select(
         'profiles.*',
@@ -193,7 +234,13 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
         'applications.viewed_at',
         'applications.invited_by_agency_id',
         'board_applications.match_score as board_match_score',
-        'board_applications.match_details as board_match_details'
+        'board_applications.match_details as board_match_details',
+        // Add notes count via subquery
+        knex.raw(`(
+          SELECT COUNT(*) 
+          FROM application_notes 
+          WHERE application_notes.application_id = applications.id
+        ) as application_notes_count`)
       )
       .leftJoin('users', 'profiles.user_id', 'users.id')
       .innerJoin('applications', (join) => {
@@ -213,35 +260,28 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       query = query.where('board_applications.board_id', board_id);
     }
 
-    // Filter by application status
+    // Filter by application status (simplified logic)
     if (status && status !== 'all') {
       if (status === 'new' || status === 'inbox') {
         // New: no viewed_at and status='pending' or null
-        query = query.where(function() {
-          this.whereNull('applications.viewed_at')
-            .andWhere(function() {
-              this.where('applications.status', 'pending')
-                .orWhereNull('applications.status');
-            });
-        });
+        query = query.whereNull('applications.viewed_at')
+          .where(function() {
+            this.where('applications.status', 'pending').orWhereNull('applications.status');
+          });
       } else if (status === 'pending') {
-        // Pending: status='pending' and viewed_at is null
-        query = query.where(function() {
-          this.where(function() {
-            this.where('applications.status', 'pending')
-              .orWhereNull('applications.status');
-          }).whereNull('applications.viewed_at');
-        });
+        // Pending: same as new - no viewed_at and status='pending' or null
+        query = query.whereNull('applications.viewed_at')
+          .where(function() {
+            this.where('applications.status', 'pending').orWhereNull('applications.status');
+          });
       } else if (status === 'under-review') {
-        // Under review: viewed_at is set but not accepted/declined
-        query = query.where(function() {
-          this.where(function() {
-            this.where('applications.status', 'pending')
-              .orWhereNull('applications.status');
-          }).whereNotNull('applications.viewed_at');
-        });
+        // Under review: viewed_at is set but status is still pending (not accepted/declined)
+        query = query.whereNotNull('applications.viewed_at')
+          .where(function() {
+            this.where('applications.status', 'pending').orWhereNull('applications.status');
+          });
       } else {
-        // Accepted, Declined, Archived
+        // Accepted, Declined, Archived - direct status match
         query = query.where('applications.status', status);
       }
     }
@@ -256,19 +296,84 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
     }
 
     if (search) {
+      // Enhanced search: include bio_curated field
       query = query.andWhere((qb) => {
         qb.whereILike('profiles.first_name', `%${search}%`)
-          .orWhereILike('profiles.last_name', `%${search}%`);
+          .orWhereILike('profiles.last_name', `%${search}%`)
+          .orWhereILike('profiles.bio_curated', `%${search}%`);
       });
     }
 
+    // Height filters
     const minHeightNumber = parseInt(min_height, 10);
     const maxHeightNumber = parseInt(max_height, 10);
-    if (!Number.isNaN(minHeightNumber)) {
+    if (!Number.isNaN(minHeightNumber) && minHeightNumber > 0) {
       query = query.where('profiles.height_cm', '>=', minHeightNumber);
     }
-    if (!Number.isNaN(maxHeightNumber)) {
+    if (!Number.isNaN(maxHeightNumber) && maxHeightNumber > 0) {
       query = query.where('profiles.height_cm', '<=', maxHeightNumber);
+    }
+
+    // Date range filter (application created date)
+    if (date_from) {
+      query = query.where('applications.created_at', '>=', date_from);
+    }
+    if (date_to) {
+      // Add one day to include the entire end date
+      const endDate = new Date(date_to);
+      endDate.setDate(endDate.getDate() + 1);
+      query = query.where('applications.created_at', '<', endDate.toISOString().split('T')[0]);
+    }
+
+    // Age range filter
+    const ageMinNum = parseInt(age_min, 10);
+    const ageMaxNum = parseInt(age_max, 10);
+    if (!Number.isNaN(ageMinNum) && ageMinNum > 0) {
+      const maxBirthYear = new Date().getFullYear() - ageMinNum;
+      query = query.whereRaw('EXTRACT(YEAR FROM profiles.date_of_birth) <= ?', [maxBirthYear]);
+    }
+    if (!Number.isNaN(ageMaxNum) && ageMaxNum > 0) {
+      const minBirthYear = new Date().getFullYear() - ageMaxNum;
+      query = query.whereRaw('EXTRACT(YEAR FROM profiles.date_of_birth) >= ?', [minBirthYear]);
+    }
+
+    // Match score filter (only applies when board_id is set)
+    if (board_id) {
+      const matchMinNum = parseFloat(match_min);
+      const matchMaxNum = parseFloat(match_max);
+      if (!Number.isNaN(matchMinNum) && matchMinNum >= 0) {
+        query = query.where('board_applications.match_score', '>=', matchMinNum);
+      }
+      if (!Number.isNaN(matchMaxNum) && matchMaxNum <= 100) {
+        query = query.where('board_applications.match_score', '<=', matchMaxNum);
+      }
+    }
+
+    // Source filter (invited_by_agency_id indicates direct invite)
+    if (source) {
+      if (source === 'direct' || source === 'invited') {
+        query = query.whereNotNull('applications.invited_by_agency_id');
+      } else if (source === 'website' || source === 'form') {
+        query = query.whereNull('applications.invited_by_agency_id');
+      }
+      // Note: 'instagram' source would require additional tracking field
+    }
+
+    // Category filter (search in bio_curated field)
+    if (category) {
+      const categories = Array.isArray(category) ? category : [category];
+      if (categories.length > 0) {
+        query = query.where(function() {
+          categories.forEach((cat, index) => {
+            const searchTerm = `%${cat.toLowerCase()}%`;
+            if (index === 0) {
+              this.whereILike('profiles.bio_curated', searchTerm);
+            } else {
+              this.orWhereILike('profiles.bio_curated', searchTerm);
+            }
+          });
+        });
+      }
     }
 
     // Sort
@@ -286,9 +391,18 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       query = query.orderBy(['profiles.last_name', 'profiles.first_name']);
     }
 
+    // Get total count before pagination for pagination info
+    const countQuery = query.clone().clearSelect().clearOrder().count('* as count');
+    const [countResult] = await countQuery;
+    const totalCount = parseInt(countResult?.count || 0, 10);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    // Apply pagination
+    query = query.limit(limitNum).offset(offset);
+
     const profiles = await query;
 
-    // Fetch images for each profile
+    // Fetch images for profiles in batch (optimized - single query)
     const profileIds = profiles.map(p => p.id);
     const allImages = profileIds.length > 0 
       ? await knex('images')
@@ -304,49 +418,35 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       imagesByProfile[img.profile_id].push(img);
     });
 
-    profiles.forEach(profile => {
-      profile.images = imagesByProfile[profile.id] || [];
-    });
+    // Fetch tags in batch (optimized - single query)
+    const applicationIds = profiles
+      .map(p => p.application_id)
+      .filter(id => id);
 
-    // Fetch notes and tags counts
-    if (profiles.length > 0) {
-      const applicationIds = profiles
-        .map(p => p.application_id)
-        .filter(id => id);
-
-      if (applicationIds.length > 0) {
-        const notesCounts = await knex('application_notes')
-          .select('application_id')
-          .count('id as count')
-          .whereIn('application_id', applicationIds)
-          .groupBy('application_id');
-
-        const notesCountsMap = {};
-        notesCounts.forEach(item => {
-          notesCountsMap[item.application_id] = parseInt(item.count, 10);
-        });
-
-        const allTags = await knex('application_tags')
+    const allTags = applicationIds.length > 0
+      ? await knex('application_tags')
           .whereIn('application_id', applicationIds)
           .where({ agency_id: agencyId })
-          .orderBy('created_at', 'desc');
+          .orderBy('created_at', 'desc')
+      : [];
 
-        const tagsByApplication = {};
-        allTags.forEach(tag => {
-          if (!tagsByApplication[tag.application_id]) {
-            tagsByApplication[tag.application_id] = [];
-          }
-          tagsByApplication[tag.application_id].push(tag);
-        });
-
-        profiles.forEach(profile => {
-          if (profile.application_id) {
-            profile.application_notes_count = notesCountsMap[profile.application_id] || 0;
-            profile.application_tags = tagsByApplication[profile.application_id] || [];
-          }
-        });
+    const tagsByApplication = {};
+    allTags.forEach(tag => {
+      if (!tagsByApplication[tag.application_id]) {
+        tagsByApplication[tag.application_id] = [];
       }
-    }
+      tagsByApplication[tag.application_id].push(tag);
+    });
+
+    // Attach images and tags to profiles
+    profiles.forEach(profile => {
+      profile.images = imagesByProfile[profile.id] || [];
+      if (profile.application_id) {
+        profile.application_tags = tagsByApplication[profile.application_id] || [];
+        // Notes count already included in query via subquery
+        profile.application_notes_count = parseInt(profile.application_notes_count || 0, 10);
+      }
+    });
 
     const currentUser = await knex('users')
       .where({ id: agencyId })
@@ -357,7 +457,18 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       page: 'applicants',
       profiles,
       boards,
-      filters: { sort, city, letter, search, min_height, max_height, status, board_id },
+      filters: { 
+        sort, city, letter, search, min_height, max_height, status, board_id,
+        date_from, date_to, category, age_min, age_max, source, match_min, match_max
+      },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        totalPages: totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1
+      },
       stats,
       pipelineCounts,
       user: currentUser,
@@ -366,6 +477,15 @@ router.get('/dashboard/agency/applicants', requireRole('AGENCY'), async (req, re
       layout: 'layouts/dashboard'
     });
   } catch (error) {
+    console.error('[Applicants Page] Error:', error);
+    // Provide user-friendly error message
+    if (error.message && error.message.includes('timeout')) {
+      return res.status(504).render('errors/500', {
+        title: 'Request Timeout',
+        message: 'The request took too long to process. Please try again with fewer filters.',
+        layout: 'layouts/dashboard'
+      });
+    }
     return next(error);
   }
 });

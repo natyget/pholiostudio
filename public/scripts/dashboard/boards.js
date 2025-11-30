@@ -31,12 +31,39 @@
       if (quickActionCreate) {
         quickActionCreate.addEventListener('click', () => this.openBoardEditor());
       }
+      
+      // Initialize menu dropdowns
+      this.initBoardMenuDropdowns();
 
       // Event delegation for board actions
       const boardsGrid = document.getElementById('boards-grid');
       if (boardsGrid) {
         boardsGrid.addEventListener('click', async (e) => {
-          // Menu / Edit / Delete Actions
+          // Menu button click - toggle dropdown
+          const menuBtn = e.target.closest('.agency-boards-page__menu-btn');
+          if (menuBtn) {
+            e.stopPropagation();
+            const boardId = menuBtn.dataset.boardId;
+            this.toggleMenuDropdown(boardId);
+            return;
+          }
+          
+          // Menu item click - handle action
+          const menuItem = e.target.closest('.agency-boards-page__menu-item');
+          if (menuItem) {
+            e.stopPropagation();
+            const action = menuItem.dataset.action;
+            const boardId = menuItem.dataset.boardId;
+            this.closeAllMenus();
+            
+            if (action === 'edit') this.openBoardEditor(boardId);
+            if (action === 'delete') this.deleteBoard(boardId);
+            if (action === 'duplicate') this.duplicateBoard(boardId);
+            if (action === 'toggle') this.toggleBoardStatus(boardId);
+            return;
+          }
+          
+          // Menu / Edit / Delete Actions (legacy support)
           const actionBtn = e.target.closest('[data-action]');
           if (actionBtn) {
               const action = actionBtn.dataset.action;
@@ -49,11 +76,23 @@
           
           // If clicking the card itself (not a button)
           const card = e.target.closest('.agency-boards-page__card');
-          if (card && !e.target.closest('button') && !e.target.closest('a')) {
+          if (card && !e.target.closest('button') && !e.target.closest('a') && !e.target.closest('.agency-boards-page__menu-dropdown')) {
              window.location.href = `/dashboard/agency/applicants?board_id=${card.dataset.boardId}`;
+          }
+          
+          // Close menus when clicking outside
+          if (!e.target.closest('.agency-boards-page__menu-wrapper')) {
+            this.closeAllMenus();
           }
         });
       }
+      
+      // Close menus when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.agency-boards-page__menu-wrapper')) {
+          this.closeAllMenus();
+        }
+      });
     },
 
     initBoardEditor() {
@@ -589,6 +628,96 @@
           window.Toast.error('Failed to duplicate board');
         }
       }
+    },
+
+    initBoardMenuDropdowns() {
+      // Set up menu button aria attributes
+      const menuButtons = document.querySelectorAll('.agency-boards-page__menu-btn');
+      menuButtons.forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+        const wrapper = btn.closest('.agency-boards-page__menu-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-open', 'false');
+        }
+      });
+    },
+
+    toggleMenuDropdown(boardId) {
+      const menuBtn = document.querySelector(`.agency-boards-page__menu-btn[data-board-id="${boardId}"]`);
+      if (!menuBtn) return;
+      
+      const wrapper = menuBtn.closest('.agency-boards-page__menu-wrapper');
+      const dropdown = wrapper?.querySelector('.agency-boards-page__menu-dropdown');
+      
+      if (!wrapper || !dropdown) return;
+      
+      const isOpen = wrapper.getAttribute('data-open') === 'true';
+      
+      // Close all other menus first
+      this.closeAllMenus();
+      
+      if (!isOpen) {
+        // Open this menu
+        wrapper.setAttribute('data-open', 'true');
+        dropdown.classList.add('is-open');
+        menuBtn.setAttribute('aria-expanded', 'true');
+      }
+    },
+
+    closeAllMenus() {
+      const openMenus = document.querySelectorAll('.agency-boards-page__menu-wrapper[data-open="true"]');
+      openMenus.forEach(wrapper => {
+        wrapper.setAttribute('data-open', 'false');
+        const dropdown = wrapper.querySelector('.agency-boards-page__menu-dropdown');
+        const btn = wrapper.querySelector('.agency-boards-page__menu-btn');
+        if (dropdown) dropdown.classList.remove('is-open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    },
+
+    initBoardMenuDropdowns() {
+      // Set up menu button aria attributes
+      const menuButtons = document.querySelectorAll('.agency-boards-page__menu-btn');
+      menuButtons.forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+        const wrapper = btn.closest('.agency-boards-page__menu-wrapper');
+        if (wrapper) {
+          wrapper.setAttribute('data-open', 'false');
+        }
+      });
+    },
+
+    toggleMenuDropdown(boardId) {
+      const menuBtn = document.querySelector(`.agency-boards-page__menu-btn[data-board-id="${boardId}"]`);
+      if (!menuBtn) return;
+      
+      const wrapper = menuBtn.closest('.agency-boards-page__menu-wrapper');
+      const dropdown = wrapper?.querySelector('.agency-boards-page__menu-dropdown');
+      
+      if (!wrapper || !dropdown) return;
+      
+      const isOpen = wrapper.getAttribute('data-open') === 'true';
+      
+      // Close all other menus first
+      this.closeAllMenus();
+      
+      if (!isOpen) {
+        // Open this menu
+        wrapper.setAttribute('data-open', 'true');
+        dropdown.classList.add('is-open');
+        menuBtn.setAttribute('aria-expanded', 'true');
+      }
+    },
+
+    closeAllMenus() {
+      const openMenus = document.querySelectorAll('.agency-boards-page__menu-wrapper[data-open="true"]');
+      openMenus.forEach(wrapper => {
+        wrapper.setAttribute('data-open', 'false');
+        const dropdown = wrapper.querySelector('.agency-boards-page__menu-dropdown');
+        const btn = wrapper.querySelector('.agency-boards-page__menu-btn');
+        if (dropdown) dropdown.classList.remove('is-open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
     },
 
     async toggleBoardStatus(boardId) {

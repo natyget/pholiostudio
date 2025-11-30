@@ -1,4 +1,12 @@
 <%
+  // Helper function to normalize image paths
+  function normalizeImagePath(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/')) return path;
+    return '/' + path;
+  }
+
   // Format location
   const location = profile.city && profile.country 
     ? `${profile.city.toUpperCase()}, ${profile.country.toUpperCase()}`
@@ -38,11 +46,6 @@
       </label>
     </div>
 
-    <!-- Match/Status Indicator (Top Right) -->
-    <div class="discover-card__indicator">
-      <span class="discover-card__indicator-dot"></span>
-    </div>
-
     <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
       <img 
         src="<%= normalizeImagePath(profile.hero_image_path || (profile.images && profile.images[0] ? profile.images[0].path : '')) %>" 
@@ -55,6 +58,11 @@
         <%= (profile.first_name || 'T').charAt(0).toUpperCase() %><%= (profile.last_name || 'T').charAt(0).toUpperCase() %>
       </div>
     <% } %>
+    
+    <!-- Match Badge (Top Right) -->
+    <div class="discover-card__match-badge">
+      <%= matchScore %>% MATCH
+    </div>
     
     <!-- Hover Overlay (View Profile Button Only) -->
     <div class="discover-card__overlay">

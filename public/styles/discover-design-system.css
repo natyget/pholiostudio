@@ -66,7 +66,7 @@
 /* Discover page container */
 .agency-dashboard__content[data-page="discover"],
 .agency-dashboard__content[data-page="scout"] {
-  background: var(--discover-cream);
+  background: #fafaf9; /* bg-stone-50 - Slight contrast with white modal */
   min-height: 100vh;
 }
 
@@ -76,6 +76,16 @@
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  color: inherit; /* Allow parent color to take precedence */
+}
+
+/* Override for hero title - ensure gradient is visible */
+.discover-hero__title.discover-title,
+.discover-hero__title {
+  font-size: 3.75rem !important; /* text-6xl - Match command-bar.css */
+  font-weight: 500 !important; /* font-medium */
+  opacity: 1 !important;
+  /* Allow gradient to show - don't override background-clip or text-fill-color */
 }
 
 .discover-subtitle {

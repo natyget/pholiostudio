@@ -55,8 +55,11 @@
       this.currentGreeting = greeting;
       this.agencyName = agencyName;
       
-      // Update the greeting text (will be enhanced by dynamic header system)
-      greetingElement.textContent = `${greeting}, ${agencyName}`;
+      // Update only the greeting time text (agency name stays in template with gradient)
+      const greetingTimeElement = document.getElementById('greeting-time');
+      if (greetingTimeElement) {
+        greetingTimeElement.textContent = `${greeting},`;
+      }
     },
 
     /**
@@ -313,16 +316,10 @@
      * Update dynamic header and subheader
      */
     updateDynamicText() {
-      const greetingElement = document.getElementById('overview-greeting');
-      const subheaderElement = document.querySelector('.agency-overview__greeting-subtitle');
-      
-      if (greetingElement) {
-        greetingElement.textContent = this.getDynamicHeader();
-      }
-      
-      if (subheaderElement) {
-        subheaderElement.textContent = this.getDynamicSubheader();
-      }
+      // Note: Greeting structure is now static in template with gradient agency name
+      // Only the time-based greeting text is updated by updateGreeting()
+      // Subtitle is also static now: "Here is what is happening with your roster today."
+      // No longer updating dynamically to preserve the new design structure
     },
 
     /**

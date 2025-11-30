@@ -32,6 +32,7 @@
             placeholder="Search applicants by name, location..." 
             class="agency-applicants-header__search-input"
             id="applicants-search-input"
+            value="<%= typeof filters !== 'undefined' && filters.search ? filters.search : '' %>"
           />
         </div>
         
@@ -92,30 +93,44 @@
       </div>
     <% } %>
     
-    <!-- Status Pills Row (only show if there are applicants) -->
+    <!-- Status Tabs Row (only show if there are applicants) -->
     <% if (hasApplicants) { %>
       <div class="agency-applicants-header__status-row">
-        <div class="applicants-status-pills">
+        <div class="applicants-status-tabs">
           <button 
-            class="applicants-status-pill <%= currentStatus === 'all' ? 'applicants-status-pill--active' : '' %>" 
+            class="applicants-status-tab <%= currentStatus === 'all' ? 'applicants-status-tab--active' : '' %>" 
             data-status="all"
+            title="View all applicants"
           >
-            <span class="applicants-status-pill__label">All</span>
-            <span class="applicants-status-pill__count"><%= safePipelineCounts.all %></span>
+            All (<%= safePipelineCounts.all %>)
           </button>
           <button 
-            class="applicants-status-pill <%= currentStatus === 'pending' ? 'applicants-status-pill--active' : '' %>" 
+            class="applicants-status-tab <%= currentStatus === 'new' ? 'applicants-status-tab--active' : '' %>" 
+            data-status="new"
+            title="New applications that haven't been viewed"
+          >
+            New (<%= safePipelineCounts.new %>)
+          </button>
+          <button 
+            class="applicants-status-tab <%= currentStatus === 'pending' ? 'applicants-status-tab--active' : '' %>" 
             data-status="pending"
+            title="Pending review"
           >
-            <span class="applicants-status-pill__label">Pending</span>
-            <span class="applicants-status-pill__count"><%= safePipelineCounts.pending %></span>
+            Pending (<%= safePipelineCounts.pending %>)
           </button>
           <button 
-            class="applicants-status-pill <%= currentStatus === 'under-review' ? 'applicants-status-pill--active' : '' %>" 
+            class="applicants-status-tab <%= currentStatus === 'under-review' ? 'applicants-status-tab--active' : '' %>" 
             data-status="under-review"
+            title="Currently under review"
           >
-            <span class="applicants-status-pill__label">Under Review</span>
-            <span class="applicants-status-pill__count"><%= safePipelineCounts['under-review'] %></span>
+            Under Review (<%= safePipelineCounts['under-review'] %>)
+          </button>
+          <button 
+            class="applicants-status-tab <%= currentStatus === 'accepted' ? 'applicants-status-tab--active' : '' %>" 
+            data-status="accepted"
+            title="Accepted applicants"
+          >
+            Accepted (<%= safePipelineCounts.accepted %>)
           </button>
         </div>
         

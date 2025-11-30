@@ -17,9 +17,26 @@
             const heightFeet = profile.height_cm ? Math.floor(profile.height_cm / 30.48) : null;
             const heightInches = profile.height_cm ? Math.round((profile.height_cm % 30.48) / 2.54) : null;
             const heightDisplay = heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : profile.height_cm ? `${profile.height_cm} cm` : '--';
-            const ageDisplay = profile.age ? `${profile.age} Years` : '--';
+            const ageDisplay = profile.age ? `${profile.age}` : '--';
           %>
           <div class="agency-dashboard__scout-list-item" data-profile-id="<%= profile.id %>">
+            <!-- Selection Checkbox (Far Left) -->
+            <div class="agency-dashboard__scout-list-select">
+              <label class="agency-dashboard__scout-list-checkbox-label">
+                <input 
+                  type="checkbox" 
+                  class="agency-dashboard__scout-list-checkbox"
+                  data-profile-id="<%= profile.id %>"
+                  aria-label="Select <%= profile.first_name %>"
+                />
+                <span class="agency-dashboard__scout-list-checkbox-custom">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </label>
+            </div>
+
             <div class="agency-dashboard__scout-list-image">
               <% if (profile.hero_image_path || (profile.images && profile.images.length > 0)) { %>
                 <img 
@@ -31,9 +48,6 @@
                   <%= (profile.first_name || 'T').charAt(0).toUpperCase() %><%= (profile.last_name || 'T').charAt(0).toUpperCase() %>
                 </div>
               <% } %>
-              <% if (isNewFace) { %>
-                <span class="agency-dashboard__scout-list-badge agency-dashboard__scout-list-badge--new">NEW</span>
-              <% } %>
             </div>
             
             <div class="agency-dashboard__scout-list-content">
@@ -43,43 +57,23 @@
                     <%= profile.first_name %> <%= profile.last_name %>
                   </a>
                 </h3>
-                <div class="agency-dashboard__scout-list-badges">
-                  <span class="agency-dashboard__scout-list-badge agency-dashboard__scout-list-badge--experience agency-dashboard__scout-list-badge--<%= experienceLevel.toLowerCase().replace(' ', '-') %>">
-                    <%= experienceLevel %>
-                  </span>
-                  <% if (matchScore >= 80) { %>
-                    <span class="agency-dashboard__scout-list-badge agency-dashboard__scout-list-badge--match agency-dashboard__scout-list-badge--match-<%= matchScoreClass %>">
-                      <%= matchScore %>% Match
-                    </span>
-                  <% } %>
-                </div>
               </div>
               
               <div class="agency-dashboard__scout-list-details">
-                <div class="agency-dashboard__scout-list-detail">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  <span><%= location %></span>
-                </div>
-                <div class="agency-dashboard__scout-list-detail">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="2" x2="12" y2="22"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
-                  <span><%= heightDisplay %></span>
-                </div>
-                <div class="agency-dashboard__scout-list-detail">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span><%= ageDisplay %></span>
-                </div>
+                <span class="agency-dashboard__scout-list-stats">
+                  <%= location %> • <%= heightDisplay %> • <%= ageDisplay %>
+                </span>
               </div>
             </div>
             
+            <% if (matchScore >= 80) { %>
+              <div class="agency-dashboard__scout-list-match-score">
+                <span class="agency-dashboard__scout-list-match-percentage"><%= matchScore %>%</span>
+                <span class="agency-dashboard__scout-list-match-label">Match</span>
+              </div>
+            <% } else { %>
+              <div></div>
+            <% } %>
             <div class="agency-dashboard__scout-list-actions">
               <button 
                 class="agency-dashboard__scout-list-preview" 

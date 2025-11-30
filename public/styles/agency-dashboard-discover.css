@@ -3,38 +3,20 @@
    ============================================ */
 
 .discover-hero {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2d1f0e 100%);
-  border-radius: 16px;
+  background: transparent; /* Remove hard background - let ambient glow show through */
+  border-radius: 0; /* Remove hard corners */
   padding: 3rem 2.5rem;
   margin: -2rem -2rem 3rem -2rem;
-  color: #ffffff;
+  color: #0c0a09; /* Changed from #ffffff to dark - don't inherit white */
   position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(201, 165, 90, 0.1);
+  overflow: visible; /* Allow glow to extend */
+  border: none; /* Remove hard border */
+  box-shadow: none; /* Remove hard shadow */
 }
 
-.discover-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 20% 50%, var(--agency-brand-color-light, rgba(201, 165, 90, 0.25)) 0%, transparent 60%),
-              radial-gradient(circle at 80% 80%, rgba(201, 165, 90, 0.15) 0%, transparent 50%);
-  pointer-events: none;
-}
+/* Removed ::before pseudo-element - using ambient aura from discover-command-bar.css instead */
 
-.discover-hero::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--agency-brand-color, #C9A55A) 50%, transparent 100%);
-  pointer-events: none;
-}
+/* Removed ::after pseudo-element - using ambient aura from discover-command-bar.css instead */
 
 .discover-hero__content {
   position: relative;
@@ -53,11 +35,8 @@
   font-weight: 700;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, var(--agency-brand-color-light, rgba(201, 165, 90, 0.9)) 50%, #ffffff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   font-family: var(--agency-font-serif, 'Noto Serif Display', serif);
+  /* Allow gradient from discover-command-bar.css to show */
 }
 
 .discover-hero__subtitle {
@@ -469,26 +448,95 @@
   color: #64748b;
 }
 
-.discover-controls__sort-select {
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+/* Custom Sort Dropdown */
+.discover-sort-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.discover-sort-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  min-width: 120px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   color: #0f172a;
-  background: #ffffff;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.discover-controls__sort-select:hover {
-  border-color: var(--agency-brand-color-light, rgba(201, 165, 90, 0.3));
+.discover-sort-dropdown__trigger:hover {
+  background: #fafaf9;
+  border-color: #d1d5db;
 }
 
-.discover-controls__sort-select:focus {
-  outline: none;
-  border-color: var(--agency-brand-color, #C9A55A);
-  box-shadow: 0 0 0 3px var(--agency-brand-color-light, rgba(201, 165, 90, 0.15)),
-              0 2px 4px var(--agency-brand-color-light, rgba(201, 165, 90, 0.1));
+.discover-sort-dropdown__trigger svg {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.discover-sort-dropdown.is-open .discover-sort-dropdown__trigger svg {
+  transform: rotate(180deg);
+}
+
+.discover-sort-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 50;
+  min-width: 192px; /* w-48 */
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 0.25rem;
+  display: none;
+  flex-direction: column;
+}
+
+.discover-sort-dropdown.is-open .discover-sort-dropdown__menu {
+  display: flex;
+}
+
+.discover-sort-dropdown__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.discover-sort-dropdown__item:hover {
+  background: #fafaf9;
+  color: #000000;
+}
+
+.discover-sort-dropdown__item--active {
+  font-weight: 600;
+  color: #000000;
+}
+
+.discover-sort-dropdown__check {
+  width: 16px;
+  height: 16px;
+  color: #000000;
+  display: none;
+  flex-shrink: 0;
 }
 
 .discover-controls__filters-btn {
@@ -590,11 +638,24 @@
   display: block;
 }
 
+.discover-view--active.discover-view--grid {
+  display: block; /* Grid container uses block, inner grid uses grid */
+}
+
+.discover-view--active.discover-view--list {
+  display: block; /* List container uses block */
+}
+
 .discover-view--active.agency-dashboard__empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* Ensure inactive views are hidden */
+.discover-view:not(.discover-view--active) {
+  display: none !important;
 }
 
 /* ============================================
@@ -1032,88 +1093,7 @@
 }
 
 /* Boards Grid Styles */
-.agency-boards-page__card-images {
-  position: relative;
-  width: 100%;
-  padding-top: 75%; /* 4:3 aspect ratio */
-  background: #f8fafc;
-  overflow: hidden;
-}
-
-.agency-boards-page__image-grid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 2px;
-}
-
-.agency-boards-page__grid-image {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.agency-boards-page__grid-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.agency-dashboard__scout-card:hover .agency-boards-page__grid-image img {
-  transform: scale(1.05);
-}
-
-.agency-boards-page__image-placeholder,
-.agency-boards-page__card-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.agency-boards-page__card-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.agency-boards-page__menu-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  color: var(--agency-text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s ease;
-  opacity: 0;
-}
-
-.agency-dashboard__scout-card:hover .agency-boards-page__menu-btn {
-  opacity: 1;
-}
-
-.agency-boards-page__menu-btn:hover {
-  background: #ffffff;
-  color: var(--agency-text-primary);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* Board card styles moved to agency-dashboard.css */
 
 /* ============================================
    Trending Talent Section
@@ -1492,15 +1472,73 @@
 }
 
 .agency-dashboard__scout-list-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto; /* checkbox, avatar, info, match score, actions */
+  gap: 1.5rem; /* gap-6 */
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.25rem;
+  padding: 1rem 1.5rem; /* px-6 py-4 */
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
+/* Selection Checkbox (Far Left) */
+.agency-dashboard__scout-list-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.5rem; /* Add breathing room from left edge */
+}
+
+.agency-dashboard__scout-list-checkbox {
+  display: none;
+}
+
+.agency-dashboard__scout-list-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.agency-dashboard__scout-list-checkbox-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem; /* w-4 */
+  height: 1rem; /* h-4 */
+  border-radius: 0.25rem; /* rounded */
+  background: transparent;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.agency-dashboard__scout-list-checkbox-label:hover .agency-dashboard__scout-list-checkbox-custom {
+  border-color: #9ca3af; /* border-gray-400 */
+}
+
+.agency-dashboard__scout-list-checkbox:checked + .agency-dashboard__scout-list-checkbox-custom {
+  background: #000000; /* text-black */
+  border-color: #000000;
+}
+
+.agency-dashboard__scout-list-checkbox:focus + .agency-dashboard__scout-list-checkbox-custom {
+  outline: 2px solid #000000; /* focus:ring-black */
+  outline-offset: 2px;
+}
+
+.agency-dashboard__scout-list-checkbox-custom svg {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s ease;
+}
+
+.agency-dashboard__scout-list-checkbox:checked + .agency-dashboard__scout-list-checkbox-custom svg {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .agency-dashboard__scout-list-item:hover {
@@ -1511,10 +1549,10 @@
 
 .agency-dashboard__scout-list-image {
   position: relative;
-  width: 80px;
-  height: 100px;
+  width: 64px; /* w-16 */
+  height: 96px; /* h-24 - Aspect 2:3 */
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 0.125rem; /* rounded-sm */
   overflow: hidden;
   background: #f8fafc;
 }
@@ -1550,17 +1588,25 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.agency-dashboard__scout-list-badge--new {
-  background: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
+/* New Face Dot (Blue Dot) - Inside Avatar */
+.agency-dashboard__scout-list-new-dot {
+  position: absolute;
+  top: 0.25rem; /* top-1 */
+  right: 0.25rem; /* right-1 */
+  width: 0.5rem; /* w-2 */
+  height: 0.5rem; /* h-2 */
+  background: #3b82f6; /* bg-blue-500 */
+  border-radius: 50%; /* rounded-full */
+  box-shadow: 0 0 0 2px #ffffff; /* ring-2 ring-white */
+  z-index: 10;
 }
 
 .agency-dashboard__scout-list-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   min-width: 0;
+  align-items: flex-start;
 }
 
 .agency-dashboard__scout-list-header {
@@ -1576,6 +1622,9 @@
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .agency-dashboard__scout-list-name a {
@@ -1591,6 +1640,15 @@
   text-underline-offset: 3px;
   text-decoration-color: var(--agency-brand-color-light, rgba(201, 165, 90, 0.5));
   text-underline-offset: 3px;
+}
+
+/* Match Score - Right aligned, fixed width */
+.agency-dashboard__scout-list-match-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  text-align: right;
+  min-width: 80px; /* Fixed width for alignment */
 }
 
 .agency-dashboard__scout-list-badges {
@@ -1645,10 +1703,39 @@
   color: #ffffff;
 }
 
+/* Match Score - Polished Format */
+.agency-dashboard__scout-list-match-percentage {
+  font-family: var(--agency-font-serif, 'Noto Serif Display', serif);
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 600;
+  font-style: italic;
+  color: #d4af37; /* text-[#d4af37] - Gold */
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.agency-dashboard__scout-list-match-label {
+  font-family: var(--agency-font-sans, 'Inter', sans-serif);
+  font-size: 0.625rem; /* text-[10px] */
+  font-weight: 500;
+  color: #9ca3af; /* text-gray-400 */
+  text-transform: uppercase;
+  letter-spacing: 0.1em; /* tracking-widest */
+  margin-left: 0.5rem; /* ml-2 */
+}
+
 .agency-dashboard__scout-list-details {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.agency-dashboard__scout-list-stats {
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  color: #78716c; /* text-stone-500 */
+  text-transform: uppercase;
+  letter-spacing: 0.05em; /* tracking-wide */
 }
 
 .agency-dashboard__scout-list-detail {
@@ -1661,16 +1748,25 @@
 }
 
 .agency-dashboard__scout-list-detail svg {
-  width: 14px;
-  height: 14px;
-  color: #94a3b8;
+  width: 12px; /* w-3 */
+  height: 12px; /* h-3 */
+  color: #a8a29e; /* text-stone-400 */
   flex-shrink: 0;
+}
+
+.agency-dashboard__scout-list-detail-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #78716c; /* text-stone-500 */
+  margin-right: 0.25rem;
 }
 
 .agency-dashboard__scout-list-actions {
   display: flex;
   gap: 0.75rem;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: fit-content;
 }
 
 .agency-dashboard__scout-list-preview,
@@ -1678,7 +1774,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: 0.375rem 1rem; /* py-1.5 - Reduced from 0.625rem */
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -1695,9 +1791,14 @@
 }
 
 .agency-dashboard__scout-list-invite {
-  background: #0f172a;
-  color: #ffffff;
-  border-color: #0f172a;
+  background: #000000; /* bg-black */
+  color: #ffffff; /* text-white */
+  border-color: #000000;
+}
+
+.agency-dashboard__scout-list-invite:hover:not(:disabled) {
+  background: #292524; /* hover:bg-stone-800 */
+  border-color: #292524;
 }
 
 .agency-dashboard__scout-list-invite:hover:not(:disabled) {

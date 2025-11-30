@@ -10,6 +10,8 @@
     currentView: 'grid',
     searchHistory: [],
     filterState: {},
+    sortBy: 'relevance',
+    profiles: [],
 
     init() {
       this.initHeroSearch();
@@ -263,8 +265,13 @@
         });
       });
 
-      // Load saved view preference
+      // Load saved view preference and initialize
       const savedView = localStorage.getItem('discover-view-mode') || 'grid';
+      // Ensure initial state is set correctly
+      if (gridView && listView) {
+        gridView.classList.remove('discover-view--active');
+        listView.classList.remove('discover-view--active');
+      }
       this.switchView(savedView);
     },
 
@@ -649,41 +656,248 @@
     },
 
     initDiscoverPage() {
-      const sortSelect = document.getElementById('discover-sort');
-      if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-          const url = new URL(window.location.href);
-          url.searchParams.set('sort', e.target.value);
-          window.location.href = url.toString();
-        });
+      // Load profiles from window data
+      if (window.AGENCY_DASHBOARD_DATA && window.AGENCY_DASHBOARD_DATA.profiles) {
+        this.profiles = [...window.AGENCY_DASHBOARD_DATA.profiles];
       }
       
-      // Quick View Handlers
+      // Initialize sort dropdown
+      this.initSortDropdown();
+      
+      // Quick View Handlers - Use the same drawer as applicants/inbox
       document.querySelectorAll('.agency-dashboard__scout-preview-btn, .agency-dashboard__scout-list-preview').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           const profileId = btn.dataset.profileId;
-          if (profileId) {
-            this.openQuickPreview(profileId);
+          if (profileId && window.AgencyDashboard?.Applicants?.openApplicationDetail) {
+            window.AgencyDashboard.Applicants.openApplicationDetail(profileId);
           }
         });
       });
 
-      // Card click handlers (open quick preview)
+      // Card click handlers (open preview using same drawer)
       document.querySelectorAll('.agency-dashboard__scout-card, .agency-dashboard__scout-list-item').forEach(card => {
         card.addEventListener('click', (e) => {
           // Don't trigger if clicking a button
           if (e.target.closest('button') || e.target.closest('a')) return;
           
           const profileId = card.dataset.profileId;
-          if (profileId) {
-            this.openQuickPreview(profileId);
+          if (profileId && window.AgencyDashboard?.Applicants?.openApplicationDetail) {
+            window.AgencyDashboard.Applicants.openApplicationDetail(profileId);
           }
         });
       });
 
       // Filter toggle removed - sidebar no longer used
+    },
+
+    initSortDropdown() {
+      const dropdown = document.getElementById('discover-sort-dropdown');
+      const trigger = document.getElementById('discover-sort-trigger');
+      const menu = document.getElementById('discover-sort-menu');
+      const triggerText = document.getElementById('discover-sort-trigger-text');
+      const items = menu?.querySelectorAll('.discover-sort-dropdown__item');
+      
+      if (!dropdown || !trigger || !menu) return;
+
+      // Get initial sort from URL or default to 'relevance'
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialSort = urlParams.get('sort') || 'relevance';
+      this.sortBy = initialSort;
+      this.updateSortDropdown(initialSort, triggerText, items);
+      this.applySorting();
+
+      // Toggle dropdown
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.contains('is-open');
+        if (isOpen) {
+          dropdown.classList.remove('is-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        } else {
+          dropdown.classList.add('is-open');
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      // Handle item clicks
+      items?.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sortValue = item.dataset.sort;
+          this.sortBy = sortValue;
+          this.updateSortDropdown(sortValue, triggerText, items);
+          this.applySorting();
+          dropdown.classList.remove('is-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+          dropdown.classList.remove('is-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && dropdown.classList.contains('is-open')) {
+          dropdown.classList.remove('is-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    },
+
+    updateSortDropdown(activeSort, triggerText, items) {
+      const sortLabels = {
+        'relevance': 'Relevance',
+        'newest': 'Newest First',
+        'az': 'A-Z'
+      };
+
+      if (triggerText) {
+        triggerText.textContent = sortLabels[activeSort] || 'Relevance';
+      }
+
+      items?.forEach(item => {
+        const check = item.querySelector('.discover-sort-dropdown__check');
+        if (item.dataset.sort === activeSort) {
+          item.classList.add('discover-sort-dropdown__item--active');
+          if (check) check.style.display = 'block';
+        } else {
+          item.classList.remove('discover-sort-dropdown__item--active');
+          if (check) check.style.display = 'none';
+        }
+      });
+    },
+
+    applySorting() {
+      if (!this.profiles || this.profiles.length === 0) return;
+
+      const sorted = this.getSortedProfiles([...this.profiles]);
+      
+      // Re-render both grid and list views
+      this.renderProfiles(sorted);
+    },
+
+    getSortedProfiles(profiles) {
+      switch (this.sortBy) {
+        case 'relevance':
+          // Sort by AI match score descending (highest score first)
+          return profiles.sort((a, b) => {
+            const scoreA = a.match_score || 0;
+            const scoreB = b.match_score || 0;
+            // Primary sort: match score descending
+            if (scoreB !== scoreA) {
+              return scoreB - scoreA;
+            }
+            // Secondary sort: if scores are equal, sort by last name then first name
+            const lastNameA = (a.last_name || '').trim().toLowerCase();
+            const lastNameB = (b.last_name || '').trim().toLowerCase();
+            const lastNameCompare = lastNameA.localeCompare(lastNameB);
+            if (lastNameCompare !== 0) {
+              return lastNameCompare;
+            }
+            const firstNameA = (a.first_name || '').trim().toLowerCase();
+            const firstNameB = (b.first_name || '').trim().toLowerCase();
+            return firstNameA.localeCompare(firstNameB);
+          });
+
+        case 'newest':
+          // Sort by created_at descending
+          return profiles.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+            const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+            return dateB - dateA;
+          });
+
+        case 'az':
+          // Sort alphabetically by last name, then first name (A-Z ascending)
+          return profiles.sort((a, b) => {
+            // Get last names, fallback to empty string if missing
+            const lastNameA = (a.last_name || '').trim().toLowerCase();
+            const lastNameB = (b.last_name || '').trim().toLowerCase();
+            
+            // Compare last names first
+            const lastNameCompare = lastNameA.localeCompare(lastNameB);
+            if (lastNameCompare !== 0) {
+              return lastNameCompare;
+            }
+            
+            // If last names are equal, compare first names
+            const firstNameA = (a.first_name || '').trim().toLowerCase();
+            const firstNameB = (b.first_name || '').trim().toLowerCase();
+            return firstNameA.localeCompare(firstNameB);
+          });
+
+        default:
+          return profiles;
+      }
+    },
+
+    renderProfiles(sortedProfiles) {
+      // Create a map of profile ID to index for quick lookup
+      const profileIndexMap = new Map();
+      sortedProfiles.forEach((profile, index) => {
+        profileIndexMap.set(profile.id, index);
+      });
+
+      // Get grid and list containers - preserve current view mode
+      const gridView = document.getElementById('discover-talent-grid');
+      const listView = document.getElementById('discover-talent-list');
+      
+      // Determine current view mode - don't reset it
+      const isGridView = gridView?.classList.contains('discover-view--active') || 
+                        (!listView?.classList.contains('discover-view--active') && this.currentView === 'grid');
+
+      if (isGridView && gridView) {
+        const grid = gridView.querySelector('.discover-grid');
+        if (grid) {
+          // Get all existing cards
+          const cards = Array.from(grid.querySelectorAll('.discover-card[data-profile-id]'));
+          
+          // Sort cards by their profile index in the sorted array
+          cards.sort((a, b) => {
+            const idA = a.dataset.profileId;
+            const idB = b.dataset.profileId;
+            const indexA = profileIndexMap.get(idA) ?? Infinity;
+            const indexB = profileIndexMap.get(idB) ?? Infinity;
+            return indexA - indexB;
+          });
+          
+          // Re-append cards in sorted order (this preserves all classes and structure)
+          // Use DocumentFragment for better performance
+          const fragment = document.createDocumentFragment();
+          cards.forEach(card => {
+            fragment.appendChild(card);
+          });
+          grid.appendChild(fragment);
+        }
+      } else if (listView) {
+        const items = Array.from(listView.querySelectorAll('.agency-dashboard__scout-list-item[data-profile-id]'));
+        // Sort items by their profile index
+        items.sort((a, b) => {
+          const idA = a.dataset.profileId;
+          const idB = b.dataset.profileId;
+          const indexA = profileIndexMap.get(idA) ?? Infinity;
+          const indexB = profileIndexMap.get(idB) ?? Infinity;
+          return indexA - indexB;
+        });
+        // Re-append in sorted order
+        const fragment = document.createDocumentFragment();
+        items.forEach(item => {
+          fragment.appendChild(item);
+        });
+        listView.appendChild(fragment);
+      }
+
+      // Update URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.set('sort', this.sortBy);
+      window.history.pushState({}, '', url);
     },
 
     initKeyboardShortcuts() {

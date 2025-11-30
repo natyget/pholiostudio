@@ -1385,6 +1385,73 @@ router.get('/api/agency/applications/:applicationId/details', requireRole('AGENC
   }
 });
 
+// GET /api/agency/profiles/:profileId/details - Get profile details (for discover/scout view)
+router.get('/api/agency/profiles/:profileId/details', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { profileId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Get profile
+    const profile = await knex('profiles')
+      .where({ id: profileId, is_discoverable: true })
+      .first();
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found or not discoverable' });
+    }
+
+    // Get all images
+    const images = await knex('images')
+      .where({ profile_id: profileId })
+      .orderBy(['sort', 'created_at']);
+
+    // Get user info
+    const user = await knex('users')
+      .where({ id: profile.user_id })
+      .first();
+
+    // Check if there's an existing application for this profile
+    const application = await knex('applications')
+      .where({ profile_id: profileId, agency_id: agencyId })
+      .first();
+
+    // If application exists, get notes and tags
+    let notes = [];
+    let tags = [];
+    if (application) {
+      notes = await knex('application_notes')
+        .where({ application_id: application.id })
+        .orderBy('created_at', 'desc');
+      
+      tags = await knex('application_tags')
+        .where({ application_id: application.id, agency_id: agencyId })
+        .orderBy('created_at', 'desc');
+    }
+
+    return res.json({
+      application: application ? {
+        id: application.id,
+        status: application.status,
+        created_at: application.created_at,
+        accepted_at: application.accepted_at,
+        declined_at: application.declined_at,
+        viewed_at: application.viewed_at,
+        invited_by_agency_id: application.invited_by_agency_id
+      } : null,
+      profile: {
+        ...profile,
+        images,
+        user_email: user?.email || null
+      },
+      notes,
+      tags
+    });
+  } catch (error) {
+    console.error('[Profile Details API] Error:', error);
+    return res.status(500).json({ error: 'Failed to fetch profile details' });
+  }
+});
+
 // GET /api/agency/analytics - Get detailed analytics
 router.get('/api/agency/analytics', requireRole('AGENCY'), async (req, res, next) => {
   try {

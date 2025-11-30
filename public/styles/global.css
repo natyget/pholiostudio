@@ -17072,12 +17072,14 @@ body.filmstrip-hover {
   grid-template-columns: 1fr; /* sm: 1 column */
   gap: 1rem; /* gap-4 */
   animation: fadeInUp 1s ease-out 0.2s both;
+  align-items: start; /* Force top alignment */
 }
 
 /* Tablet: md breakpoint (2 columns) */
 @media (min-width: 768px) {
   .homepage-portfolio-showcase__grid {
     grid-template-columns: repeat(2, 1fr);
+    align-items: start; /* Force top alignment */
   }
 }
 
@@ -17085,6 +17087,8 @@ body.filmstrip-hover {
 @media (min-width: 1024px) {
   .homepage-portfolio-showcase__grid {
     grid-template-columns: repeat(3, 1fr);
+    align-items: start; /* Force top alignment */
+    grid-auto-rows: 1fr; /* Force equal row heights */
   }
 }
 
@@ -17120,6 +17124,7 @@ body.filmstrip-hover {
   border: none;
   width: 100%;
   display: block;
+  align-self: start; /* Force top alignment in grid */
 }
 
 .homepage-portfolio-showcase__card.visible {
@@ -17130,10 +17135,14 @@ body.filmstrip-hover {
 /* Vary aspect ratios */
 .homepage-portfolio-showcase__card--portrait {
   aspect-ratio: 3 / 4;
+  height: 100%; /* Force full height */
 }
 
 .homepage-portfolio-showcase__card--landscape {
   aspect-ratio: 4 / 3;
+  height: 100%; /* Force full height */
+  /* Force alignment with portrait cards by matching row height */
+  align-self: start; /* Align to top of grid cell */
 }
 
 .homepage-portfolio-showcase__card:hover {

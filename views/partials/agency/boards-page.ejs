@@ -1,6 +1,6 @@
 <!-- Boards Page Content -->
 <section class="agency-boards-page">
-  <div class="agency-dashboard__scout-grid" id="boards-grid">
+  <div class="agency-boards-page__grid" id="boards-grid">
     <% if (safeBoards.length === 0) { %>
       <div class="agency-dashboard__empty-state">
         <div class="agency-dashboard__empty-icon">
@@ -17,28 +17,84 @@
       </div>
     <% } else { %>
       <% safeBoards.forEach((board) => { %>
-        <div class="agency-dashboard__scout-card agency-boards-page__card" data-board-id="<%= board.id %>">
+        <%
+          // Get applications for this board
+          const boardApplications = board.applications || [];
+          const imageCount = Math.min(boardApplications.length, 4);
+          
+          // Format date
+          const createdDate = board.created_at ? new Date(board.created_at) : new Date();
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const formattedDate = `${monthNames[createdDate.getMonth()]} ${createdDate.getDate()}`;
+          
+          // Helper to normalize image paths
+          function normalizeImagePath(path) {
+            if (!path) return '';
+            if (path.startsWith('http://') || path.startsWith('https://')) return path;
+            if (path.startsWith('/')) return path;
+            return '/' + path;
+          }
+        %>
+        <div class="agency-boards-page__card" data-board-id="<%= board.id %>">
           <!-- Quick Actions Menu Trigger -->
-          <button class="agency-boards-page__menu-btn" data-board-id="<%= board.id %>" aria-label="Board options">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="1"/>
-              <circle cx="12" cy="5" r="1"/>
-              <circle cx="12" cy="19" r="1"/>
-            </svg>
-          </button>
+          <div class="agency-boards-page__menu-wrapper">
+            <button class="agency-boards-page__menu-btn" data-board-id="<%= board.id %>" aria-label="Board options" aria-haspopup="true" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                <circle cx="19" cy="12" r="1.5" fill="currentColor"/>
+              </svg>
+            </button>
+            <!-- Dropdown Menu -->
+            <div class="agency-boards-page__menu-dropdown" data-menu-id="<%= board.id %>" role="menu">
+              <button 
+                type="button" 
+                class="agency-boards-page__menu-item" 
+                data-action="edit" 
+                data-board-id="<%= board.id %>"
+                role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span>Edit Board</span>
+              </button>
+              <button 
+                type="button" 
+                class="agency-boards-page__menu-item" 
+                data-action="duplicate" 
+                data-board-id="<%= board.id %>"
+                role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>Duplicate</span>
+              </button>
+              <div class="agency-boards-page__menu-divider"></div>
+              <button 
+                type="button" 
+                class="agency-boards-page__menu-item agency-boards-page__menu-item--danger" 
+                data-action="delete" 
+                data-board-id="<%= board.id %>"
+                role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <span>Delete Board</span>
+              </button>
+            </div>
+          </div>
 
+          <!-- Image Grid (Top Half) -->
           <div class="agency-boards-page__card-images">
-            <% 
-              // Get applications for this board
-              const boardApplications = board.applications || [];
-              const imageCount = Math.min(boardApplications.length, 4);
-            %>
             <% if (imageCount > 0) { %>
-              <div class="agency-boards-page__image-grid agency-boards-page__image-grid--<%= imageCount %>">
-                <% for (let i = 0; i < imageCount; i++) { %>
+              <div class="agency-boards-page__image-grid">
+                <% for (let i = 0; i < 4; i++) { %>
                   <div class="agency-boards-page__grid-image">
                     <% if (boardApplications[i] && boardApplications[i].profile_image) { %>
-                      <img src="<%= boardApplications[i].profile_image %>" alt="Model">
+                      <img src="<%= normalizeImagePath(boardApplications[i].profile_image) %>" alt="Model" loading="lazy">
                     <% } else { %>
                       <div class="agency-boards-page__image-placeholder"></div>
                     <% } %>
@@ -47,47 +103,26 @@
               </div>
             <% } else { %>
               <div class="agency-boards-page__card-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity: 0.2;">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3;">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
                 </svg>
               </div>
             <% } %>
-            
-            <!-- Quick View/Open Button -->
-            <button class="agency-dashboard__scout-preview-btn" data-board-id="<%= board.id %>">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-              </svg>
-              Open Board
-            </button>
           </div>
 
-          <div class="agency-dashboard__scout-info">
-            <div class="agency-dashboard__scout-header">
-              <h3 class="agency-dashboard__scout-name">
-                <%= board.name %>
-              </h3>
-              <span class="agency-dashboard__scout-badge" style="background: #f3f4f6; color: #4b5563;">
-                <%= board.type || 'Runway' %>
-              </span>
+          <!-- Content (Bottom Half) -->
+          <div class="agency-boards-page__card-content">
+            <div class="agency-boards-page__card-header">
+              <h3 class="agency-boards-page__card-title"><%= board.name %></h3>
+              <% if (board.type) { %>
+                <span class="agency-boards-page__card-badge"><%= board.type.toUpperCase() %></span>
+              <% } %>
             </div>
-            
-            <p class="agency-dashboard__scout-details">
-              <%= board.description ? (board.description.length > 60 ? board.description.substring(0, 60) + '...' : board.description) : 'No description' %>
-            </p>
-
-            <div class="agency-dashboard__scout-stats" style="margin-top: auto; border-bottom: none; padding-bottom: 0; margin-bottom: 0.5rem;">
-              <div class="agency-dashboard__scout-stat">
-                <span class="agency-dashboard__scout-stat-label">Models</span>
-                <span class="agency-dashboard__scout-stat-value"><%= board.application_count || 0 %></span>
-              </div>
-              <div class="agency-dashboard__scout-stat">
-                <span class="agency-dashboard__scout-stat-label">Created</span>
-                <span class="agency-dashboard__scout-stat-value"><%= new Date(board.created_at).toLocaleDateString() %></span>
-              </div>
+            <div class="agency-boards-page__card-meta">
+              <%= board.application_count || 0 %> Models • Updated <%= formattedDate %>
             </div>
           </div>
         </div>

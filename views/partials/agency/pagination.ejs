@@ -1,0 +1,115 @@
+<!-- Pagination Controls -->
+<% 
+  const safePagination = typeof pagination !== 'undefined' && pagination ? pagination : {
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  };
+  
+  const safeFilters = typeof filters !== 'undefined' && filters ? filters : {};
+  
+  // Helper function to build pagination URL with filters
+  function buildPaginationUrl(pageNum) {
+    const params = new URLSearchParams();
+    params.set('page', pageNum);
+    
+    // Preserve all existing filters
+    Object.keys(safeFilters).forEach(key => {
+      if (safeFilters[key] && safeFilters[key] !== '' && key !== 'page') {
+        if (Array.isArray(safeFilters[key])) {
+          safeFilters[key].forEach(val => params.append(key, val));
+        } else {
+          params.set(key, safeFilters[key]);
+        }
+      }
+    });
+    
+    return '?' + params.toString();
+  }
+%>
+<div class="applicants-pagination">
+  <div class="applicants-pagination__info">
+    Showing <%= ((safePagination.page - 1) * safePagination.limit) + 1 %>-<%= Math.min(safePagination.page * safePagination.limit, safePagination.total) %> of <%= safePagination.total %> applicants
+  </div>
+  
+  <div class="applicants-pagination__controls">
+    <% if (safePagination.hasPrev) { %>
+      <a 
+        href="<%= buildPaginationUrl(safePagination.page - 1) %>" 
+        class="applicants-pagination__btn applicants-pagination__btn--prev"
+        aria-label="Previous page"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Previous
+      </a>
+    <% } else { %>
+      <span class="applicants-pagination__btn applicants-pagination__btn--prev applicants-pagination__btn--disabled" aria-disabled="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Previous
+      </span>
+    <% } %>
+    
+    <div class="applicants-pagination__pages">
+      <% 
+        const maxPagesToShow = 7;
+        let startPage = Math.max(1, safePagination.page - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(safePagination.totalPages, startPage + maxPagesToShow - 1);
+        
+        if (endPage - startPage < maxPagesToShow - 1) {
+          startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+      %>
+      
+      <% if (startPage > 1) { %>
+        <a href="<%= buildPaginationUrl(1) %>" class="applicants-pagination__page">1</a>
+        <% if (startPage > 2) { %>
+          <span class="applicants-pagination__ellipsis">...</span>
+        <% } %>
+      <% } %>
+      
+      <% for (let i = startPage; i <= endPage; i++) { %>
+        <% if (i === safePagination.page) { %>
+          <span class="applicants-pagination__page applicants-pagination__page--active" aria-current="page"><%= i %></span>
+        <% } else { %>
+          <a href="<%= buildPaginationUrl(i) %>" class="applicants-pagination__page"><%= i %></a>
+        <% } %>
+      <% } %>
+      
+      <% if (endPage < safePagination.totalPages) { %>
+        <% if (endPage < safePagination.totalPages - 1) { %>
+          <span class="applicants-pagination__ellipsis">...</span>
+        <% } %>
+        <a href="<%= buildPaginationUrl(safePagination.totalPages) %>" class="applicants-pagination__page"><%= safePagination.totalPages %></a>
+      <% } %>
+    </div>
+    
+    <% if (safePagination.hasNext) { %>
+      <a 
+        href="<%= buildPaginationUrl(safePagination.page + 1) %>" 
+        class="applicants-pagination__btn applicants-pagination__btn--next"
+        aria-label="Next page"
+      >
+        Next
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </a>
+    <% } else { %>
+      <span class="applicants-pagination__btn applicants-pagination__btn--next applicants-pagination__btn--disabled" aria-disabled="true">
+        Next
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </span>
+    <% } %>
+  </div>
+</div>
+
+

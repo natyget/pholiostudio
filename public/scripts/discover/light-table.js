@@ -21,9 +21,10 @@
 
   if (!dock) return;
 
-  // Listen for checkbox changes (from grid-controller.js)
+  // Listen for checkbox changes (from grid-controller.js and list view)
   document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('discover-card__checkbox')) {
+    if (e.target.classList.contains('discover-card__checkbox') || 
+        e.target.classList.contains('agency-dashboard__scout-list-checkbox')) {
       const profileId = e.target.dataset.profileId;
       if (e.target.checked) {
         addProfile(profileId);
@@ -45,6 +46,11 @@
     if (checkbox) {
       checkbox.checked = false;
       checkbox.closest('.discover-card').classList.remove('discover-card--selected');
+    }
+    // Uncheck the box in the list view
+    const listCheckbox = document.querySelector(`.agency-dashboard__scout-list-checkbox[data-profile-id="${id}"]`);
+    if (listCheckbox) {
+      listCheckbox.checked = false;
     }
     updateUI();
   }

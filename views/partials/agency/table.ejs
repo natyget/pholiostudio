@@ -1,4 +1,32 @@
     <!-- Table View -->
+    <% 
+      function normalizeImagePath(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        if (path.startsWith('/')) return path;
+        return '/' + path;
+      }
+      
+      function formatMeasurements(profile) {
+        if (!profile.bust && !profile.waist && !profile.hips) {
+          return null;
+        }
+        const bust = profile.bust ? profile.bust.toString().replace(/"/g, '') : '';
+        const waist = profile.waist ? profile.waist.toString().replace(/"/g, '') : '';
+        const hips = profile.hips ? profile.hips.toString().replace(/"/g, '') : '';
+        if (bust && waist && hips) {
+          return `${bust}-${waist}-${hips}`;
+        }
+        return null;
+      }
+      
+      function formatHeight(profile) {
+        if (!profile.height_cm) return null;
+        const heightFeet = Math.floor(profile.height_cm / 30.48);
+        const heightInches = Math.round((profile.height_cm % 30.48) / 2.54);
+        return heightFeet && heightInches ? `${heightFeet}'${heightInches}"` : `${profile.height_cm} cm`;
+      }
+    %>
     <div class="agency-dashboard__view agency-dashboard__view--table" id="view-table" style="display: none;">
       <div class="agency-dashboard__table-wrapper">
         <table class="agency-dashboard__table">
@@ -16,8 +44,12 @@
                 </tr>
               </thead>
               <tbody>
-            <% safeProfiles.forEach((profile) => { %>
-              <tr class="agency-dashboard__table-row" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">
+            <% safeProfiles.forEach((profile) => { 
+              const appStatus = profile.application_status || 'pending';
+              const measurements = formatMeasurements(profile);
+              const heightDisplay = formatHeight(profile);
+            %>
+              <tr class="agency-dashboard__table-row group" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">
                 <td>
                   <input type="checkbox" class="agency-dashboard__select-checkbox" data-profile-id="<%= profile.id %>">
                     </td>
@@ -30,41 +62,57 @@
                         class="agency-dashboard__table-avatar"
                         loading="lazy">
                     <% } %>
-                    <span><%= profile.first_name %> <%= profile.last_name %></span>
+                    <span class="agency-dashboard__table-name-text"><%= profile.first_name %> <%= profile.last_name %></span>
                   </div>
                     </td>
                 <td><%= profile.city || '—' %></td>
-                <td><%= profile.height_cm ? profile.height_cm + ' cm' : '—' %></td>
-                <td><%= profile.measurements || '—' %></td>
+                <td class="agency-dashboard__table-height"><%= heightDisplay || '—' %></td>
+                <td class="agency-dashboard__table-measurements">
+                  <% if (measurements) { %>
+                    <%= measurements %>
+                  <% } else { %>
+                    <span class="agency-dashboard__table-na">N/A</span>
+                  <% } %>
+                </td>
                 <td>
-                  <% const appStatus = profile.application_status || 'pending'; %>
                   <span class="agency-dashboard__status-badge agency-dashboard__status-badge--<%= appStatus %>">
                     <%= appStatus.charAt(0).toUpperCase() + appStatus.slice(1) %>
                   </span>
                     </td>
                     <td>
                   <div class="agency-dashboard__table-actions">
-                    <button class="agency-dashboard__table-preview" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">Preview</button>
-                    <% if (appStatus !== 'accepted') { %>
-                      <button 
-                        type="button" 
-                        class="agency-dashboard__table-btn agency-dashboard__table-btn--accept" 
-                        data-action="accept" 
-                        data-application-id="<%= profile.application_id || '' %>"
-                      >
-                        Accept
+                    <button class="agency-dashboard__table-review" data-profile-id="<%= profile.id %>" data-application-id="<%= profile.application_id || '' %>">Review</button>
+                    <div class="agency-dashboard__table-menu">
+                      <button class="agency-dashboard__table-menu-btn" type="button" aria-label="More actions">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="1"/>
+                          <circle cx="12" cy="5" r="1"/>
+                          <circle cx="12" cy="19" r="1"/>
+                        </svg>
                       </button>
-                    <% } %>
-                    <% if (appStatus !== 'declined') { %>
-                      <button 
-                        type="button" 
-                        class="agency-dashboard__table-btn agency-dashboard__table-btn--decline" 
-                        data-action="decline" 
-                        data-application-id="<%= profile.application_id || '' %>"
-                      >
-                        Decline
-                      </button>
-                    <% } %>
+                      <div class="agency-dashboard__table-menu-dropdown">
+                        <% if (appStatus !== 'accepted') { %>
+                          <button 
+                            type="button" 
+                            class="agency-dashboard__table-menu-item" 
+                            data-action="accept" 
+                            data-application-id="<%= profile.application_id || '' %>"
+                          >
+                            Accept
+                          </button>
+                        <% } %>
+                        <% if (appStatus !== 'declined') { %>
+                          <button 
+                            type="button" 
+                            class="agency-dashboard__table-menu-item" 
+                            data-action="decline" 
+                            data-application-id="<%= profile.application_id || '' %>"
+                          >
+                            Decline
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
                   </div>
                     </td>
                   </tr>
@@ -78,5 +126,54 @@
             <% } %>
               </tbody>
             </table>
+          </div>
+          
+          <!-- Compare Modal (Bottom Sheet) -->
+          <div class="agency-compare-modal__overlay"></div>
+          <div class="agency-compare-modal" id="compare-modal" style="display: none;">
+            <div class="agency-compare-modal__content">
+              <div class="agency-compare-modal__header">
+                <h2 class="agency-compare-modal__title">Comparing Applicants</h2>
+                <button class="agency-compare-modal__close" id="compare-modal-close" aria-label="Close">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="agency-compare-modal__body">
+                <div class="agency-compare-modal__grid" id="compare-grid">
+                  <!-- Columns will be dynamically inserted here -->
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Floating Action Bar -->
+          <div class="agency-dashboard__floating-action-bar" id="table-floating-action-bar">
+            <div class="agency-dashboard__floating-action-bar__left">
+              <span class="agency-dashboard__floating-action-bar__count" id="selected-count">0 Selected</span>
+              <button class="agency-dashboard__floating-action-bar__clear" id="clear-selection">Clear</button>
+            </div>
+            
+            <div class="agency-dashboard__floating-action-bar__middle" id="selected-avatars">
+              <!-- Avatars will be dynamically inserted here -->
+            </div>
+            
+            <div class="agency-dashboard__floating-action-bar__right">
+              <button class="agency-dashboard__floating-action-bar__btn agency-dashboard__floating-action-bar__btn--primary" id="compare-selected">
+                Compare
+              </button>
+              <button class="agency-dashboard__floating-action-bar__btn agency-dashboard__floating-action-bar__btn--secondary" id="add-to-board">
+                Add to Board
+              </button>
+              <button class="agency-dashboard__floating-action-bar__btn agency-dashboard__floating-action-bar__btn--destructive" id="archive-selected" aria-label="Archive selected">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>

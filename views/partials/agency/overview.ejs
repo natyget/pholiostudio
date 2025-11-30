@@ -3,10 +3,12 @@
   <!-- Personalized Greeting -->
   <div class="agency-overview__greeting">
     <h1 class="agency-overview__greeting-title" id="overview-greeting" data-agency-name="<%= currentUser && currentUser.agency_name ? currentUser.agency_name : 'Agency' %>">
-      <!-- Greeting will be updated by JavaScript -->
-      <%= currentUser && currentUser.agency_name ? currentUser.agency_name : 'Agency' %>
+      <span class="agency-overview__greeting-text" id="greeting-time">Good Evening,</span>
+      <span class="agency-overview__greeting-agency-name">
+        <%= currentUser && currentUser.agency_name ? currentUser.agency_name : 'Agency' %>
+      </span>
     </h1>
-    <p class="agency-overview__greeting-subtitle">Here is your daily overview</p>
+    <p class="agency-overview__greeting-subtitle">Here is what is happening with your roster today.</p>
   </div>
 
   <!-- KPI Cards -->
@@ -77,31 +79,37 @@
                   <%= (profile.first_name || 'T').charAt(0).toUpperCase() %><%= (profile.last_name || 'T').charAt(0).toUpperCase() %>
                 </div>
               <% } %>
-            </div>
-            <div class="agency-overview__recent-info">
-              <div class="agency-overview__recent-name">
-                <%= profile.first_name %> <%= profile.last_name %>
-              </div>
-              <div class="agency-overview__recent-meta">
-                <%= profile.city || 'Location not specified' %>
-                <% if (profile.height_cm) { %>
-                  • <%= profile.height_cm %> cm
-                <% } %>
-                <% if (profile.age) { %>
-                  • Age <%= profile.age %>
-                <% } %>
-              </div>
-            </div>
-            <div class="agency-overview__recent-badges">
               <% 
                 const daysSinceCreated = profile.application_created_at 
                   ? Math.floor((new Date() - new Date(profile.application_created_at)) / (1000 * 60 * 60 * 24))
                   : 999;
               %>
               <% if (daysSinceCreated <= 7) { %>
-                <span class="agency-overview__recent-badge">New Face</span>
+                <div class="agency-overview__recent-new-indicator"></div>
               <% } %>
-              <span class="agency-overview__recent-badge agency-overview__recent-badge--match">94% Match</span>
+            </div>
+            <div class="agency-overview__recent-info">
+              <div class="agency-overview__recent-header">
+                <div class="agency-overview__recent-name">
+                  <%= profile.first_name %> <%= profile.last_name %>
+                </div>
+                <div class="agency-overview__recent-match">
+                  <span class="agency-overview__match-number">94</span>
+                </div>
+              </div>
+              <div class="agency-overview__recent-details">
+                <div class="agency-overview__recent-location">
+                  <%= profile.city || 'Location not specified' %>
+                </div>
+                <div class="agency-overview__recent-stats">
+                  <% if (profile.height_cm) { %>
+                    <span class="agency-overview__stat-item"><%= profile.height_cm %> cm</span>
+                  <% } %>
+                  <% if (profile.age) { %>
+                    <span class="agency-overview__stat-item">Age <%= profile.age %></span>
+                  <% } %>
+                </div>
+              </div>
             </div>
           </div>
         <% }); %>
@@ -150,7 +158,15 @@
           </svg>
         </div>
         <div class="agency-overview__quick-action-content">
-          <h3 class="agency-overview__quick-action-title">Review Inbox</h3>
+          <div class="agency-overview__quick-action-header">
+            <h3 class="agency-overview__quick-action-title">Review Inbox</h3>
+            <% 
+              const pendingCount = safeStats ? (safeStats.pending || 0) : 0;
+            %>
+            <% if (pendingCount > 0) { %>
+              <span class="agency-overview__quick-action-badge agency-overview__quick-action-badge--pulse"><%= pendingCount %></span>
+            <% } %>
+          </div>
           <p class="agency-overview__quick-action-description">
             <% if (safeStats.pending > 0) { %>
               You have <%= safeStats.pending %> pending application<%= safeStats.pending !== 1 ? 's' : '' %>
@@ -159,9 +175,6 @@
             <% } %>
           </p>
         </div>
-        <% if (safeStats.pending > 0) { %>
-          <span class="agency-overview__quick-action-badge"><%= safeStats.pending %></span>
-        <% } %>
       </a>
     </div>
   </div>
