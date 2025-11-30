@@ -8,6 +8,7 @@ import {
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
+  OAuthProvider,
   sendPasswordResetEmail as sendPasswordReset,
   onAuthStateChanged as onAuthStateChangedFn
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
@@ -224,6 +225,57 @@ window.FirebaseAuth = {
       }
     } catch (error) {
       console.error('[Firebase Auth] Google Sign-In error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Sign in with Instagram using popup (with redirect fallback)
+   * @param {boolean} useRedirect - If true, use redirect instead of popup
+   * @returns {Promise<UserCredential>}
+   */
+  signInWithInstagram: async function(useRedirect = false) {
+    try {
+      const auth = await getAuthInstance();
+      // Instagram uses OAuth 2.0 - configure as custom OAuth provider in Firebase Console
+      // Provider ID should be set in Firebase Console (e.g., 'instagram.com')
+      const provider = new OAuthProvider('instagram.com');
+      
+      // Request additional scopes if needed
+      provider.addScope('user_profile');
+      provider.addScope('user_media');
+      
+      // Use redirect if requested or if popup is likely blocked
+      if (useRedirect) {
+        console.log('[Firebase Auth] Using redirect flow for Instagram Sign-In');
+        await signInWithRedirect(auth, provider);
+        // Redirect will happen, so we won't return here
+        // The result will be handled by getRedirectResult on page load
+        return null;
+      }
+      
+      // Try popup sign-in first
+      try {
+        const userCredential = await signInWithPopup(auth, provider);
+        console.log('[Firebase Auth] User signed in with Instagram (popup):', userCredential.user.uid);
+        return userCredential;
+      } catch (popupError) {
+        // If popup fails (blocked or closed), check the error code
+        if (popupError.code === 'auth/popup-blocked') {
+          console.warn('[Firebase Auth] Popup blocked, falling back to redirect flow');
+          // Automatically fall back to redirect
+          await signInWithRedirect(auth, provider);
+          return null; // Redirect will happen
+        } else if (popupError.code === 'auth/popup-closed-by-user') {
+          console.log('[Firebase Auth] Popup closed by user');
+          throw popupError;
+        } else {
+          // Re-throw other errors
+          throw popupError;
+        }
+      }
+    } catch (error) {
+      console.error('[Firebase Auth] Instagram Sign-In error:', error);
       throw error;
     }
   },

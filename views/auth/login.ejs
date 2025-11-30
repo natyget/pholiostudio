@@ -70,6 +70,13 @@ const fieldError = (name) => {
           Sign in with Google
         </button>
         
+        <button type="button" id="instagram-signin-btn" class="button button-instagram button-block" data-loading-text="Signing in…">
+          <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px; vertical-align: middle;" fill="currentColor">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+          Sign in with Instagram
+        </button>
+        
         <p class="auth-switch">Need an account? <a href="/apply">Start Creating</a>.</p>
       </div>
     </div>
@@ -80,78 +87,145 @@ const fieldError = (name) => {
 document.addEventListener('DOMContentLoaded', async function() {
   const loginForm = document.querySelector('form[action="/login"]');
   const googleSignInBtn = document.getElementById('google-signin-btn');
+  const instagramSignInBtn = document.getElementById('instagram-signin-btn');
   if (!loginForm) return;
 
-  // Check for redirect result (when user returns from Google Sign-In redirect)
+  // Track if we're processing any login to avoid duplicate processing
+  let isProcessingLogin = false;
+  let authStateListenerUnsubscribe = null;
+
+  // Set up onAuthStateChanged listener FIRST - this is the primary mechanism for handling auth
+  // This will fire when:
+  // 1. User returns from redirect (Firebase restores auth state)
+  // 2. User becomes authenticated via any method
+  // 3. User signs out
+  try {
+    if (window.FirebaseAuth && typeof window.FirebaseAuth.onAuthStateChanged === 'function') {
+      console.log('[Login] Setting up onAuthStateChanged listener...');
+      
+      const unsubscribe = await window.FirebaseAuth.onAuthStateChanged(async (user) => {
+        console.log('[Login] onAuthStateChanged fired:', user ? `User authenticated: ${user.uid}` : 'User signed out');
+        
+        // Only process if user is authenticated and we're not already processing a login
+        // This handles OAuth redirects - email/password login handles itself directly
+        if (user && !isProcessingLogin) {
+          isProcessingLogin = true;
+          console.log('[Login] ✅ User authenticated via OAuth, processing login...');
+          
+          try {
+            // Show loading state
+            if (googleSignInBtn) {
+              googleSignInBtn.disabled = true;
+              googleSignInBtn.innerHTML = '<span>Signing in…</span>';
+            }
+            if (instagramSignInBtn) {
+              instagramSignInBtn.disabled = true;
+              instagramSignInBtn.innerHTML = '<span>Signing in…</span>';
+            }
+            
+            // Get ID token
+            const idToken = await user.getIdToken();
+            const email = user.email;
+            
+            console.log('[Login] Got Firebase token from auth state:', {
+              hasToken: !!idToken,
+              tokenLength: idToken ? idToken.length : 0,
+              email: email
+            });
+            
+            if (!idToken) {
+              throw new Error('Failed to get authentication token');
+            }
+            
+            // Populate email field
+            const emailInput = loginForm.querySelector('#email');
+            if (emailInput && email) {
+              emailInput.value = email;
+            }
+            
+            // Populate password field with dummy value (not used for OAuth Sign-In)
+            const passwordInput = loginForm.querySelector('#password');
+            if (passwordInput) {
+              // Determine provider from user's providerData
+              const providerId = user.providerData && user.providerData.length > 0 
+                ? user.providerData[0].providerId 
+                : 'google.com';
+              if (providerId.includes('instagram')) {
+                passwordInput.value = 'instagram-sign-in';
+              } else {
+                passwordInput.value = 'google-sign-in';
+              }
+            }
+            
+            // Submit to backend - handleLogin will handle the response and redirect
+            console.log('[Login] 🔵 Calling handleLogin with auth state token...');
+            await handleLogin(idToken);
+          } catch (authError) {
+            console.error('[Login] ❌ Error processing authenticated user:', authError);
+            resetButtons();
+            showError('Failed to complete sign-in. Please try again.');
+            isProcessingLogin = false;
+          }
+        } else if (!user) {
+          // User signed out - reset processing flag
+          isProcessingLogin = false;
+        }
+      });
+      
+      authStateListenerUnsubscribe = unsubscribe;
+      console.log('[Login] ✅ onAuthStateChanged listener set up');
+    }
+  } catch (authStateError) {
+    console.error('[Login] Error setting up onAuthStateChanged:', authStateError);
+  }
+
+  // Check for redirect result ONLY to get provider-specific data (e.g., access tokens)
+  // Do NOT use this for navigation - onAuthStateChanged handles that
   try {
     if (window.FirebaseAuth && typeof window.FirebaseAuth.getRedirectResult === 'function') {
-      console.log('[Login] Checking for redirect result...');
+      console.log('[Login] Checking for redirect result (for provider data only)...');
       const redirectResult = await window.FirebaseAuth.getRedirectResult();
       
       if (redirectResult && redirectResult.user) {
-        console.log('[Login] ✅ Redirect sign-in successful, processing...');
-        
-        // Show loading state
-        if (googleSignInBtn) {
-          googleSignInBtn.disabled = true;
-          googleSignInBtn.innerHTML = '<span>Signing in…</span>';
-        }
-        
-        try {
-          // Get ID token
-          const idToken = await redirectResult.user.getIdToken();
-          const email = redirectResult.user.email;
-          
-          console.log('[Login] Got Firebase token from redirect:', {
-            hasToken: !!idToken,
-            tokenLength: idToken ? idToken.length : 0,
-            email: email
-          });
-          
-          if (!idToken) {
-            throw new Error('Failed to get authentication token');
-          }
-          
-          // Populate email field
-          const emailInput = loginForm.querySelector('#email');
-          if (emailInput && email) {
-            emailInput.value = email;
-          }
-          
-          // Populate password field with dummy value (not used for Google Sign-In)
-          const passwordInput = loginForm.querySelector('#password');
-          if (passwordInput) {
-            passwordInput.value = 'google-sign-in';
-          }
-          
-          // Submit to backend - handleLogin will handle the response and redirect
-          console.log('[Login] 🔵 Calling handleLogin with redirect token...');
-          handleLogin(idToken);
-          // Note: handleLogin is async but we don't await it here because it handles redirect internally
-        } catch (tokenError) {
-          console.error('[Login] ❌ Error getting token from redirect result:', tokenError);
-          resetButtons();
-          showError('Failed to complete sign-in. Please try again.');
-        }
+        console.log('[Login] Redirect result found (provider:', redirectResult.providerId, ')');
+        // Note: We don't process this here - onAuthStateChanged will handle it
+        // This is just to consume the redirect result so it doesn't interfere
       } else {
-        console.log('[Login] No redirect result found, continuing with normal flow');
+        console.log('[Login] No redirect result found (this is normal if not returning from redirect)');
       }
     }
   } catch (redirectError) {
-    console.error('[Login] Error checking redirect result:', redirectError);
-    // Don't show error - user might just be visiting the page normally
-    if (redirectError.code && redirectError.code !== 'auth/no-auth-event') {
-      showError('Error processing Google Sign-In. Please try again.');
+    console.log('[Login] Error checking redirect result (non-critical):', redirectError);
+    // Don't show error - this is expected if user is just visiting the page normally
+  }
+
+  // Check if user is already authenticated on page load
+  // This handles the case where user visits login page while already logged in
+  async function checkExistingAuth() {
+    try {
+      if (window.FirebaseAuth && typeof window.FirebaseAuth.getCurrentUser === 'function') {
+        const currentUser = await window.FirebaseAuth.getCurrentUser();
+        if (currentUser) {
+          console.log('[Login] User already authenticated, redirecting...');
+          const idToken = await currentUser.getIdToken();
+          await handleLogin(idToken);
+        }
+      }
+    } catch (error) {
+      console.log('[Login] Error checking existing auth (non-critical):', error);
     }
   }
 
-  // Function to handle login submission (used by both email/password and Google)
-  function handleLogin(idToken) {
+  // Check for existing auth after a short delay to allow Firebase to restore state
+  setTimeout(checkExistingAuth, 500);
+
+  // Function to handle login submission (used by both email/password and OAuth)
+  async function handleLogin(idToken) {
     // Validate Firebase token is present
     if (!idToken || typeof idToken !== 'string' || idToken.trim() === '') {
       console.error('[Login] ❌ Firebase token is missing or invalid!');
       showError('Authentication failed. Please try signing in again.');
-      return;
+      return Promise.reject(new Error('Invalid token'));
     }
     
     // Submit as JSON to ensure Firebase token is properly sent
@@ -190,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-    fetch(loginForm.action, {
+    return fetch(loginForm.action, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -330,6 +404,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       } else {
         showError('An error occurred during sign-in. Please try again. If the problem persists, contact support.');
       }
+      
+      // Reset processing flag on error
+      isProcessingLogin = false;
+      
+      return Promise.reject(error);
     });
   }
 
@@ -359,6 +438,12 @@ document.addEventListener('DOMContentLoaded', async function() {
       const originalHTML = googleSignInBtn.dataset.originalText || 
         '<svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px; vertical-align: middle;"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Sign in with Google';
       googleSignInBtn.innerHTML = originalHTML;
+    }
+    if (instagramSignInBtn) {
+      instagramSignInBtn.disabled = false;
+      const originalHTML = instagramSignInBtn.dataset.originalText || 
+        '<svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px; vertical-align: middle;" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>Sign in with Instagram';
+      instagramSignInBtn.innerHTML = originalHTML;
     }
   }
 
@@ -415,8 +500,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         tokenLength: idToken ? idToken.length : 0
       });
       
+      // Set flag to prevent onAuthStateChanged from processing this login
+      // (email/password login handles itself directly)
+      isProcessingLogin = true;
+      
       // Submit form to backend
-      handleLogin(idToken);
+      // Note: onAuthStateChanged will also fire, but isProcessingLogin flag prevents duplicate
+      await handleLogin(idToken);
     } catch (error) {
       console.error('[Login] Authentication error:', error);
       
@@ -652,5 +742,161 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     });
   }
+
+  // Instagram Sign-In
+  if (instagramSignInBtn) {
+    instagramSignInBtn.addEventListener('click', async function() {
+      // Check if Firebase Auth is available
+      if (!window.FirebaseAuth) {
+        console.error('[Login] ❌ window.FirebaseAuth is not defined');
+        showError('Authentication system not ready. Please refresh the page and try again.');
+        return;
+      }
+      
+      if (typeof window.FirebaseAuth.signInWithInstagram !== 'function') {
+        console.error('[Login] ❌ signInWithInstagram function not available');
+        console.error('[Login] Available methods:', Object.keys(window.FirebaseAuth));
+        showError('Authentication system not ready. Please refresh the page and try again.');
+        return;
+      }
+      
+      // Check if Firebase auth instance is ready
+      try {
+        const auth = await window.FirebaseAuth.getAuth();
+        if (!auth) {
+          console.error('[Login] ❌ Firebase auth instance not available');
+          showError('Firebase authentication is not initialized. Please refresh the page.');
+          return;
+        }
+        console.log('[Login] ✅ Firebase auth instance ready');
+      } catch (authError) {
+        console.error('[Login] ❌ Error getting Firebase auth instance:', authError);
+        showError('Firebase authentication is not ready. Please refresh the page and try again.');
+        return;
+      }
+
+      // Store original button HTML at the start (before any modifications)
+      if (!instagramSignInBtn.dataset.originalText) {
+        instagramSignInBtn.dataset.originalText = instagramSignInBtn.innerHTML;
+      }
+      const originalText = instagramSignInBtn.dataset.originalText;
+
+      try {
+        // Show loading state
+        instagramSignInBtn.disabled = true;
+        instagramSignInBtn.innerHTML = '<span>' + (instagramSignInBtn.dataset.loadingText || 'Signing in…') + '</span>';
+
+        // Sign in with Instagram
+        // Use redirect flow by default for better reliability (popups are often blocked/closed)
+        console.log('[Login] 🔵 Starting Instagram Sign-In (redirect flow for reliability)...');
+        await window.FirebaseAuth.signInWithInstagram(true); // true = use redirect
+        // Redirect will happen, so we won't return here
+        // The result will be handled by getRedirectResult on page load (see DOMContentLoaded handler above)
+        return;
+      } catch (error) {
+        // Reset button state first
+        resetButtons();
+
+        // Handle different error types
+        if (error.code === 'auth/popup-closed-by-user') {
+          console.log('[Login] Popup closed, checking if user is authenticated...');
+          
+          // Show loading state while checking
+          instagramSignInBtn.disabled = true;
+          instagramSignInBtn.innerHTML = '<span>Checking authentication...</span>';
+          
+          // Check auth state similar to Google
+          let authDetected = false;
+          const checkAuthState = async (attempt = 1, maxAttempts = 6) => {
+            try {
+              const currentUser = await window.FirebaseAuth.getCurrentUser();
+              console.log(`[Login] Auth check attempt ${attempt}/${maxAttempts}:`, currentUser ? 'User found' : 'No user');
+              
+              if (currentUser) {
+                authDetected = true;
+                console.log('[Login] ✅ User is authenticated, proceeding with login...');
+                
+                const idToken = await currentUser.getIdToken();
+                const email = currentUser.email;
+                
+                // Populate form fields
+                const emailInput = loginForm.querySelector('#email');
+                if (emailInput && email) {
+                  emailInput.value = email;
+                }
+                const passwordInput = loginForm.querySelector('#password');
+                if (passwordInput) {
+                  passwordInput.value = 'instagram-sign-in';
+                }
+                
+                // Show loading state
+                instagramSignInBtn.disabled = true;
+                instagramSignInBtn.innerHTML = '<span>Signing in…</span>';
+                
+                // Submit to backend
+                handleLogin(idToken);
+                return true;
+              }
+              
+              if (attempt < maxAttempts) {
+                const delay = attempt * 300;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return await checkAuthState(attempt + 1, maxAttempts);
+              }
+              
+              return false;
+            } catch (checkError) {
+              console.error(`[Login] Error checking auth state (attempt ${attempt}):`, checkError);
+              if (attempt < maxAttempts) {
+                const delay = attempt * 300;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return await checkAuthState(attempt + 1, maxAttempts);
+              }
+              return false;
+            }
+          };
+          
+          const authFound = await checkAuthState();
+          
+          if (!authFound && !authDetected) {
+            setTimeout(() => {
+              if (!authDetected) {
+                resetButtons();
+                console.log('[Login] No authentication detected after popup closure');
+              }
+            }, 2000);
+          }
+        } else if (error.code === 'auth/popup-blocked') {
+          console.error('[Login] Popup blocked by browser, attempting redirect flow');
+          try {
+            await window.FirebaseAuth.signInWithInstagram(true);
+            console.log('[Login] Redirect flow initiated, user will be redirected');
+            return;
+          } catch (redirectError) {
+            console.error('[Login] Redirect flow also failed:', redirectError);
+            showError('Popup was blocked and redirect failed. Please allow popups for this site or check your browser settings.');
+          }
+        } else if (error.code === 'auth/unauthorized-domain') {
+          console.error('[Login] Unauthorized domain error');
+          showError('This domain is not authorized for Instagram Sign-In. Please contact support.');
+        } else if (error.code === 'auth/network-request-failed') {
+          console.error('[Login] Network error during Instagram Sign-In');
+          showError('Network error. Please check your internet connection and try again.');
+        } else {
+          const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Instagram Sign-In failed. Please try again.';
+          console.error('[Login] Unexpected Instagram Sign-In error:', errorMessage);
+          showError(errorMessage);
+        }
+      }
+    });
+  }
+
+  // Cleanup: Unsubscribe from auth state listener when page unloads
+  window.addEventListener('beforeunload', function() {
+    if (authStateListenerUnsubscribe && typeof authStateListenerUnsubscribe === 'function') {
+      console.log('[Login] Cleaning up auth state listener');
+      authStateListenerUnsubscribe();
+    }
+  });
 });
 </script>

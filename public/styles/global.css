@@ -1684,6 +1684,46 @@ input[type="submit"] {
   margin-right: 0.5rem;
 }
 
+.button-instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-transform: none;
+  font-size: 0.9375rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.button-instagram:hover,
+.button-instagram:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  filter: brightness(1.05);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.button-instagram:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button-instagram svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
