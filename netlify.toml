@@ -5,13 +5,24 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # Include optional deps (e.g. sqlite3 for local dev won't fail if missing)
   NPM_FLAGS = "--include=optional"
 
 [functions]
   directory = "netlify/function"
-  # nft (Node Function Tracing) handles native modules (sharp, bcrypt, etc.) correctly
-  node_bundler = "nft"
+  # esbuild bundles everything into one file — no runtime module resolution issues.
+  # nft was failing to trace Express's internal ./router directory.
+  # Native .node binaries and large packages are kept external (copied from node_modules as-is).
+  node_bundler = "esbuild"
+  external_node_modules = [
+    "bcrypt",
+    "sharp",
+    "@img",
+    "@unrs",
+    "sqlite3",
+    "@sparticuz/chromium",
+    "puppeteer",
+    "fsevents"
+  ]
   included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
@@ -19,8 +30,6 @@
   memory = 3008
 
 [[redirects]]
-  # Static files in public/ are served directly by Netlify CDN.
-  # All other requests (API, EJS pages, etc.) proxy to the serverless function.
   from = "/*"
   to = "/.netlify/functions/server"
   status = 200
