@@ -13,7 +13,7 @@
   # Fix: explicitly include express/lib/router and express/lib/middleware so nft doesn't need to trace them.
   # At runtime Node.js resolves directory requires fine — the issue is only at nft trace time.
   node_bundler = "nft"
-  included_files = ["views/**", "public/**", "migrations/**", "node_modules/express/lib/router/**", "node_modules/express/lib/middleware/**"]
+  included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
   timeout = 26
