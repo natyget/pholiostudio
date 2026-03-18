@@ -1,9 +1,6 @@
 [build]
-  # 1. Install + build React SPA
-  # 2. Pre-bundle the serverless function with esbuild (inline express, keep native modules external)
-  # nft would fail to include express/lib/router/ due to a directory-require tracing bug.
-  # Bundling ourselves sidesteps nft entirely for JS — nft only needs to handle native .node files.
-  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build && npm run build:function"
+  # Install + build React SPA only. Function bundling is handled by nft.
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
   publish = "public"
 
 [build.environment]
@@ -11,11 +8,12 @@
   NPM_FLAGS = "--include=optional"
 
 [functions]
-  directory = "netlify/function-built"
-  # nft traces the pre-built bundle to find native module requires (bcrypt, sharp, etc.)
-  # No JS bundling needed — everything except native modules is already inlined by our esbuild step.
+  directory = "netlify/function"
+  # nft traces JS requires but has a bug with express's directory requires (e.g. require('./router')).
+  # Fix: explicitly include express/lib/router and express/lib/middleware so nft doesn't need to trace them.
+  # At runtime Node.js resolves directory requires fine — the issue is only at nft trace time.
   node_bundler = "nft"
-  included_files = ["views/**", "public/**", "migrations/**"]
+  included_files = ["views/**", "public/**", "migrations/**", "node_modules/express/lib/router/**", "node_modules/express/lib/middleware/**"]
 
 [functions."server"]
   timeout = 26
