@@ -13,7 +13,7 @@ const files = [
 ];
 
 const replacements = [
-  ["require('./router')", "require('./router/index')"],
+  ["require('./router')", "require('./router/index.js')"],
   ["require('./middleware/init')", "require('./middleware/init.js')"],
   ["require('./middleware/query')", "require('./middleware/query.js')"],
 ];
