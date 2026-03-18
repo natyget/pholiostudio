@@ -13,6 +13,8 @@
   # nft (Node Function Tracing) handles native modules (sharp, bcrypt, etc.) correctly
   node_bundler = "nft"
   included_files = ["views/**", "public/**", "migrations/**"]
+  # path-to-regexp uses a bare-string exports field that nft can't trace — include explicitly
+  external_node_modules = ["path-to-regexp"]
 
 [functions."server"]
   timeout = 26
