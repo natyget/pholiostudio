@@ -9,14 +9,7 @@
 [functions]
   directory = "netlify/function"
   node_bundler = "nft"
-  # nft cannot trace express's internal directory requires (./router, ./middleware/*).
-  # Force-include the full express package so those files exist at runtime.
-  included_files = [
-    "views/**",
-    "public/**",
-    "migrations/**",
-    "node_modules/express/**"
-  ]
+  included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
   timeout = 26
