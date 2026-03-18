@@ -1,6 +1,6 @@
 [build]
-  # Install + build React SPA only. Function bundling is handled by nft.
-  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
+  # Install + build React SPA. Pre-bundle Netlify functions using esbuild.
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build && npm run build:function"
   publish = "public"
 
 [build.environment]
@@ -8,12 +8,10 @@
   NPM_FLAGS = "--include=optional"
 
 [functions]
-  directory = "netlify/function"
-  # nft traces JS requires but has a bug with express's directory requires (e.g. require('./router')).
-  # Fix: explicitly include express/lib/router and express/lib/middleware so nft doesn't need to trace them.
-  # At runtime Node.js resolves directory requires fine — the issue is only at nft trace time.
+  directory = "netlify/function-built"
+  # nft will now trace the esbuild output and correctly package the --external modules (like bcrypt, sqlite3) 
   node_bundler = "nft"
-  included_files = ["views/**", "public/**", "migrations/**", "node_modules/express/lib/router/**", "node_modules/express/lib/middleware/**"]
+  included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
   timeout = 26
