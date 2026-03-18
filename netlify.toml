@@ -1,6 +1,6 @@
 [build]
   # Install client devDeps (vite, etc.) explicitly — NODE_ENV=production skips them otherwise
-  command = "NODE_ENV=development cd client && npm install --legacy-peer-deps && npm run build"
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
   publish = "public"
 
 [build.environment]
