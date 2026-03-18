@@ -366,18 +366,6 @@ const applyProfileSchema = z
       z.record(z.string(), z.string()).optional(),
       z.null()
     ]).optional(),
-    experience_details: z.union([
-      z.string().transform((val) => {
-        if (!val || val.trim() === '') return null;
-        try {
-          return JSON.parse(val);
-        } catch {
-          return null;
-        }
-      }),
-      z.record(z.string(), z.string()).optional(),
-      z.null()
-    ]).optional(),
     partner_agency_email: z
       .string()
       .trim()
@@ -523,7 +511,6 @@ const talentProfileUpdateSchema = z
     body_type: z.string().trim().max(50).optional().or(z.literal('')).or(z.null()),
     drivers_license: z.union([z.boolean(), z.literal(''), z.null()]).optional(),
     passport_ready: z.union([z.boolean(), z.literal(''), z.null()]).optional(),
-    inseam_cm: z.number().optional().or(z.literal('')).or(z.null()),
     modeling_categories: z.array(z.string()).optional().or(z.null())
   })
   .passthrough();

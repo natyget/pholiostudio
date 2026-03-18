@@ -172,7 +172,6 @@ function getDemoProfile(slug) {
       measurements: '32-25-35',
       bio_raw: 'Elara is a collaborative creative professional with a background in editorial campaigns and on-set leadership. Based in Los Angeles, she balances editorial edge with commercial versatility.',
       bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
-      bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
       // hero_image_path removed from demo as it is derived 
       is_pro: false,
       pdf_theme: null,
@@ -402,12 +401,11 @@ function renderPdfView(req, res, data, isDemo) {
   }
 
   // Merge theme with customizations
-  const mergedTheme = mergeThemeWithCustomization(theme, customizations);
+  let mergedTheme = mergeThemeWithCustomization(theme, customizations);
 
   // Ensure mergedTheme has all required properties
   if (!mergedTheme) {
     console.error('[renderPdfView] mergedTheme is null, falling back to default theme');
-    // Fallback to default theme if merge failed
     mergedTheme = getTheme(getDefaultTheme());
   }
 

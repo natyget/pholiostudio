@@ -65,7 +65,6 @@ router.post(['/login', '/api/login'], async (req, res, next) => {
     bodyKeys: req.body ? Object.keys(req.body).slice(0, 10) : [],
     hasBodyToken: !!(req.body && req.body.firebase_token),
     bodyTokenLength: req.body && req.body.firebase_token ? req.body.firebase_token.length : 0,
-    hasBodyToken: !!(req.body && req.body.firebase_token),
     extractedToken: !!extractIdToken(req),
     idToken: !!idToken,
     idTokenLength: idToken ? idToken.length : 0,
