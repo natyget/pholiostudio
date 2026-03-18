@@ -1,40 +1,26 @@
 [build]
-  # Netlify automatically runs 'npm install' before the build command
-  # Note: Migrations should be run AFTER deployment via /api/migrate endpoint
-  # or manually using: netlify functions:invoke migrate
-  # Running migrations during build may fail if database isn't accessible during build time
-  command = "npm run build"
+  # Builds the React SPA to public/dashboard-app/ before deployment
+  command = "npm run client:build"
   publish = "public"
 
 [build.environment]
   NODE_VERSION = "20"
-  # Install all dependencies including native modules
-  # Netlify will install dependencies from package.json automatically
-  # Note: Runtime environment variables (DB_CLIENT, DATABASE_URL, SESSION_SECRET, etc.)
-  # must be set in Netlify UI: Site settings > Environment variables
-  # See NETLIFY_DEPLOYMENT.md for required variables
+  # Include optional deps (e.g. sqlite3 for local dev won't fail if missing)
+  NPM_FLAGS = "--include=optional"
 
 [functions]
   directory = "netlify/function"
-  # Use 'nft' bundler which handles native modules better than 'esbuild'
-  # 'nft' (Node Function Tracing) includes required dependencies without breaking native modules
+  # nft (Node Function Tracing) handles native modules (sharp, bcrypt, etc.) correctly
   node_bundler = "nft"
-  # Include views and other necessary files that the function needs
   included_files = ["views/**", "public/**", "migrations/**"]
 
-# Function-specific configuration for server function
-# Note: Timeout and memory settings may need to be configured in Netlify UI
-# Netlify Pro/Business: up to 26s timeout, 3008 MB memory
-# Netlify Free: up to 10s timeout, 1024 MB memory
-# Puppeteer requires significant memory - consider Pro tier for production
 [functions."server"]
   timeout = 26
   memory = 3008
 
 [[redirects]]
-  # Proxy all requests to the serverless function
-  # Netlify automatically serves static files from the 'public' directory
-  # Any requests that don't match static files will be handled by the function
+  # Static files in public/ are served directly by Netlify CDN.
+  # All other requests (API, EJS pages, etc.) proxy to the serverless function.
   from = "/*"
   to = "/.netlify/functions/server"
   status = 200
