@@ -1,5 +1,4 @@
 [build]
-  # Install client devDeps (vite, etc.) explicitly — NODE_ENV=production skips them otherwise
   command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
   publish = "public"
 
@@ -9,8 +8,29 @@
 
 [functions]
   directory = "netlify/function"
-  node_bundler = "nft"
+  node_bundler = "esbuild"
   included_files = ["views/**", "public/**", "migrations/**"]
+  # Native binaries and optional DB drivers that esbuild cannot bundle.
+  # Knex conditionally requires dialect packages — only "pg" is used, the rest
+  # are never loaded at runtime but esbuild sees the require() calls at build time.
+  external_node_modules = [
+    "bcrypt",
+    "sharp",
+    "@img",
+    "@unrs",
+    "fsevents",
+    "sqlite3",
+    "better-sqlite3",
+    "mysql",
+    "mysql2",
+    "tedious",
+    "oracledb",
+    "pg-native",
+    "mssql",
+    "@sparticuz/chromium",
+    "puppeteer",
+    "mime"
+  ]
 
 [functions."server"]
   timeout = 26
