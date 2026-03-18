@@ -23,3 +23,22 @@ files.forEach(filePath => {
     console.log(`patched: ${filePath}`);
   }
 });
+
+// Fix Netlify's nft/esbuild dropping server files due to 'browser' field confusion
+const pkgTargets = [
+  'node_modules/iconv-lite/package.json',
+  'node_modules/readable-stream/package.json',
+  'node_modules/pg/package.json'
+];
+
+pkgTargets.forEach(t => {
+  const absPkg = path.resolve(__dirname, '..', t);
+  if (fs.existsSync(absPkg)) {
+    let pkg = JSON.parse(fs.readFileSync(absPkg, 'utf8'));
+    if (pkg.browser) {
+      delete pkg.browser;
+      fs.writeFileSync(absPkg, JSON.stringify(pkg, null, 2));
+      console.log(`Stripped browser field from: ${t}`);
+    }
+  }
+});
