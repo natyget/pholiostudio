@@ -16,6 +16,7 @@
     "seed": "knex seed:run",
     "test": "jest",
     "test:db": "node scripts/test-neon-connection.js",
+    "postinstall": "node scripts/patch-express.js",
     "build": "echo 'Build complete'",
     "build:migrate": "npm run migrate && npm run build"
   },

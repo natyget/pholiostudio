@@ -8,36 +8,8 @@
 
 [functions]
   directory = "netlify/function"
-  node_bundler = "esbuild"
+  node_bundler = "nft"
   included_files = ["views/**", "public/**", "migrations/**"]
-  external_node_modules = [
-    # Native binaries — cannot be bundled
-    "bcrypt",
-    "sharp",
-    "@img",
-    "@unrs",
-    "fsevents",
-    "sqlite3",
-    # Packages with internal directory requires esbuild cannot resolve
-    "express",
-    "validator",
-    # Zod v4 CJS resolution fails in esbuild on Netlify
-    "zod",
-    # Optional knex DB dialect drivers — not installed, never loaded (we use pg)
-    "better-sqlite3",
-    "mysql",
-    "mysql2",
-    "tedious",
-    "oracledb",
-    "pg-native",
-    "pg-query-stream",
-    "mssql",
-    # Large binaries
-    "@sparticuz/chromium",
-    "puppeteer",
-    # Optional Google Cloud dep
-    "mime"
-  ]
 
 [functions."server"]
   timeout = 26
