@@ -1,6 +1,6 @@
 [build]
-  # Builds the React SPA to public/dashboard-app/ before deployment
-  command = "npm run client:build"
+  # Install client devDeps (vite, etc.) explicitly — NODE_ENV=production skips them otherwise
+  command = "cd client && npm install --include=dev && npm run build"
   publish = "public"
 
 [build.environment]

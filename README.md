@@ -6,20 +6,26 @@ Pholio is a full-stack talent portfolio and agency management platform with sepa
 
 ### Separate Domain Strategy
 
-- **Marketing Site:** `www.pholio.studio` - Next.js 16 (deployed on Vercel)
-- **Web Application:** `app.pholio.studio` - Express + React SPA (deployed on Netlify/Railway/Render)
+| App | Tech | Port | Domain |
+|-----|------|------|--------|
+| Marketing | Next.js 16 (SSG/SSR) | 3001 | www.pholio.studio |
+| React SPA | Vite + React 19 | 5173 | app.pholio.studio |
+| Express API | Node.js 20, Express 5 | 3000 | app.pholio.studio |
+
+Both the React SPA and Express API are deployed together on **Netlify** (Express as a serverless function via `serverless-http`). The marketing site deploys separately.
 
 ### Tech Stack
 
-- **Marketing:** Next.js 16, TypeScript, Tailwind 4, Framer Motion
-- **Backend:** Node.js 20, Express 4, EJS templates
-- **Frontend:** React 19, Vite, React Router 7, TailwindCSS
-- **Database:** SQLite3 (local) or PostgreSQL/Neon (production)
+- **Marketing:** Next.js 16, TypeScript, Tailwind 4, Framer Motion, GSAP, Lenis
+- **Backend:** Node.js 20, Express 5, CommonJS modules
+- **Frontend:** React 19, Vite, React Router 7, TailwindCSS 4
+- **Database:** SQLite3 (local dev) or PostgreSQL/Neon (production), via Knex.js
 - **Auth:** Firebase (Web SDK + Admin SDK) + Express sessions
-- **Payments:** Stripe
-- **PDF:** Puppeteer + EJS templates
+- **Payments:** Stripe (subscriptions, webhooks)
+- **PDF:** Puppeteer + `@sparticuz/chromium` + EJS templates
 - **Image Processing:** Sharp
 - **AI:** Groq SDK for photo analysis
+- **Serverless:** `serverless-http` v3.2.0 wraps Express for Netlify Functions
 
 ## Quick Start
 
@@ -35,7 +41,7 @@ Pholio is a full-stack talent portfolio and agency management platform with sepa
 git clone <repository-url>
 cd pholio
 
-# Install dependencies
+# Install all dependencies
 npm install
 cd client && npm install && cd ..
 cd landing && npm install && cd ..
@@ -53,30 +59,26 @@ npm run seed
 
 ### Development
 
-Run all three servers for full-stack development:
-
 ```bash
-# Terminal 1: Express Backend (Port 3000)
-npm run dev
+# Recommended: run everything at once
+npm run dev:all    # Express :3000 + Vite :5173
 
-# Terminal 2: React SPA (Port 5173)
-npm run client:dev
-
-# Terminal 3: Next.js Landing (Port 3001)
-cd landing && npm run dev
+# Or individually:
+npm run dev        # Express backend on :3000
+npm run client:dev # Vite React SPA on :5173 (proxies /api to :3000)
+cd landing && npm run dev  # Next.js marketing site on :3001
 ```
 
 **Access URLs:**
 - Marketing Site: http://localhost:3001
-- Web Application: http://localhost:5173 or http://localhost:3000
+- Web Application: http://localhost:5173
 - API: http://localhost:3000/api
 
 ### Testing the Flow
 
 1. Visit Next.js landing: `http://localhost:3001`
 2. Click "Get Started" → redirects to `http://localhost:3000/signup`
-3. Sign up → redirected to `http://localhost:3000/casting` (onboarding)
-4. Complete onboarding → `http://localhost:3000/dashboard/talent`
+3. Sign up → onboarding flow → `http://localhost:5173/dashboard/talent`
 
 ## Environment Variables
 
@@ -116,22 +118,40 @@ MAX_UPLOAD_MB=8
 PDF_BASE_URL=http://localhost:3000
 ```
 
-### Production
+### Production (Netlify Environment Variables)
 
-See `.env.production.example` for production configuration template.
+Set these in **Netlify UI → Site settings → Environment variables**:
 
-**Key differences:**
-- `NODE_ENV=production`
-- `DB_CLIENT=pg` with PostgreSQL/Neon
-- `MARKETING_SITE_URL=https://www.pholio.studio`
-- `APP_URL=https://app.pholio.studio`
-- `COOKIE_DOMAIN=.pholio.studio`
+```bash
+NODE_ENV=production
+DB_CLIENT=pg
+DATABASE_URL=postgresql://user:password@ep-xxxx.neon.tech/dbname?sslmode=require
+SESSION_SECRET=<long-random-string>
+
+MARKETING_SITE_URL=https://www.pholio.studio
+APP_URL=https://app.pholio.studio
+COOKIE_DOMAIN=.pholio.studio
+
+# Firebase (same keys as dev)
+FIREBASE_API_KEY=...
+FIREBASE_AUTH_DOMAIN=...
+FIREBASE_PROJECT_ID=...
+FIREBASE_STORAGE_BUCKET=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_APP_ID=...
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=...
+FIREBASE_CLIENT_ID=...
+
+# Optional
+COMMISSION_RATE=0.25
+MAX_UPLOAD_MB=8
+```
 
 ## Database
 
 ### Local Development (SQLite)
 
-Default configuration uses SQLite:
 ```bash
 npm run migrate
 npm run seed  # Load sample data
@@ -144,132 +164,115 @@ npm run seed  # Load sample data
 ### Production (PostgreSQL/Neon)
 
 1. Create a Neon database at [neon.tech](https://neon.tech)
-2. Update `.env`:
-   ```bash
-   DB_CLIENT=pg
-   DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+2. Copy the connection string — hostname must start with `ep-`
+3. Set `DB_CLIENT=pg` and `DATABASE_URL=postgresql://...` in Netlify env vars
+4. After first deploy, run migrations via the API endpoint:
    ```
-3. Run migrations: `npm run migrate`
-
-See [NEON_SETUP.md](./NEON_SETUP.md) for detailed guide.
+   POST https://app.pholio.studio/api/migrate?secret=YOUR_MIGRATION_SECRET
+   ```
 
 ## Deployment
 
-### Marketing Site (www.pholio.studio)
+### Web Application (app.pholio.studio) — Netlify
 
-**Platform:** Vercel
+The Express API + React SPA deploy together as a single Netlify site.
 
-```bash
-cd landing
+**How it works:**
+- `netlify/function/server.js` wraps the Express app with `serverless-http` v3.2.0
+- Netlify builds the React SPA (`public/dashboard-app/`) via `npm run client:build`
+- Static files are served from `public/` by Netlify CDN
+- All other requests (`/*`) proxy to the `server` Netlify Function
+- The function runs with 26s timeout and 3008 MB memory (Pro tier required for Puppeteer)
 
-# Install Vercel CLI
-npm i -g vercel
+**Deploy steps:**
+1. Connect the repo to a Netlify site
+2. Set all production environment variables in the Netlify UI
+3. Deploy — Netlify runs `npm run client:build` automatically
+4. Run migrations via `POST /api/migrate?secret=...`
 
-# Deploy
-vercel --prod
-```
-
-**Configuration in Vercel Dashboard:**
-- Domain: `www.pholio.studio`
-- Environment Variables:
-  - `NEXT_PUBLIC_APP_URL=https://app.pholio.studio`
-  - `NEXT_PUBLIC_API_URL=https://app.pholio.studio/api`
-- Build: Automatic from `main` branch
-
-**DNS (at your domain registrar):**
-```
-Type: CNAME
-Name: www
-Value: cname.vercel-dns.com
-```
-
-### Web Application (app.pholio.studio)
-
-**Platform:** Netlify/Railway/Render (current host)
-
-```bash
-# Build React SPA
-npm run client:build
-
-# Deploy (example for Netlify)
-netlify deploy --prod
-```
-
-**Configuration:**
-- Domain: `app.pholio.studio`
-- Environment Variables: (see `.env.production.example`)
-- Build Command: `npm run client:build`
-- Start Command: `npm start`
-
-**Post-Deployment:**
-```bash
-# Run migrations
-npm run migrate
-```
-
-**DNS (at your domain registrar):**
+**DNS:**
 ```
 Type: CNAME
 Name: app
-Value: <your-site>.netlify.app (or your host's DNS target)
+Value: <your-site>.netlify.app
+```
+
+### Marketing Site (www.pholio.studio)
+
+Deploy the `landing/` directory as a separate site (Vercel or Netlify).
+
+**Required env vars:**
+- `NEXT_PUBLIC_APP_URL=https://app.pholio.studio`
+- `NEXT_PUBLIC_API_URL=https://app.pholio.studio/api`
+
+**DNS:**
+```
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com  (Vercel) or <site>.netlify.app (Netlify)
 ```
 
 ## Scripts
 
-### Backend
+### Root (Backend + Orchestration)
 - `npm start` - Start Express server
 - `npm run dev` - Start with nodemon (auto-reload)
-- `npm test` - Run Jest + Supertest tests
+- `npm run dev:all` - Run Express + Vite concurrently
+- `npm test` - Run Jest + Supertest integration tests
+- `npm run test:db` - Test database connection
 
 ### Frontend
-- `npm run client:dev` - Start Vite dev server
+- `npm run client:dev` - Start Vite dev server (:5173)
 - `npm run client:build` - Build React SPA to `public/dashboard-app/`
-- `npm run client:lint` - Lint React code
 
 ### Database
 - `npm run migrate` - Apply pending migrations
 - `npm run migrate:status` - Check migration status
 - `npm run migrate:rollback` - Rollback last batch
 - `npm run seed` - Load seed data
-- `npm run test:db` - Test database connection
 
 ### Landing Page
-- `cd landing && npm run dev` - Start Next.js dev server
+- `cd landing && npm run dev` - Start Next.js dev server (:3001)
 - `cd landing && npm run build` - Build for production
 
 ## Project Structure
 
 ```
 pholio/
-├── landing/                 # Next.js marketing site
-│   ├── app/                 # Next.js App Router pages
-│   ├── components/          # React components
-│   ├── public/              # Static assets
-│   └── vercel.json          # Vercel deployment config
+├── landing/              # Next.js 16 marketing site (www.pholio.studio)
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components (Studio+, Agency scenes)
+│   └── public/           # Static assets
 │
-├── client/                  # React SPA (dashboard)
+├── client/               # React 19 SPA (app.pholio.studio dashboard)
 │   ├── src/
-│   │   ├── routes/          # Dashboard pages
-│   │   ├── components/      # React components
-│   │   ├── api/             # API client
-│   │   └── hooks/           # React hooks
-│   └── vite.config.js       # Vite configuration
+│   │   ├── routes/       # Page-level components (talent/, agency/)
+│   │   ├── components/   # Shared UI components
+│   │   ├── api/          # API client (fetch wrapper + named methods)
+│   │   ├── features/     # Feature modules (media, applications, analytics)
+│   │   └── hooks/        # Custom hooks (useAuth, useProfile, useMedia)
+│   └── vite.config.js    # Vite config (base: /dashboard-app/ in prod)
 │
-├── src/                     # Express backend
-│   ├── app.js               # Express app setup
-│   ├── routes/              # API routes
-│   ├── middleware/          # Express middleware
-│   └── lib/                 # Business logic
+├── src/                  # Express 5 backend
+│   ├── app.js            # Express app + middleware chain
+│   ├── routes/           # Route handlers (auth, talent/, agency/, api/)
+│   ├── middleware/        # requireAuth, requireRole, etc.
+│   └── lib/              # Business logic (pdf, uploader, ai/, onboarding/)
 │
-├── views/                   # EJS templates
-│   ├── auth/                # Login/signup pages
-│   ├── pdf/                 # PDF templates
-│   └── portfolio/           # Public portfolio pages
+├── views/                # EJS templates
+│   ├── auth/             # Login/signup pages
+│   ├── pdf/              # Comp card PDF template
+│   └── portfolio/        # Public portfolio pages
 │
-├── migrations/              # Database migrations
-├── public/                  # Static assets
-│   └── dashboard-app/       # Built React SPA
-└── uploads/                 # User uploads
+├── migrations/           # Knex database migrations
+├── seeds/                # Knex seed files
+├── netlify/
+│   └── function/
+│       └── server.js     # Netlify Function entry point (serverless-http)
+├── netlify.toml          # Netlify build + function config
+├── public/               # Static files (Netlify publish dir)
+│   └── dashboard-app/    # Built React SPA (generated by client:build)
+└── uploads/              # Local file uploads (dev only; use S3 in prod)
 ```
 
 ## Testing
@@ -279,20 +282,19 @@ pholio/
 npm test
 
 # Run specific test file
-npm test -- auth.test.js
+npx jest path/to/test.js
 
 # Test database connection
 npm run test:db
 ```
 
-Tests cover:
-- Authentication (login/logout)
-- Talent onboarding flow
-- File upload and processing
-- PDF generation
-- Agency commission tracking
-
 ## Troubleshooting
+
+### Netlify Function crashes on boot
+
+**Symptom:** `Cannot find module './get-event-type'` in function logs
+
+**Solution:** Ensure `serverless-http` is pinned to `3.2.0` in `package.json`. v4.x has a module resolution bug with the `nft` bundler.
 
 ### CORS Errors
 
@@ -300,17 +302,17 @@ Tests cover:
 
 **Solution:**
 1. Check `NODE_ENV` is set correctly
-2. Verify origin is in `allowedOrigins` (src/app.js)
+2. Verify origin is in `allowedOrigins` (`src/app.js`)
 3. Ensure API calls include `credentials: 'include'`
 
 ### Session Not Persisting
 
-**Symptom:** User logged out when navigating between www and app
+**Symptom:** User logged out between `www` and `app` subdomains
 
 **Solution:**
-1. Check `COOKIE_DOMAIN=.pholio.studio` (with dot)
-2. Verify `NODE_ENV=production`
-3. Ensure both domains use HTTPS
+1. `COOKIE_DOMAIN=.pholio.studio` (leading dot required)
+2. `NODE_ENV=production`
+3. Both domains must use HTTPS
 
 ### PDF Generation Fails
 
@@ -318,10 +320,18 @@ Tests cover:
 
 **Solution:**
 1. Verify `views/pdf/compcard.ejs` exists
-2. Check Puppeteer/Chromium is installed
-3. In serverless, ensure Chromium layer is added
+2. Netlify Pro tier required (26s timeout, 3GB memory for Puppeteer)
+3. Confirm `@sparticuz/chromium` is installed
 
 ### Build Errors
+
+**React SPA:**
+```bash
+cd client
+rm -rf dist node_modules
+npm install
+npm run build
+```
 
 **Next.js:**
 ```bash
@@ -331,26 +341,12 @@ npm install
 npm run build
 ```
 
-**React:**
-```bash
-cd client
-rm -rf dist node_modules
-npm install
-npm run build
-```
-
 ## Documentation
 
-- **CLAUDE.md** - Architecture overview and development guide
-- **RESTRUCTURE_PLAN_FINAL.md** - Detailed restructuring plan
-- **PHASE_X_COMPLETE.md** - Phase completion summaries
-- **NEON_SETUP.md** - Database setup guide
-- **NETLIFY_DEPLOYMENT.md** - Deployment guide
+- **CLAUDE.md** — Architecture overview and development guide for AI assistants
+- **PHOLIO_OVERVIEW.md** — Product overview and feature summary
+- **PHOLIO_BRAND_GUIDELINES.md** — Visual design system and brand standards
 
 ## License
 
-Private - All rights reserved
-
-## Support
-
-For issues or questions, please contact the development team.
+Private — All rights reserved
