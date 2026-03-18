@@ -9,20 +9,7 @@
 
 [functions]
   directory = "netlify/function"
-  # esbuild bundles everything into one file — no runtime module resolution issues.
-  # nft was failing to trace Express's internal ./router directory.
-  # Native .node binaries and large packages are kept external (copied from node_modules as-is).
-  node_bundler = "esbuild"
-  external_node_modules = [
-    "bcrypt",
-    "sharp",
-    "@img",
-    "@unrs",
-    "sqlite3",
-    "@sparticuz/chromium",
-    "puppeteer",
-    "fsevents"
-  ]
+  node_bundler = "nft"
   included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
