@@ -1,5 +1,9 @@
 [build]
-  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
+  # 1. Install + build React SPA
+  # 2. Pre-bundle the serverless function with esbuild (inline express, keep native modules external)
+  # nft would fail to include express/lib/router/ due to a directory-require tracing bug.
+  # Bundling ourselves sidesteps nft entirely for JS — nft only needs to handle native .node files.
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build && npm run build:function"
   publish = "public"
 
 [build.environment]
@@ -7,7 +11,9 @@
   NPM_FLAGS = "--include=optional"
 
 [functions]
-  directory = "netlify/function"
+  directory = "netlify/function-built"
+  # nft traces the pre-built bundle to find native module requires (bcrypt, sharp, etc.)
+  # No JS bundling needed — everything except native modules is already inlined by our esbuild step.
   node_bundler = "nft"
   included_files = ["views/**", "public/**", "migrations/**"]
 
