@@ -1,0 +1,121 @@
+<!-- Hero Section with Talent Image -->
+<section class="dash-hero" id="overview" data-section="overview">
+  <div class="dash-hero__image" data-is-user-uploaded="<%= isUserUploadedPhoto ? 'true' : 'false' %>">
+    <% if (heroImage && isUserUploadedPhoto) { %>
+      <!-- User-uploaded hero image -->
+      <div class="dash-hero__image-placeholder">
+        <div class="dash-hero__placeholder-shimmer"></div>
+      </div>
+      <img src="<%= normalizeImagePath(heroImage) %>"
+        alt="<%= safeProfile.first_name %> <%= safeProfile.last_name %>"
+        loading="lazy"
+        onload="this.classList.add('is-loaded')"
+        onerror="this.classList.add('is-loaded')">
+      <% } else { %>
+      <!-- Glass silhouette placeholder for Google photo or no image -->
+      <div class="dash-hero__image-placeholder dash-hero__image-placeholder--awaiting-intel">
+        <div class="dash-hero__glass-silhouette">
+          <svg width="120" height="160" viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="dash-hero__silhouette-icon">
+            <path d="M60 0C26.9 0 0 26.9 0 60C0 78.9 8.2 95.7 21.5 107.5L60 160L98.5 107.5C111.8 95.7 120 78.9 120 60C120 26.9 93.1 0 60 0ZM60 85C43.4 85 30 71.6 30 55C30 38.4 43.4 25 60 25C76.6 25 90 38.4 90 55C90 71.6 76.6 85 60 85Z" fill="currentColor" opacity="0.1"/>
+          </svg>
+          <span class="dash-hero__intel-label">Awaiting Visual Intel</span>
+        </div>
+        <div class="dash-hero__gold-pulse"></div>
+        </div>
+        <% } %>
+  </div>
+
+  <div class="dash-hero__copy">
+    <div class="dash-hero__title-wrapper">
+      <h1 class="dash-hero__title">
+        <%= (safeProfile.first_name || 'Your' ) + ' ' + (safeProfile.last_name || 'Name' ) %>
+      </h1>
+      <% if (safeProfile.is_pro) { %>
+        <span class="badge badge-pro">STUDIO+</span>
+        <% } else { %>
+          <span class="badge badge-free">Free</span>
+          <% } %>
+    </div>
+
+    <p class="dash-hero__subtitle">
+      <%= safeProfile.city || 'Add your primary city' %>
+    </p>
+
+    <div class="dash-hero__stats">
+      <div class="dash-hero__stat">
+        <span class="dash-hero__stat-label">Height</span>
+        <span class="dash-hero__stat-value">
+          <%= safeProfile.height_cm ? safeProfile.height_cm + ' cm' : '—' %>
+        </span>
+      </div>
+      <div class="dash-hero__stat">
+        <span class="dash-hero__stat-label">Measurements</span>
+        <span class="dash-hero__stat-value">
+          <%= (safeProfile.bust ? safeProfile.bust + '"' : '') + (safeProfile.waist ? '-' + safeProfile.waist + '"' : '') + (safeProfile.hips ? '-' + safeProfile.hips + '"' : '') || '—' %>
+        </span>
+      </div>
+      <div class="dash-hero__stat">
+        <span class="dash-hero__stat-label">Images</span>
+        <span class="dash-hero__stat-value" id="hero-image-count">
+          <%= safeMedia.length %>
+        </span>
+      </div>
+      <% if (safeProfile.updated_at) { %>
+        <div class="dash-hero__stat">
+          <span class="dash-hero__stat-label">Last Updated</span>
+          <span class="dash-hero__stat-value">
+            <%= new Date(safeProfile.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+          </span>
+        </div>
+      <% } %>
+      <% if (safeCompleteness && safeCompleteness.percentage !== undefined) { %>
+        <div class="dash-hero__stat dash-hero__stat--completeness">
+          <span class="dash-hero__stat-label">Profile</span>
+          <span class="dash-hero__stat-value">
+            <%= Math.round(safeCompleteness.percentage) %>%
+          </span>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="dash-hero__actions">
+      <% if (typeof profile !== 'undefined' && profile && profile.id && safeProfile.slug) { %>
+        <!-- Only show these buttons when profile exists -->
+        <button type="button" class="button button-primary dash-hero__action" id="pdf-download-btn" data-slug="<%= slug %>" data-theme="<%= (typeof currentTheme !== 'undefined' ? currentTheme : safeProfile.pdf_theme) || 'classic-serif' %>" data-is-pro="<%= safeProfile.is_pro ? 'true' : 'false' %>">
+          <span>Download Comp Card</span>
+        </button>
+        <% if (safeProfile.is_pro) { %>
+          <a href="/dashboard/pdf-customizer" class="button button-secondary dash-hero__action">Customize PDF</a>
+        <% } %>
+        <a href="/portfolio/<%= slug %>" class="button button-secondary dash-hero__action" target="_blank" rel="noopener noreferrer">
+          <span>View Portfolio</span>
+        </a>
+        <% if (!safeProfile.is_pro) { %>
+          <a href="/pro/upgrade" class="button button-gold dash-hero__action dash-hero__action--upgrade">
+            <span>Upgrade to Studio+</span>
+          </a>
+        <% } else { %>
+          <!-- Discoverability Toggle (Studio+ only) -->
+          <div class="dash-hero__discoverability" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <label class="discoverability-toggle" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+              <input 
+                type="checkbox" 
+                id="discoverability-toggle" 
+                <%= safeProfile.is_discoverable ? 'checked' : '' %>
+                data-discoverability-toggle>
+              <span style="color: #e2e8f0; font-size: 0.875rem;">
+                Make my profile discoverable to all partner agencies
+              </span>
+            </label>
+            <p style="margin-top: 0.5rem; color: #94a3b8; font-size: 0.75rem;">
+              When enabled, agencies can discover and invite you through Scout Talent
+            </p>
+          </div>
+        <% } %>
+      <% } else { %>
+        <!-- Show message when no profile exists -->
+        <p class="dash-hero__no-profile-message">Complete your profile below to unlock PDF downloads and portfolio features.</p>
+      <% } %>
+    </div>
+  </div>
+</section>

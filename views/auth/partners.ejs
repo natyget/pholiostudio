@@ -1,228 +1,160 @@
-<%- include('../partials/forms', { errors, values }) %>
-<% 
-  const _errors = (typeof errors === 'object' && errors) ? errors : {};
-  const _values = (typeof values === 'object' && values) ? values : {};
-  
-  function fieldError(name) {
-    const val = _errors[name];
-    if (!val) return '';
-    return Array.isArray(val) ? val[0] : val;
-  }
-  
-  function valueFor(name, fallback) {
-    if (Object.prototype.hasOwnProperty.call(_values, name) && _values[name] != null) {
-      return _values[name];
-    }
-    return fallback || '';
-  }
-%>
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">Partner with Pholio</h1>
+        <p class="auth-subtitle">Join as an Agency or Scout</p>
+        
+        <% if (errors && errors._general) { %>
+            <div class="alert alert-error">
+                <%= errors._general[0] %>
+            </div>
+        <% } %>
 
-<!-- Editorial Header: Matching features/pricing style -->
-<section class="partners-header" id="partners-header">
-  <div class="partners-header__container">
-    <span class="partners-header__badge">Partner Program</span>
-    <h1 class="partners-header__headline">
-      <span class="partners-header__headline-fashion">Join as a partner agency.</span>
-      <span class="partners-header__headline-ai">Professional portal.</span>
-    </h1>
-    <p class="partners-header__subheadline">Access our free talent discovery platform. Filter, review, and manage applications from verified talent—all in one place.</p>
-    <div class="partners-header__accent"></div>
-  </div>
-</section>
+        <form action="/partners" method="POST" id="partners-form">
+            <input type="hidden" name="firebase_token" id="firebase-token">
+            
+            <div class="form-group">
+                <label for="agency_name">Agency Name</label>
+                <input type="text" id="agency_name" name="agency_name" value="<%= values.agency_name || '' %>" required>
+                <% if (errors && errors.agency_name) { %>
+                    <div class="field-error"><%= errors.agency_name[0] %></div>
+                <% } %>
+            </div>
 
-<!-- Benefits Showcase Section -->
-<section class="partners-benefits" id="partners-benefits">
-  <div class="partners-benefits__container">
-    <div class="partners-benefits__grid">
-      <div class="partners-benefits__card">
-        <div class="partners-benefits__icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-        </div>
-        <h3 class="partners-benefits__title">Free Talent Discovery</h3>
-        <p class="partners-benefits__description">Access verified talent applications from our growing network of models and actors.</p>
-      </div>
+            <div class="form-group">
+                <label for="contact_name">Contact Name</label>
+                <input type="text" id="contact_name" name="contact_name" value="<%= values.contact_name || '' %>" required>
+                <% if (errors && errors.contact_name) { %>
+                    <div class="field-error"><%= errors.contact_name[0] %></div>
+                <% } %>
+            </div>
+            
+            <div class="form-group">
+                <label for="contact_role">Role</label>
+                <select id="contact_role" name="contact_role" required>
+                    <option value="" disabled <%= !values.contact_role ? 'selected' : '' %>>Select your role</option>
+                    <option value="Booker" <%= values.contact_role === 'Booker' ? 'selected' : '' %>>Booker</option>
+                    <option value="Director" <%= values.contact_role === 'Director' ? 'selected' : '' %>>Director</option>
+                    <option value="Scout" <%= values.contact_role === 'Scout' ? 'selected' : '' %>>Scout</option>
+                    <option value="Other" <%= values.contact_role === 'Other' ? 'selected' : '' %>>Other</option>
+                </select>
+                <% if (errors && errors.contact_role) { %>
+                    <div class="field-error"><%= errors.contact_role[0] %></div>
+                <% } %>
+            </div>
 
-      <div class="partners-benefits__card">
-        <div class="partners-benefits__icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-          </svg>
-        </div>
-        <h3 class="partners-benefits__title">Advanced Filtering</h3>
-        <p class="partners-benefits__description">Filter by location, measurements, experience level, and more to find the perfect match.</p>
-      </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<%= values.email || '' %>" required autocomplete="email">
+                <% if (errors && errors.email) { %>
+                    <div class="field-error"><%= errors.email[0] %></div>
+                <% } %>
+            </div>
+            
+            <div class="form-group">
+                <label for="company_website">Website (Optional)</label>
+                <input type="url" id="company_website" name="company_website" value="<%= values.company_website || '' %>" placeholder="https://">
+                <% if (errors && errors.company_website) { %>
+                    <div class="field-error"><%= errors.company_website[0] %></div>
+                <% } %>
+            </div>
 
-      <div class="partners-benefits__card">
-        <div class="partners-benefits__icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-        </div>
-        <h3 class="partners-benefits__title">Application Management</h3>
-        <p class="partners-benefits__description">Review, organize, and manage applications with powerful tools designed for agencies.</p>
-      </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <% if (errors && errors.password) { %>
+                    <div class="field-error"><%= errors.password[0] %></div>
+                <% } %>
+            </div>
 
-      <div class="partners-benefits__card">
-        <div class="partners-benefits__icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
-        </div>
-        <h3 class="partners-benefits__title">Analytics Dashboard</h3>
-        <p class="partners-benefits__description">Track traffic, application metrics, and talent pool insights with comprehensive analytics.</p>
-      </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submit-btn">Create Account</button>
+            </div>
+        </form>
+        
+        <p class="auth-footer">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
     </div>
-  </div>
-</section>
+</div>
 
-<!-- Form Section -->
-<section class="partners-form" id="partners-form">
-  <div class="partners-form__container">
-    <div class="partners-form__header">
-      <h2 class="partners-form__title">Partner Registration</h2>
-      <p class="partners-form__subtitle">Create your agency account to start discovering talent</p>
-    </div>
+<style>
+    /* Reusing auth styles from login */
+    .auth-container { display: flex; align-items: center; justify-content: center; min-height: 80vh; padding: 1rem; }
+    .auth-card { background: #111; padding: 2.5rem; border-radius: 12px; width: 100%; max-width: 500px; border: 1px solid #333; }
+    .auth-title { text-align: center; margin-bottom: 0.5rem; font-weight: 600; font-size: 1.5rem; }
+    .auth-subtitle { text-align: center; margin-bottom: 2rem; color: #888; margin-top: 0; }
     
-    <div class="partners-form__card" role="form">
-      <form method="post" action="/partners/join" class="form" data-async>
-        <div class="form-field <%= fieldError('agency_name') ? 'has-error' : '' %>">
-          <label for="agency_name">Agency Name</label>
-          <input id="agency_name" name="agency_name" type="text" autocomplete="organization" required value="<%= valueFor('agency_name', '') %>" placeholder="True Modeling Agency">
-          <% if (fieldError('agency_name')) { %>
-            <p class="field-error" role="alert"><%= fieldError('agency_name') %></p>
-          <% } %>
-        </div>
+    .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.75rem; border-radius: 6px; font-weight: 500; cursor: pointer; border: none; font-size: 0.95rem; transition: all 0.2s; }
+    .btn-primary { background: #fff; color: #000; margin-top: 1rem; font-weight: 600; }
+    .btn-primary:hover { opacity: 0.9; }
+    
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: #aaa; }
+    input, select { width: 100%; padding: 0.75rem; background: #222; border: 1px solid #333; color: #fff; border-radius: 6px; box-sizing: border-box; }
+    input:focus, select:focus { outline: none; border-color: #666; }
+    
+    .alert-error { background: rgba(220, 38, 38, 0.1); color: #ef4444; padding: 0.75rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; border: 1px solid rgba(220, 38, 38, 0.2); }
+    .field-error { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; }
+    
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #888; }
+    .auth-footer a { color: #fff; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+</style>
+
+<script type="module">
+    // Wait for FirebaseAuth to be available from layout
+    const waitForAuth = () => {
+        return new Promise((resolve) => {
+            if (window.FirebaseAuth) return resolve(window.FirebaseAuth);
+            const interval = setInterval(() => {
+                if (window.FirebaseAuth) {
+                    clearInterval(interval);
+                    resolve(window.FirebaseAuth);
+                }
+            }, 100);
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const Auth = await waitForAuth();
+        const form = document.getElementById('partners-form');
+        const submitBtn = document.getElementById('submit-btn');
         
-        <div class="form-field <%= fieldError('company_website') ? 'has-error' : '' %>">
-          <label for="company_website">Company Website <span class="muted">(optional)</span></label>
-          <input id="company_website" name="company_website" type="url" autocomplete="url" value="<%= valueFor('company_website', '') %>" placeholder="https://example.com">
-          <% if (fieldError('company_website')) { %>
-            <p class="field-error" role="alert"><%= fieldError('company_website') %></p>
-          <% } %>
-          <p class="form-field__help">Help us verify your agency</p>
-        </div>
-        
-        <div class="form-grid">
-          <div class="form-field <%= fieldError('contact_name') ? 'has-error' : '' %>">
-            <label for="contact_name">Your Full Name</label>
-            <input id="contact_name" name="contact_name" type="text" autocomplete="name" required value="<%= valueFor('contact_name', '') %>" placeholder="John Smith">
-            <% if (fieldError('contact_name')) { %>
-              <p class="field-error" role="alert"><%= fieldError('contact_name') %></p>
-            <% } %>
-          </div>
-          <div class="form-field <%= fieldError('contact_role') ? 'has-error' : '' %>">
-            <label for="contact_role">Your Role</label>
-            <select id="contact_role" name="contact_role" required>
-              <option value="">Select role</option>
-              <option value="Booker" <%= valueFor('contact_role') === 'Booker' ? 'selected' : '' %>>Booker</option>
-              <option value="Director" <%= valueFor('contact_role') === 'Director' ? 'selected' : '' %>>Director</option>
-              <option value="Scout" <%= valueFor('contact_role') === 'Scout' ? 'selected' : '' %>>Scout</option>
-              <option value="Other" <%= valueFor('contact_role') === 'Other' ? 'selected' : '' %>>Other</option>
-            </select>
-            <% if (fieldError('contact_role')) { %>
-              <p class="field-error" role="alert"><%= fieldError('contact_role') %></p>
-            <% } %>
-          </div>
-        </div>
-        
-        <div class="form-field <%= fieldError('email') ? 'has-error' : '' %>">
-          <label for="email">Work Email</label>
-          <input id="email" name="email" type="email" autocomplete="email" required value="<%= valueFor('email', '') %>" placeholder="you@agency.com">
-          <% if (fieldError('email')) { %>
-            <p class="field-error" role="alert"><%= fieldError('email') %></p>
-          <% } %>
-        </div>
-        
-        <div class="form-field <%= fieldError('password') ? 'has-error' : '' %>">
-          <label for="password">Password</label>
-          <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" value="<%= valueFor('password', '') %>">
-          <% if (fieldError('password')) { %>
-            <p class="field-error" role="alert"><%= fieldError('password') %></p>
-          <% } %>
-          <p class="form-field__help">Minimum 8 characters</p>
-        </div>
-        
-        <input type="hidden" name="firebase_token" id="firebase_token">
-        <button type="submit" class="button button-primary button-block" data-loading-text="Creating account…">Create Agency Account</button>
-      </form>
-      
-      <p class="partners-form__switch">Already have an account? <a href="/login">Sign in</a>.</p>
-    </div>
-  </div>
-</section>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const partnersForm = document.querySelector('form[action="/partners/join"]');
-  if (!partnersForm) return;
-
-  partnersForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const email = partnersForm.querySelector('#email').value.trim();
-    const password = partnersForm.querySelector('#password').value;
-    const firebaseTokenInput = partnersForm.querySelector('#firebase_token');
-    const submitButton = partnersForm.querySelector('button[type="submit"]');
-    const originalText = submitButton.textContent;
-
-    if (!email || !password) {
-      alert('Please enter your email and password.');
-      return;
-    }
-
-    // Check if Firebase Auth is available
-    if (!window.FirebaseAuth || typeof window.FirebaseAuth.signUp !== 'function') {
-      console.error('[Partners] Firebase Auth not initialized');
-      alert('Authentication system not ready. Please refresh the page and try again.');
-      return;
-    }
-
-    try {
-      // Show loading state
-      submitButton.disabled = true;
-      submitButton.textContent = submitButton.dataset.loadingText || 'Creating account…';
-
-      // Create Firebase user
-      const userCredential = await window.FirebaseAuth.signUp(email, password);
-      
-      // Get ID token
-      const idToken = await userCredential.user.getIdToken();
-      
-      // Set token in hidden input
-      firebaseTokenInput.value = idToken;
-
-      // Submit form to backend
-      partnersForm.submit();
-    } catch (error) {
-      console.error('[Partners] Authentication error:', error);
-      
-      // Reset button state
-      submitButton.disabled = false;
-      submitButton.textContent = originalText;
-
-      // Show error message
-      const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Account creation failed. Please try again.';
-      
-      // Find or create error display
-      let errorDisplay = partnersForm.querySelector('.auth-error');
-      if (!errorDisplay) {
-        errorDisplay = document.createElement('div');
-        errorDisplay.className = 'auth-error field-error';
-        errorDisplay.style.cssText = 'margin-bottom: 1rem; padding: 0.75rem; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c33;';
-        partnersForm.insertBefore(errorDisplay, partnersForm.firstChild);
-      }
-      errorDisplay.textContent = errorMessage;
-      errorDisplay.style.display = 'block';
-    }
-  });
-});
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Creating account...';
+                    
+                    // Create Firebase user first
+                    const credential = await Auth.signUp(email, password);
+                    const token = await credential.user.getIdToken();
+                    
+                    document.getElementById('firebase-token').value = token;
+                    // Now submit form with token
+                    form.submit();
+                } catch (error) {
+                    console.error('Sign Up Error:', error);
+                    
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-error';
+                    errorDiv.textContent = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message;
+                    
+                    const existingAlert = document.querySelector('.alert-error');
+                    if (existingAlert) existingAlert.remove();
+                    
+                    document.querySelector('.auth-card').insertBefore(errorDiv, document.querySelector('form'));
+                    
+                    submitBtn.style.opacity = '1';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Account';
+                }
+            });
+        }
+    });
 </script>

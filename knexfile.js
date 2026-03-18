@@ -212,7 +212,10 @@ if (client === 'pg') {
 
 const pg = {
   client: 'pg',
-  connection: process.env.DATABASE_URL,
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  },
   // Connection pool configuration for serverless environments
   // This helps handle connection termination issues with pooled connections (e.g., Neon)
   pool: {

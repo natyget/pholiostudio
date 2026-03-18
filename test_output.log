@@ -1,0 +1,373 @@
+  console.log
+    [DATABASE_URL] Extracted hostname: ep-cold-moon-a4bwyid7-pooler.us-east-1.aws.neon.tech
+
+      at Object.log (knexfile.js:129:15)
+
+  console.log
+    [DATABASE_URL] Is valid Neon hostname: true (hostname: ep-cold-moon-a4bwyid7-pooler.us-east-1.aws.neon.tech)
+
+      at Object.log (knexfile.js:138:11)
+
+  console.log
+    [Firebase Admin] Initialized successfully
+
+      at log (src/lib/firebase-admin.js:35:13)
+
+  console.warn
+    [Profile API] Text embedding failed (non-blocking): [embeddings] OPENAI_API_KEY not set — cannot compute embedding
+
+      456 |     }
+      457 |   } catch (embErr) {
+    > 458 |     console.warn('[Profile API] Text embedding failed (non-blocking):', embErr.message);
+          |             ^
+      459 |   }
+      460 |
+      461 |   const images = await knex('images')
+
+      at warn (src/routes/talent/profile.api.js:458:13)
+
+  console.log
+    [Profile API] Fetched images: {
+      profileId: '1d569168-5ecc-40c2-a785-8d496935f6ec',
+      count: 0,
+      paths: []
+    }
+
+      at log (src/routes/talent/profile.api.js:106:11)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:414:11)
+
+  console.log
+    ═══════════════════════════════════════════════════════════════════
+
+      at log (tests/profile-persistence.test.js:415:11)
+
+  console.log
+                  PERSISTENCE DISCREPANCY REPORT
+
+      at log (tests/profile-persistence.test.js:416:11)
+
+  console.log
+    ═══════════════════════════════════════════════════════════════════
+
+      at log (tests/profile-persistence.test.js:417:11)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:418:11)
+
+  console.log
+    Test Date: 2026-02-19T21:49:16.957Z
+
+      at log (tests/profile-persistence.test.js:419:11)
+
+  console.log
+    Test User: persistence.test@example.com
+
+      at log (tests/profile-persistence.test.js:420:11)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:421:11)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:422:11)
+
+  console.log
+    SUMMARY
+
+      at log (tests/profile-persistence.test.js:423:11)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:424:11)
+
+  console.log
+    Total Fields Tested: 55
+
+      at log (tests/profile-persistence.test.js:430:11)
+
+  console.log
+    Fields with Discrepancies: 2
+
+      at log (tests/profile-persistence.test.js:431:11)
+
+  console.log
+    Success Rate: 96.36%
+
+      at log (tests/profile-persistence.test.js:432:11)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:433:11)
+
+  console.log
+    ❌ DISCREPANCIES DETECTED
+
+      at log (tests/profile-persistence.test.js:438:13)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:439:13)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:440:13)
+
+  console.log
+    DETAILED DISCREPANCY LIST
+
+      at log (tests/profile-persistence.test.js:441:13)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:442:13)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:443:13)
+
+  console.log
+    1. Field: email (DB: email)
+
+      at log (tests/profile-persistence.test.js:446:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Type: string
+
+      at log (tests/profile-persistence.test.js:447:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Input Value: "persistence.test@example.com"
+
+      at log (tests/profile-persistence.test.js:448:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Saved Value: undefined
+
+      at log (tests/profile-persistence.test.js:449:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Reloaded Value: undefined
+
+      at log (tests/profile-persistence.test.js:450:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       ⚠️  INPUT → SAVE ISSUE: Expected "persistence.test@example.com", got "undefined"
+
+      at log (tests/profile-persistence.test.js:453:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:460:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    2. Field: date_of_birth (DB: date_of_birth)
+
+      at log (tests/profile-persistence.test.js:446:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Type: string
+
+      at log (tests/profile-persistence.test.js:447:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Input Value: "1995-03-15"
+
+      at log (tests/profile-persistence.test.js:448:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Saved Value: "1995-03-15T05:00:00.000Z"
+
+      at log (tests/profile-persistence.test.js:449:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Reloaded Value: "1995-03-15"
+
+      at log (tests/profile-persistence.test.js:450:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       ⚠️  INPUT → SAVE ISSUE: Expected "1995-03-15", got "1995-03-15T05:00:00.000Z"
+
+      at log (tests/profile-persistence.test.js:453:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       ⚠️  SAVE → RELOAD ISSUE: Saved "1995-03-15T05:00:00.000Z", reloaded "1995-03-15"
+
+      at log (tests/profile-persistence.test.js:457:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:460:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:464:13)
+
+  console.log
+    DISCREPANCIES BY CATEGORY
+
+      at log (tests/profile-persistence.test.js:465:13)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:466:13)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:467:13)
+
+  console.log
+    INPUT → SAVE Issues (2):
+
+      at log (tests/profile-persistence.test.js:473:15)
+
+  console.log
+      - email: Expected "persistence.test@example.com", got "undefined"
+
+      at log (tests/profile-persistence.test.js:475:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - date_of_birth: Expected "1995-03-15", got "1995-03-15T05:00:00.000Z"
+
+      at log (tests/profile-persistence.test.js:475:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:477:15)
+
+  console.log
+    SAVE → RELOAD Issues (1):
+
+      at log (tests/profile-persistence.test.js:481:15)
+
+  console.log
+      - date_of_birth: Saved "1995-03-15T05:00:00.000Z", reloaded "1995-03-15"
+
+      at log (tests/profile-persistence.test.js:483:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:485:15)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:489:13)
+
+  console.log
+    DISCREPANCIES BY FIELD TYPE
+
+      at log (tests/profile-persistence.test.js:490:13)
+
+  console.log
+    ───────────────────────────────────────────────────────────────────
+
+      at log (tests/profile-persistence.test.js:491:13)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:492:13)
+
+  console.log
+    STRING (2):
+
+      at log (tests/profile-persistence.test.js:501:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - email
+
+      at log (tests/profile-persistence.test.js:503:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - date_of_birth
+
+      at log (tests/profile-persistence.test.js:503:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:505:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ═══════════════════════════════════════════════════════════════════
+
+      at log (tests/profile-persistence.test.js:509:11)
+
+  console.log
+                          END OF REPORT
+
+      at log (tests/profile-persistence.test.js:510:11)
+
+  console.log
+    ═══════════════════════════════════════════════════════════════════
+
+      at log (tests/profile-persistence.test.js:511:11)
+
+  console.log
+
+
+      at log (tests/profile-persistence.test.js:512:11)
+
+  console.log
+    📄 Report saved to: ./PERSISTENCE_REPORT.md
+
+      at log (tests/profile-persistence.test.js:556:11)
+
+PASS tests/profile-persistence.test.js
+  Profile Persistence Test Suite
+    Field-by-Field Persistence Testing
+      ✓ Should create/update profile with all fields (491 ms)
+      ✓ Should reload profile and verify all fields persist correctly (342 ms)
+      ✓ Should generate Persistence Discrepancy Report (32 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        2.401 s, estimated 3 s
+Ran all test suites matching /tests\/profile-persistence.test.js/i.

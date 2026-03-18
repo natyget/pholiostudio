@@ -1,0 +1,2072 @@
+<% 
+  // Safe profile extraction - handle null, undefined, arrays, and malformed objects
+  let safeProfile = {};
+  if (typeof profile !== 'undefined' && profile !== null) {
+    if (Array.isArray(profile)) {
+      safeProfile = profile.length > 0 ? profile[0] : {};
+    } else if (typeof profile === 'object') {
+      safeProfile = profile;
+    }
+  }
+  
+  // Debug: Log profile data in development
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+    console.log('[EJS Template] Profile data received:', {
+      hasProfile: !!profile,
+      profileType: typeof profile,
+      isArray: Array.isArray(profile),
+      safeProfileKeys: Object.keys(safeProfile).slice(0, 20),
+      sampleValues: {
+        city: safeProfile.city,
+        phone: safeProfile.phone,
+        height_cm: safeProfile.height_cm,
+        gender: safeProfile.gender,
+        date_of_birth: safeProfile.date_of_birth
+      }
+    });
+  }
+  
+  // Helper function to safely extract values, preserving falsy values (false, 0, '')
+  const safeValue = (val, def = '') => (val !== null && val !== undefined) ? val : def;
+  
+  // Helper function to safely extract JSON fields (handles both string and object)
+  // Validates JSON strings before returning them to prevent template errors
+  const safeJsonValue = (val, def = '[]') => {
+    if (val === null || val === undefined) return def;
+    
+    // If it's already a string, validate it's valid JSON
+    if (typeof val === 'string') {
+      // Empty string should return default
+      if (val.trim() === '') return def;
+      try {
+        // Validate by parsing - if successful, return original string
+        JSON.parse(val);
+        return val;
+      } catch (e) {
+        // Invalid JSON string - log warning in development and return default
+        if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+          console.warn('[Template] Invalid JSON value:', val, e.message);
+        }
+        return def;
+      }
+    }
+    
+    // If it's an object/array, stringify it
+    if (typeof val === 'object') {
+      try {
+        return JSON.stringify(val);
+      } catch (e) {
+        // Stringification failed - log warning and return default
+        if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+          console.warn('[Template] Failed to stringify object:', e.message);
+        }
+        return def;
+      }
+    }
+    
+    // For other types (number, boolean, etc.), return default
+    return def;
+  };
+  
+  const rawMedia = (typeof images !== 'undefined' && images) ? images : [];
+  const safeMedia = Array.isArray(rawMedia) ? rawMedia : [];
+  const slug = safeProfile.slug || 'yourname';
+  const effectiveShareUrl = (typeof shareUrl !== 'undefined') ? shareUrl : `https://pholio.me/${slug}`;
+  const safeCompleteness = (typeof completeness !== 'undefined') ? completeness : {};
+  
+  // Onboarding state (variables passed from route - check existence before using)
+  // These variables may not always be passed (e.g., error routes)
+  // Use typeof to check existence, then assign to local consts with defaults
+  const onboardingStage = safeProfile.onboarding_stage || 'draft';
+  
+  // Check and provide defaults for route variables that may not always be passed
+  const hasShowOnboardingBanner = typeof showOnboardingBanner !== 'undefined';
+  const showOnboardingBannerValue = hasShowOnboardingBanner ? showOnboardingBanner : false;
+  const hasCanSubmit = typeof canSubmit !== 'undefined';
+  const canSubmitValue = hasCanSubmit ? canSubmit : { ok: false, missing_fields: [], photo_count: 0, min_photos: 6 };
+  
+  // editDefaults with proper null/undefined checking (preserves falsy values like false, 0)
+  const editDefaults = {
+    city: safeValue(safeProfile.city),
+    city_secondary: safeValue(safeProfile.city_secondary),
+    height_cm: safeValue(safeProfile.height_cm),
+    bio: safeValue(safeProfile.bio_raw),
+    bio_curated: safeValue(safeProfile.bio_curated),
+    phone: safeValue(safeProfile.phone),
+    first_name: safeValue(safeProfile.first_name),
+    last_name: safeValue(safeProfile.last_name),
+    bust: safeValue(safeProfile.bust),
+    waist: safeValue(safeProfile.waist),
+    hips: safeValue(safeProfile.hips),
+    shoe_size: safeValue(safeProfile.shoe_size),
+    eye_color: safeValue(safeProfile.eye_color),
+    hair_color: safeValue(safeProfile.hair_color),
+    hair_length: safeValue(safeProfile.hair_length),
+    skin_tone: safeValue(safeProfile.skin_tone),
+    gender: safeValue(safeProfile.gender),
+    date_of_birth: safeValue(safeProfile.date_of_birth),
+    age: safeValue(safeProfile.age),
+    weight: safeValue(safeProfile.weight_lbs || safeProfile.weight_kg || null),
+    weight_unit: safeValue(safeProfile.weight_unit || (safeProfile.weight_kg ? 'kg' : 'lbs') || 'lbs'),
+    weight_kg: safeValue(safeProfile.weight_kg),
+    weight_lbs: safeValue(safeProfile.weight_lbs),
+    dress_size: safeValue(safeProfile.dress_size),
+    experience_level: safeValue(safeProfile.experience_level),
+    training: safeValue(safeProfile.training),
+    portfolio_url: safeValue(safeProfile.portfolio_url),
+    instagram_handle: safeValue(safeProfile.instagram_handle),
+    twitter_handle: safeValue(safeProfile.twitter_handle),
+    tiktok_handle: safeValue(safeProfile.tiktok_handle),
+    availability_travel: safeValue(safeProfile.availability_travel),
+    availability_schedule: safeValue(safeProfile.availability_schedule),
+    work_eligibility: safeValue(safeProfile.work_eligibility),
+    work_status: safeValue(safeProfile.work_status),
+    union_membership: safeValue(safeProfile.union_membership),
+    ethnicity: safeValue(safeProfile.ethnicity),
+    tattoos: safeValue(safeProfile.tattoos),
+    piercings: safeValue(safeProfile.piercings),
+    reference_name: safeValue(safeProfile.reference_name),
+    reference_email: safeValue(safeProfile.reference_email),
+    reference_phone: safeValue(safeProfile.reference_phone),
+    emergency_contact_name: safeValue(safeProfile.emergency_contact_name),
+    emergency_contact_phone: safeValue(safeProfile.emergency_contact_phone),
+    emergency_contact_relationship: safeValue(safeProfile.emergency_contact_relationship),
+    specialties: safeJsonValue(safeProfile.specialties, '[]'),
+    experience_details: safeJsonValue(safeProfile.experience_details, '{}'),
+    languages: safeJsonValue(safeProfile.languages, '[]'),
+    comfort_levels: safeJsonValue(safeProfile.comfort_levels, '[]'),
+    previous_representations: safeJsonValue(safeProfile.previous_representations, '[]')
+  };
+  
+  // Ensure values is an object (handle null, undefined, and non-object types)
+  const safeValues = (values && typeof values === 'object' && !Array.isArray(values)) ? values : {};
+  const formValues = { ...editDefaults, ...safeValues };
+  const _formErrors = (typeof formErrors !== 'undefined' && formErrors !== null) ? formErrors : {};
+  const valueFor = (key) => {
+    const val = formValues && formValues[key];
+    return (val !== null && val !== undefined) ? val : '';
+  };
+
+  // Helper function to normalize image paths
+  // Handles external URLs, local paths, and edge cases safely
+  function normalizeImagePath(imagePath) {
+    if (!imagePath || typeof imagePath !== 'string') return '';
+    
+    // Preserve external URLs (Google Photos, etc.)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // Normalize local paths
+    let normalized = imagePath;
+    
+    // Ensure leading slash
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    
+    // If it doesn't start with /uploads/, extract filename and prepend /uploads/
+    // This handles cases where paths might be stored without the /uploads/ prefix
+    if (!normalized.startsWith('/uploads/')) {
+      const filename = normalized.split('/').pop();
+      if (filename) {
+        normalized = '/uploads/' + filename;
+      } else {
+        // No filename found, return empty string
+        return '';
+      }
+    }
+    
+    return normalized;
+  }
+
+  // Get hero image - check if it's a Google URL or user-uploaded
+  const heroImagePath = safeProfile.hero_image_path;
+  const heroImage = heroImagePath || (safeMedia.length > 0 ? safeMedia[0].path : null);
+  const isGooglePhoto = heroImagePath && (heroImagePath.startsWith('http://') || heroImagePath.startsWith('https://'));
+  const isUserUploadedPhoto = heroImagePath && !isGooglePhoto && heroImagePath.startsWith('/uploads/');
+  
+  // Get Google photo URL if available (for badge display)
+  const googlePhotoURL = isGooglePhoto ? heroImagePath : null;
+
+  const fieldError = (key) => (_formErrors[key] && _formErrors[key].length) ? _formErrors[key][0] : null;
+  const fieldHasError = (key) => Boolean(fieldError(key));
+  
+  // Onboarding banner and submit button (shown when onboarding=1 and stage is draft/completing)
+  const showOnboardingUI = showOnboardingBannerValue && (onboardingStage === 'draft' || onboardingStage === 'completing');
+
+  // Use unified completeness calculation from backend (fixes split-brain problem)
+  // The route handler passes the completeness object with sections calculated by calculateProfileCompleteness()
+  const sectionStatuses = safeCompleteness.sections || {
+    personalInfo: { status: 'incomplete', message: 'Complete profile' },
+    physicalProfile: { status: 'incomplete', message: 'Complete profile' },
+    experienceTraining: { status: 'incomplete', message: 'Complete profile' },
+    skillsLifestyle: { status: 'incomplete', message: 'Complete profile' },
+    comfortBoundaries: { status: 'incomplete', message: 'Complete profile' },
+    availabilityLocations: { status: 'incomplete', message: 'Complete profile' },
+    socialPortfolio: { status: 'incomplete', message: 'Complete profile' },
+    referencesEmergency: { status: 'incomplete', message: 'Complete profile' }
+  };
+  
+  // Applications & Matches is a display section, not a completeness section - always complete
+  if (!sectionStatuses.applicationsMatches) {
+    sectionStatuses.applicationsMatches = { status: 'complete', message: 'View applications' };
+  }
+  %>
+
+  <% if (showOnboardingUI) { %>
+    <!-- Onboarding Banner -->
+    <div class="onboarding-banner" style="background: linear-gradient(135deg, rgba(201, 165, 90, 0.1) 0%, rgba(201, 165, 90, 0.05) 100%); border: 1px solid rgba(201, 165, 90, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; margin-top: 1rem;">
+      <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+        <div style="font-size: 1.5rem; flex-shrink: 0;">📋</div>
+        <div style="flex: 1;">
+          <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary, #fff); margin-bottom: 0.5rem;">
+            Complete your profile to submit
+          </h3>
+          <p style="font-size: 0.9375rem; color: var(--text-secondary, rgba(255, 255, 255, 0.8)); line-height: 1.6; margin-bottom: 1rem;">
+            Fill out all required fields and upload at least <%= canSubmitValue.min_photos %> photos to submit your profile for AI analysis.
+          </p>
+          <% if (!canSubmitValue.ok) { %>
+            <div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; margin-bottom: 1rem;">
+              <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.25rem; font-weight: 500;">
+                Still missing:
+              </p>
+              <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: rgba(255, 255, 255, 0.8);">
+                <% if (canSubmitValue.missing_fields && canSubmitValue.missing_fields.length > 0) { %>
+                  <% canSubmitValue.missing_fields.forEach(field => { %>
+                    <li><%= field %></li>
+                  <% }); %>
+                <% } %>
+                <% if (!canSubmitValue.has_enough_photos) { %>
+                  <li>Minimum <%= canSubmitValue.min_photos %> photos (you have <%= canSubmitValue.photo_count %>)</li>
+                <% } %>
+              </ul>
+            </div>
+          <% } %>
+          <form method="post" action="/dashboard/talent/onboarding/submit" style="display: inline-block;">
+            <button 
+              type="submit" 
+              class="button button-primary"
+              <%= !canSubmitValue.ok ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' %>
+              onclick="return confirm('Submit your profile for AI analysis? This will trigger the processing pipeline.')">
+              Submit Profile for Processing
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  <!-- APPLICATION INTERFACE -->
+  <div class="dashboard-shell">
+    
+    <!-- 1. SIDEBAR NAVIGATION (Dark) -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">P</div>
+        <span class="sidebar-logo-text">Pholio</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-item active">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Overview</span>
+          </div>
+          <a href="/agencies" class="nav-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Agencies</span>
+          </a>
+          <a href="#apps-section" class="nav-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Applications</span>
+          </a>
+          <a href="#portfolio-section" class="nav-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Portfolio</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Messages</span>
+            <span class="nav-badge">0</span>
+          </a>
+          <a href="#dossier-section" class="nav-item">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Profile</span>
+          </a>
+        </div>
+      </nav>
+
+      
+      <!-- Sidebar Footer with Dropdown -->
+      <div class="sidebar-footer">
+        <div class="sidebar-profile" id="profile-dropdown-trigger" onclick="toggleSidebarDropdown()">
+          <div class="sidebar-profile-avatar">
+            <% if (safeProfile.hero_image_path) { %>
+              <img src="<%= normalizeImagePath(safeProfile.hero_image_path) %>" alt="">
+            <% } else if (safeMedia && safeMedia.length > 0) { %>
+              <img src="<%= normalizeImagePath(safeMedia[0].path) %>" alt="">
+            <% } else { %>
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1e293b;color:#94a3b8;font-weight:600;"><%= (safeProfile.first_name || 'U')[0] %></div>
+            <% } %>
+          </div>
+          <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name"><%= safeProfile.first_name || 'Your' %> <%= (safeProfile.last_name || 'Name')[0] %>.</div>
+            <div class="sidebar-profile-role">Talent</div>
+          </div>
+          <svg class="sidebar-profile-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        
+        <!-- Dropdown Menu -->
+        <div class="sidebar-dropdown" id="sidebar-dropdown" hidden>
+          <div class="dropdown-section">
+            <a href="/dashboard/settings" class="dropdown-item">
+              <span class="dropdown-icon">⚙️</span>
+              <span>Settings</span>
+            </a>
+            <a href="/dashboard/settings#notifications" class="dropdown-item">
+              <span class="dropdown-icon">🔔</span>
+              <span>Notifications</span>
+            </a>
+            <a href="/dashboard/settings#billing" class="dropdown-item">
+              <span class="dropdown-icon">💳</span>
+              <span>Billing</span>
+            </a>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <div class="dropdown-section">
+            <a href="/" class="dropdown-item">
+              <span class="dropdown-icon">🏠</span>
+              <span>Back to Website</span>
+            </a>
+            <a href="/agencies" class="dropdown-item">
+              <span class="dropdown-icon">🔍</span>
+              <span>Browse Agencies</span>
+            </a>
+            <a href="/help" class="dropdown-item">
+              <span class="dropdown-icon">❓</span>
+              <span>Help & Support</span>
+            </a>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <a href="/auth/logout" class="dropdown-item dropdown-logout">
+            <span class="dropdown-icon">🚪</span>
+            <span>Sign Out</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+
+    <!-- 2. MAIN CANVAS -->
+    <main class="app-canvas">
+      <div class="canvas-content">
+        
+        <!-- WELCOME HEADER — Large & Prominent -->
+        <div class="welcome-banner" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 40px; padding-top: 12px;">
+          <div>
+            <p style="font-size: 13px; font-weight: 600; color: #C9A55A; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px;">
+              <% 
+                const hour = new Date().getHours();
+                let greeting = 'Good evening';
+                if (hour < 12) greeting = 'Good morning';
+                else if (hour < 17) greeting = 'Good afternoon';
+              %>
+              <%= greeting %>
+            </p>
+            <h1 style="font-family: var(--font-serif); font-size: 42px; font-weight: 700; color: #0f172a; margin: 0 0 8px; letter-spacing: -0.03em; line-height: 1.1;">
+              <%= safeProfile.first_name || 'Welcome' %>
+            </h1>
+            <p style="font-size: 16px; color: #64748b; margin: 0;">
+              <span id="current-date"></span> · <strong style="color: #C9A55A;"><%= safeCompleteness.percentage || 0 %>%</strong> profile complete
+            </p>
+          </div>
+          
+          <div style="display: flex; gap: 12px; padding-top: 8px;">
+            <a href="/talent/<%= safeProfile.id || '' %>" target="_blank" style="background: #ffffff; border: 1px solid #e2e8f0; color: #0f172a; font-size: 14px; font-weight: 600; padding: 12px 22px; border-radius: 10px; text-decoration: none; transition: all 0.2s ease;">
+              View Profile
+            </a>
+            <a href="/agencies" style="background: #C9A55A; color: #ffffff; font-size: 14px; font-weight: 600; padding: 12px 22px; border-radius: 10px; text-decoration: none; transition: all 0.2s ease;">
+              Browse Agencies
+            </a>
+          </div>
+        </div>
+
+        
+        <script>
+          document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        </script>
+
+
+        
+        <!-- PROFILE REACH — Stats without duplicate % -->
+        <div class="reach-card">
+          <div class="reach-header">
+            <h2>Your Profile Reach</h2>
+            <span class="reach-period">This Week</span>
+          </div>
+          
+          <div class="reach-stats" style="grid-template-columns: repeat(3, 1fr);">
+            <% if ((typeof profileViews !== 'undefined' ? profileViews : 0) === 0) { %>
+              <!-- Zero-state with illustration -->
+              <div class="reach-stat" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b;">
+                <div class="reach-stat-value" style="font-size: 28px;">🚀</div>
+                <div class="reach-stat-label">Start Here</div>
+                <div class="reach-stat-hint" style="color: #92400e;">Complete your profile</div>
+              </div>
+            <% } else { %>
+              <div class="reach-stat">
+                <div class="reach-stat-value"><%= typeof profileViews !== 'undefined' ? profileViews : 0 %></div>
+                <div class="reach-stat-label">Views</div>
+                <div class="reach-stat-hint">this week</div>
+              </div>
+            <% } %>
+            <div class="reach-stat">
+              <div class="reach-stat-value"><%= typeof agencyViews !== 'undefined' ? agencyViews : 0 %></div>
+              <div class="reach-stat-label">Agencies</div>
+              <div class="reach-stat-hint">viewed you</div>
+            </div>
+            <div class="reach-stat">
+              <div class="reach-stat-value"><%= typeof shortlistCount !== 'undefined' ? shortlistCount : 0 %></div>
+              <div class="reach-stat-label">Shortlists</div>
+              <div class="reach-stat-hint">this month</div>
+            </div>
+          </div>
+
+          
+          <!-- #9 — Top Viewers with Social Proof -->
+          <div class="reach-viewers">
+            <div class="reach-viewers-title">Top Viewers</div>
+            <% if ((typeof profileViews !== 'undefined' && profileViews > 0) || false) { %>
+              <div class="reach-viewer">
+                <div class="reach-viewer-avatar">E</div>
+                <div class="reach-viewer-info">
+                  <div class="reach-viewer-name">Elite Models NYC</div>
+                  <div class="reach-viewer-count">viewed 3× this week</div>
+                </div>
+                <div class="reach-viewer-time">2h ago</div>
+              </div>
+            <% } else { %>
+              <div class="reach-viewer">
+                <div class="reach-viewer-avatar">?</div>
+                <div class="reach-viewer-info">
+                  <div class="reach-viewer-name">No agency views yet</div>
+                  <div class="reach-viewer-count">Complete your profile to get discovered</div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+
+        <!-- RECOMMENDED AGENCIES — #3, #14 -->
+        <div class="agencies-card">
+          <div class="section-header">
+            <h3 class="section-title">Recommended Agencies</h3>
+            <a href="/agencies" class="section-link">View All Agencies →</a>
+          </div>
+          <p class="section-subtitle">3 agencies match your profile — based on your location, experience, and look.</p>
+          
+          <div class="agencies-grid">
+            <!-- Agency 1 — High Match -->
+            <div class="agency-card">
+              <div class="agency-match-badge high">⭐ 95% Match</div>
+              <div class="agency-header">
+                <div class="agency-logo">E</div>
+                <div class="agency-info">
+                  <h4>Elite Models</h4>
+                </div>
+              </div>
+              <div class="agency-tags">
+                <span class="agency-tag fashion">👗 Fashion</span>
+                <span class="agency-tag runway">✨ Runway</span>
+              </div>
+              <div class="agency-looking">Looking for: Female, 5'9"+, LA-based</div>
+              <a href="/agencies" class="agency-cta agency-cta-apply">Apply Now</a>
+            </div>
+            
+            <!-- Agency 2 -->
+            <div class="agency-card">
+              <div class="agency-match-badge">87% Match</div>
+              <div class="agency-header">
+                <div class="agency-logo">I</div>
+                <div class="agency-info">
+                  <h4>IMG Models</h4>
+                </div>
+              </div>
+              <div class="agency-tags">
+                <span class="agency-tag commercial">📷 Commercial</span>
+                <span class="agency-tag">🖼 Print</span>
+              </div>
+              <div class="agency-looking">Looking for: All heights, Nationwide</div>
+              <a href="/agencies" class="agency-cta agency-cta-apply">Apply Now</a>
+            </div>
+            
+            <!-- Agency 3 -->
+            <div class="agency-card">
+              <div class="agency-match-badge">82% Match</div>
+              <div class="agency-header">
+                <div class="agency-logo">N</div>
+                <div class="agency-info">
+                  <h4>Next Management</h4>
+                </div>
+              </div>
+              <div class="agency-tags">
+                <span class="agency-tag editorial">📸 Editorial</span>
+                <span class="agency-tag">🌍 Diversity</span>
+              </div>
+              <div class="agency-looking">Looking for: NYC-based talent</div>
+              <a href="/agencies" class="agency-cta agency-cta-apply">Apply Now</a>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- APPLICATION STATUS BOARD — #4 Aspirational Empty State -->
+        <div class="applications-card" id="apps-section">
+          <div class="section-header">
+            <h3 class="section-title">Your Applications (<%= typeof applicationCount !== 'undefined' ? applicationCount : 0 %>)</h3>
+            <a href="/agencies" class="section-link">+ Apply to Agency</a>
+          </div>
+          
+          <div class="applications-filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">Active</button>
+            <button class="filter-btn">Archive</button>
+          </div>
+          
+          <div class="applications-list" id="applications-container">
+            <!-- #4 — Aspirational empty state -->
+            <div class="applications-empty">
+              <div class="applications-empty-icon">🚀</div>
+              <h3>Ready to Launch Your Career?</h3>
+              <p>Your next opportunity is just one application away. Browse top agencies that match your profile and take the first step.</p>
+              <a href="/agencies" class="btn-primary">Explore Agencies</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFILE STRENGTH CHECKLIST — #2, #8 -->
+        <div class="profile-checklist" id="profile-checklist">
+          <div class="section-header">
+            <h3 class="section-title">Complete Your Profile</h3>
+          </div>
+          
+          <div class="checklist-items">
+            <!-- #2 — Gray circles for incomplete (not red) -->
+            <div class="checklist-item <%= safeProfile.first_name && safeProfile.last_name ? 'complete' : 'incomplete' %>">
+              <span class="checklist-icon"><%= safeProfile.first_name && safeProfile.last_name ? '✅' : '⚪' %></span>
+              <span class="checklist-label">Basic Info (Name, Location, Contact)</span>
+              <% if (!safeProfile.first_name || !safeProfile.last_name) { %>
+                <a href="#dossier-section" class="checklist-action">Add →</a>
+              <% } %>
+            </div>
+            
+            <div class="checklist-item <%= safeProfile.height ? 'complete' : 'incomplete' %>">
+              <span class="checklist-icon"><%= safeProfile.height ? '✅' : '⚪' %></span>
+              <span class="checklist-label">Physical Stats (Height, Measurements)</span>
+              <% if (!safeProfile.height) { %>
+                <a href="#dossier-section" class="checklist-action">Add →</a>
+              <% } %>
+            </div>
+            
+            <div class="checklist-item <%= safeMedia.length >= 1 ? 'complete' : 'incomplete' %>">
+              <span class="checklist-icon"><%= safeMedia.length >= 1 ? '✅' : '⚪' %></span>
+              <span class="checklist-label">Profile Photo</span>
+              <% if (safeMedia.length < 1) { %>
+                <span class="checklist-action" onclick="document.getElementById('media').click()">Upload →</span>
+              <% } %>
+            </div>
+            
+            <!-- #2 — Yellow/amber for "needs attention" -->
+            <div class="checklist-item <%= safeMedia.length >= 8 ? 'complete' : 'warning' %>">
+              <span class="checklist-icon"><%= safeMedia.length >= 8 ? '✅' : '🟡' %></span>
+              <span class="checklist-label">Portfolio Gallery (<%= safeMedia.length %>/8 photos)</span>
+              <% if (safeMedia.length < 8) { %>
+                <span class="checklist-action" onclick="document.getElementById('media').click()">Add <%= 8 - safeMedia.length %> more →</span>
+              <% } %>
+            </div>
+            
+            <div class="checklist-item <%= safeProfile.bio ? 'complete' : 'incomplete' %>">
+              <span class="checklist-icon"><%= safeProfile.bio ? '✅' : '⚪' %></span>
+              <span class="checklist-label">Professional Bio</span>
+              <% if (!safeProfile.bio) { %>
+                <a href="#dossier-section" class="checklist-action">Write →</a>
+              <% } %>
+            </div>
+            
+            <div class="checklist-item <%= safeProfile.experience_level ? 'complete' : 'incomplete' %>">
+              <span class="checklist-icon"><%= safeProfile.experience_level ? '✅' : '⚪' %></span>
+              <span class="checklist-label">Experience Level</span>
+              <% if (!safeProfile.experience_level) { %>
+                <a href="#dossier-section" class="checklist-action">Select →</a>
+              <% } %>
+            </div>
+          </div>
+          
+          <!-- #8 — Gamified progress -->
+          <div class="checklist-progress">
+            <div class="checklist-progress-text">
+              <span><%= safeCompleteness.completedSections || 0 %> of <%= safeCompleteness.totalSections || 6 %> complete — you're <% if ((safeCompleteness.percentage || 0) >= 50) { %>over halfway there! 🎉<% } else { %>getting started 💪<% } %></span>
+              <span><%= safeCompleteness.percentage || 0 %>%</span>
+            </div>
+            <div class="checklist-progress-bar">
+              <div class="checklist-progress-fill" style="width: <%= safeCompleteness.percentage || 0 %>%"></div>
+            </div>
+          </div>
+          
+          <div class="checklist-tip">
+            <span class="checklist-tip-icon">💡</span>
+            <span>Complete profiles get 5× more views — <strong>at 50%, you unlock agency recommendations!</strong></span>
+          </div>
+        </div>
+
+
+        <!-- PORTFOLIO SHOWCASE -->
+        <div class="portfolio-card" id="portfolio-section">
+          <div class="section-header">
+            <h3 class="section-title">Your Portfolio</h3>
+            <div style="display: flex; gap: 12px;">
+              <a href="#" class="section-link">Organize</a>
+              <button class="btn-primary" onclick="document.getElementById('media').click()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Photos
+              </button>
+            </div>
+          </div>
+          
+          <p class="section-subtitle">This is how agencies see your work:</p>
+          
+          <!-- Hidden Upload Form -->
+          <form action="/dashboard/talent/media" method="post" enctype="multipart/form-data" style="display:none;" id="media-upload-form">
+            <input id="media" name="media" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="this.form.submit()">
+          </form>
+
+          <div class="portfolio-preview">
+            <% if (safeMedia.length) { %>
+              <% safeMedia.slice(0, 4).forEach((image, index) => { %>
+                <div class="portfolio-thumb" data-media-id="<%= image.id %>">
+                  <img src="<%= normalizeImagePath(image.path) %>" loading="lazy" alt="">
+                </div>
+              <% }); %>
+            <% } %>
+            <!-- Always show add slot -->
+            <div class="portfolio-thumb portfolio-thumb-add" onclick="document.getElementById('media').click()">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+          </div>
+          
+          <div class="portfolio-categories">
+            <div class="portfolio-category">
+              <span>Professional Headshots</span>
+              <span><%= safeMedia.filter(m => m.category === 'headshot').length || 0 %> photos</span>
+            </div>
+            <div class="portfolio-category">
+              <span>Full Body</span>
+              <span><%= safeMedia.filter(m => m.category === 'fullbody').length || 0 %> photos</span>
+            </div>
+            <div class="portfolio-category <%= safeMedia.filter(m => m.category === 'editorial').length < 2 ? 'portfolio-category-warning' : '' %>">
+              <span>Runway/Editorial</span>
+              <span><%= safeMedia.filter(m => m.category === 'editorial').length || 0 %> photos <% if (safeMedia.filter(m => m.category === 'editorial').length < 2) { %>(Recommended: Add 2+)<% } %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT PROFILE CTA — Streamlined -->
+        <div class="section-card" id="edit-profile-cta" style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 20px; font-weight: 700; margin: 0 0 8px; color: #0f172a;">Complete Your Profile</h3>
+              <p style="font-size: 14px; color: #64748b; margin: 0;"><%= safeCompleteness.percentage || 0 %>% complete — Add missing details to get discovered.</p>
+            </div>
+            <button class="btn-primary" type="button" onclick="toggleProfileForm()" style="flex-shrink: 0;">
+              Edit Profile →
+            </button>
+          </div>
+          
+          <% if (safeCompleteness.missing && safeCompleteness.missing.length > 0) { %>
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Missing</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <% safeCompleteness.missing.slice(0, 4).forEach(function(item) { %>
+                <span style="background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 10px;"><%= item %></span>
+              <% }); %>
+              <% if (safeCompleteness.missing.length > 4) { %>
+                <span style="color: #94a3b8; font-size: 11px;">+<%= safeCompleteness.missing.length - 4 %> more</span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- PROFILE DETAILS (Hidden - use Edit Profile CTA instead) -->
+        <div class="profile-checklist" id="dossier-section" style="display: none; background: #ffffff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+          <div class="section-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <h3 class="section-title">Edit Profile</h3>
+            <button type="button" onclick="toggleProfileForm()" style="background: none; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; color: #64748b; cursor: pointer; font-size: 13px; font-weight: 500;">✕ Close</button>
+          </div>
+          
+          <!-- Profile Form (Accordion preserved below) -->
+
+
+
+
+
+
+      <div class="talent-settings-accordion">
+        
+        <!-- Personal Info Section -->
+        <div class="talent-accordion__item" data-section="personal-info">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Personal Info</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.personalInfo?.status || 'incomplete' %>">
+                <%= sectionStatuses.personalInfo?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+            <div class="form-grid">
+              <div class="form-field <%= fieldHasError('city') ? 'has-error' : '' %>">
+                <label for="city">Primary City</label>
+                <input id="city" name="city" type="text" autocomplete="address-level2" value="<%= valueFor('city') %>"
+                  placeholder="Los Angeles, CA">
+                <% if (fieldHasError('city')) { %>
+                  <p class="form-field__error">
+                    <%= fieldError('city') %>
+                  </p>
+                  <% } %>
+              </div>
+
+              <div class="form-field <%= fieldHasError('city_secondary') ? 'has-error' : '' %>">
+                <label for="city_secondary">Secondary City <span class="form-label__optional">(optional)</span></label>
+                <input id="city_secondary" name="city_secondary" type="text" autocomplete="address-level2" value="<%= valueFor('city_secondary') %>"
+                  placeholder="New York, NY">
+                <% if (fieldHasError('city_secondary')) { %>
+                  <p class="form-field__error">
+                    <%= fieldError('city_secondary') %>
+                  </p>
+                  <% } %>
+              </div>
+
+              <div class="form-field <%= fieldHasError('phone') ? 'has-error' : '' %> <%= !valueFor('phone') ? 'form-field--required' : '' %>">
+                <label for="phone" style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span>
+                    Phone <span class="form-label__required" style="color: #ef4444;" aria-label="required">*</span>
+                    <span class="form-label__help" style="font-size: 0.75rem; font-weight: normal; color: #64748b; margin-left: 0.5rem;">Required for agency contact</span>
+                  </span>
+                  <% if (googlePhotoURL) { %>
+                    <div class="google-auth-badge" title="Google Auth Source" style="display: flex; align-items: center; gap: 0.25rem; margin-left: auto;">
+                      <img src="<%= googlePhotoURL %>" alt="Google profile photo" class="google-auth-badge__photo" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(201, 165, 90, 0.3);">
+                      <span class="google-auth-badge__label" style="font-size: 0.625rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Google Auth</span>
+                    </div>
+                  <% } %>
+                </label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" value="<%= valueFor('phone') %>"
+                  placeholder="+1 (555) 123-4567" required
+                  style="<%= !valueFor('phone') ? 'border-color: #ef4444; box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);' : '' %>"
+                  <%= fieldHasError('phone') ? 'aria-invalid="true" aria-describedby="phone-error"' : (!valueFor('phone') ? 'aria-describedby="phone-help"' : '') %>>
+                <% if (fieldHasError('phone')) { %>
+                  <p class="form-field__error" id="phone-error" role="alert">
+                    <%= fieldError('phone') %>
+                  </p>
+                <% } else if (!valueFor('phone')) { %>
+                  <p class="form-field__help" id="phone-help" style="color: #f59e0b; font-size: 0.875rem; margin-top: 0.25rem;">
+                    ⚠️ Phone number is required for agencies to contact you
+                  </p>
+                  <% } %>
+            </div>
+
+            <!-- AI-Refined Bio Display (Read-Only Well) -->
+            <% if (valueFor('bio_curated') && valueFor('bio_curated').trim()) { %>
+              <div class="bio-curated-well" style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(201, 165, 90, 0.05); border: 1px solid rgba(201, 165, 90, 0.15); border-radius: 8px; border-left: 3px solid #C9A55A;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--accent-gold-text, #B8944A); flex-shrink: 0;">
+                    <path d="M8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0ZM7 11L3 7L4.41421 5.58579L7 8.17157L11.5858 3.58579L13 5L7 11Z" fill="currentColor"/>
+                  </svg>
+                  <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-gold-text, #B8944A);">AI-Refined Bio</span>
+              </div>
+                <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text-primary, #0F172A); font-style: italic;">
+                  <%= valueFor('bio_curated') %>
+              </div>
+              </div>
+                  <% } %>
+
+            <!-- Personal Details Section -->
+            <div class="form-section">
+              <div class="form-section__header">
+                <h4>Personal Details</h4>
+                <p>Additional information about yourself</p>
+              </div>
+              
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('gender') ? 'has-error' : '' %>">
+                  <label for="gender">Gender</label>
+                  <select id="gender" name="gender">
+                    <option value="">Select...</option>
+                    <option value="Male" <%= valueFor('gender') === 'Male' ? 'selected' : '' %>>Male</option>
+                    <option value="Female" <%= valueFor('gender') === 'Female' ? 'selected' : '' %>>Female</option>
+                    <option value="Non-binary" <%= valueFor('gender') === 'Non-binary' ? 'selected' : '' %>>Non-binary</option>
+                    <option value="Other" <%= valueFor('gender') === 'Other' ? 'selected' : '' %>>Other</option>
+                    <option value="Prefer not to say" <%= valueFor('gender') === 'Prefer not to say' ? 'selected' : '' %>>Prefer not to say</option>
+                  </select>
+                  <% if (fieldHasError('gender')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('gender') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('date_of_birth') ? 'has-error' : '' %>">
+                  <label for="date_of_birth">Date of Birth</label>
+                  <input id="date_of_birth" name="date_of_birth" type="date" value="<%= valueFor('date_of_birth') %>">
+                  <% if (fieldHasError('date_of_birth')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('date_of_birth') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('age') ? 'has-error' : '' %>">
+                  <label for="age">Age</label>
+                  <input id="age" name="age" type="number" min="0" max="150" value="<%= valueFor('age') %>" readonly
+                    style="background-color: #f5f5f5; cursor: not-allowed;" placeholder="Auto-calculated">
+                  <p class="form-field__help" style="font-size: 0.85rem; margin-top: 0.25rem;">
+                    Automatically calculated from date of birth
+                  </p>
+                  <% if (fieldHasError('age')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('age') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('weight') || fieldHasError('weight_unit') ? 'has-error' : '' %>">
+                  <label>Weight</label>
+                  <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                      <input id="weight" name="weight" type="number" step="0.1" min="30" max="440"
+                        value="<%= valueFor('weight') || (valueFor('weight_kg') ? valueFor('weight_kg') : valueFor('weight_lbs')) %>" placeholder="143">
+                    </div>
+                    <div style="width: auto; min-width: 90px; display: flex; flex-direction: column;">
+                      <select id="weight_unit" name="weight_unit" style="height: 100%;">
+                        <option value="lbs" <%= (!valueFor('weight_unit') && valueFor('weight_kg')) ? '' : (valueFor('weight_unit') === 'lbs' ? 'selected' : (!valueFor('weight_lbs') ? 'selected' : '')) %>>lbs</option>
+                        <option value="kg" <%= valueFor('weight_unit') === 'kg' ? 'selected' : '' %>>kg</option>
+                      </select>
+                    </div>
+                  </div>
+                  <input type="hidden" id="weight_kg" name="weight_kg" value="<%= valueFor('weight_kg') %>">
+                  <input type="hidden" id="weight_lbs" name="weight_lbs" value="<%= valueFor('weight_lbs') %>">
+                  <% if (fieldHasError('weight') || fieldHasError('weight_unit')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('weight') || fieldError('weight_unit') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('dress_size') ? 'has-error' : '' %>" id="dress-size-field">
+                  <label for="dress_size">Dress Size <span class="form-label__optional">(optional)</span></label>
+                  <input id="dress_size" name="dress_size" type="text" value="<%= valueFor('dress_size') %>"
+                    placeholder="6 US">
+                  <% if (fieldHasError('dress_size')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('dress_size') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <!-- Legal & Background Section -->
+              <div class="form-section" style="margin-top: 40px;">
+                <div class="form-section__header">
+                  <h4>Legal & Background</h4>
+                  <p>Work eligibility and legal status</p>
+                </div>
+                
+                <div class="form-grid">
+                  <div class="form-field <%= fieldHasError('work_eligibility') ? 'has-error' : '' %>">
+                    <label for="work_eligibility">Work Eligibility</label>
+                    <select id="work_eligibility" name="work_eligibility">
+                      <option value="">Select...</option>
+                      <option value="Yes" <%= valueFor('work_eligibility') === 'Yes' ? 'selected' : '' %>>Yes</option>
+                      <option value="No" <%= valueFor('work_eligibility') === 'No' ? 'selected' : '' %>>No</option>
+                    </select>
+                    <% if (fieldHasError('work_eligibility')) { %>
+                      <p class="form-field__error">
+                        <%= fieldError('work_eligibility') %>
+                      </p>
+                      <% } %>
+                  </div>
+
+                  <div class="form-field <%= fieldHasError('work_status') ? 'has-error' : '' %>">
+                    <label for="work_status">Work Status</label>
+                    <% 
+                      const workStatusValue = valueFor('work_status', '');
+                      const workStatusOptions = ['Citizen', 'PR', 'Visa', 'Other'];
+                      const isWorkStatusOther = workStatusValue && !workStatusOptions.includes(workStatusValue);
+                    %>
+                    <select id="work_status" name="work_status">
+                      <option value="">Select...</option>
+                      <% workStatusOptions.filter(opt => opt !== 'Other').forEach(opt => { %>
+                        <option value="<%= opt %>" <%= workStatusValue === opt ? 'selected' : '' %>><%= opt %></option>
+                      <% }); %>
+                      <option value="Other" <%= isWorkStatusOther ? 'selected' : '' %>>Other</option>
+                    </select>
+                    <input type="text" id="work_status_other" name="work_status_other" value="<%= isWorkStatusOther ? workStatusValue : '' %>" placeholder="Enter work status" style="margin-top: 0.5rem; display: <%= isWorkStatusOther ? 'block' : 'none' %>;">
+                    <% if (fieldHasError('work_status')) { %>
+                      <p class="form-field__error">
+                        <%= fieldError('work_status') %>
+                      </p>
+                      <% } %>
+                  </div>
+                </div>
+
+                <div class="form-grid">
+                  <div class="form-field <%= fieldHasError('ethnicity') ? 'has-error' : '' %>">
+                    <label for="ethnicity">Ethnicity <span class="form-label__optional">(optional)</span></label>
+                    <input id="ethnicity" name="ethnicity" type="text" value="<%= valueFor('ethnicity') %>"
+                      placeholder="Optional">
+                    <% if (fieldHasError('ethnicity')) { %>
+                      <p class="form-field__error">
+                        <%= fieldError('ethnicity') %>
+                      </p>
+                      <% } %>
+                  </div>
+
+                  <div class="form-field <%= fieldHasError('union_membership') ? 'has-error' : '' %>">
+                    <label for="union_membership">Union Membership <span class="form-label__optional">(optional)</span></label>
+                    <input id="union_membership" name="union_membership" type="text" value="<%= valueFor('union_membership') %>"
+                      placeholder="SAG-AFTRA, AEA, etc.">
+                    <% if (fieldHasError('union_membership')) { %>
+                      <p class="form-field__error">
+                        <%= fieldError('union_membership') %>
+                      </p>
+                      <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('tattoos') ? 'has-error' : '' %>">
+                  <label>
+                    <input type="checkbox" name="tattoos" value="true" <%= valueFor('tattoos') === 'true' || valueFor('tattoos') === true ? 'checked' : '' %>>
+                    <span>Has Tattoos</span>
+                  </label>
+                  <% if (fieldHasError('tattoos')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('tattoos') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('piercings') ? 'has-error' : '' %>">
+                  <label>
+                    <input type="checkbox" name="piercings" value="true" <%= valueFor('piercings') === 'true' || valueFor('piercings') === true ? 'checked' : '' %>>
+                    <span>Has Piercings</span>
+                  </label>
+                  <% if (fieldHasError('piercings')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('piercings') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-field <%= fieldHasError('bio') ? 'has-error' : '' %>">
+              <label for="bio">Editorial Bio</label>
+              <textarea id="bio" name="bio" rows="5"
+                placeholder="Experienced in runway, editorial, commercial, and beauty campaigns..."><%= valueFor('bio') %></textarea>
+              <p class="form-field__help">
+                Write naturally. Our AI will refine this into a polished editorial bio.
+              </p>
+              <% if (fieldHasError('bio')) { %>
+                <p class="form-field__error">
+                  <%= fieldError('bio') %>
+                </p>
+                <% } %>
+            </div>
+
+            <% if (safeProfile && safeProfile.bio_curated) { %>
+              <div class="form-field--readonly">
+                <label>AI-Refined Bio (Live on Portfolio)</label>
+                <p class="form-field__static-text">
+                  <%= safeProfile.bio_curated %>
+                </p>
+              </div>
+              <% } %>
+
+            <!-- References & Emergency Contact Section -->
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
+              <h4 style="margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600;">References & Emergency Contact</h4>
+              
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('reference_name') ? 'has-error' : '' %>">
+                  <label for="reference_name">Reference Name</label>
+                  <input id="reference_name" name="reference_name" type="text" value="<%= valueFor('reference_name') %>"
+                    placeholder="John Doe">
+                  <% if (fieldHasError('reference_name')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('reference_name') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('reference_email') ? 'has-error' : '' %>">
+                  <label for="reference_email">Reference Email</label>
+                  <input id="reference_email" name="reference_email" type="email" value="<%= valueFor('reference_email') %>"
+                    placeholder="john@example.com">
+                  <% if (fieldHasError('reference_email')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('reference_email') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('reference_phone') ? 'has-error' : '' %>">
+                  <label for="reference_phone">Reference Phone</label>
+                  <input id="reference_phone" name="reference_phone" type="tel" value="<%= valueFor('reference_phone') %>"
+                    placeholder="+1 (555) 123-4567">
+                  <% if (fieldHasError('reference_phone')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('reference_phone') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+
+              <div class="form-grid" style="margin-top: 1.5rem;">
+                <div class="form-field <%= fieldHasError('emergency_contact_name') ? 'has-error' : '' %>">
+                  <label for="emergency_contact_name">Emergency Contact Name</label>
+                  <input id="emergency_contact_name" name="emergency_contact_name" type="text" value="<%= valueFor('emergency_contact_name') %>"
+                    placeholder="Jane Doe">
+                  <% if (fieldHasError('emergency_contact_name')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('emergency_contact_name') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('emergency_contact_phone') ? 'has-error' : '' %>">
+                  <label for="emergency_contact_phone">Emergency Contact Phone</label>
+                  <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" value="<%= valueFor('emergency_contact_phone') %>"
+                    placeholder="+1 (555) 123-4567">
+                  <% if (fieldHasError('emergency_contact_phone')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('emergency_contact_phone') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('emergency_contact_relationship') ? 'has-error' : '' %>">
+                  <label for="emergency_contact_relationship">Emergency Contact Relationship</label>
+                  <input id="emergency_contact_relationship" name="emergency_contact_relationship" type="text" value="<%= valueFor('emergency_contact_relationship') %>"
+                    placeholder="Parent, Spouse, etc.">
+                  <% if (fieldHasError('emergency_contact_relationship')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('emergency_contact_relationship') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Physical Profile Section -->
+        <div class="talent-accordion__item <%= sectionStatuses.physicalProfile?.status === 'incomplete' ? 'talent-accordion__item--priority' : '' %>" data-section="physical-profile">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">
+                Physical Profile
+                <% if (sectionStatuses.physicalProfile?.status === 'incomplete') { %>
+                  <span style="margin-left: 0.5rem; color: #f59e0b; font-size: 0.75rem; font-weight: 600;">HIGH PRIORITY</span>
+                <% } %>
+              </h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.physicalProfile?.status || 'incomplete' %>">
+                <%= sectionStatuses.physicalProfile?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('height_cm') ? 'has-error' : '' %>">
+                  <label for="height_cm_pp">Height (cm)</label>
+                  <input id="height_cm_pp" name="height_cm" type="number" min="120" max="220"
+                    value="<%= (valueFor('height_cm') !== '' && valueFor('height_cm') !== null && valueFor('height_cm') !== undefined && parseInt(valueFor('height_cm')) > 0) ? valueFor('height_cm') : '' %>" placeholder="177">
+                  <% if (fieldHasError('height_cm')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('height_cm') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('bust') ? 'has-error' : '' %>">
+                  <label for="bust_pp">Bust</label>
+                  <input id="bust_pp" name="bust" type="number" min="20" max="60" step="0.5"
+                    value="<%= valueFor('bust') %>" placeholder="32">
+                  <% if (fieldHasError('bust')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('bust') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('waist') ? 'has-error' : '' %>">
+                  <label for="waist_pp">Waist</label>
+                  <input id="waist_pp" name="waist" type="number" min="20" max="60" step="0.5"
+                    value="<%= valueFor('waist') %>" placeholder="25">
+                  <% if (fieldHasError('waist')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('waist') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('hips') ? 'has-error' : '' %>">
+                  <label for="hips_pp">Hips</label>
+                  <input id="hips_pp" name="hips" type="number" min="20" max="60" step="0.5"
+                    value="<%= valueFor('hips') %>" placeholder="35">
+                  <% if (fieldHasError('hips')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('hips') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('shoe_size') ? 'has-error' : '' %>">
+                  <label for="shoe_size_pp">Shoe Size</label>
+                  <% 
+                    const shoeSizeValue = valueFor('shoe_size');
+                    const shoeSizeOptions = ['5 US', '5.5 US', '6 US', '6.5 US', '7 US', '7.5 US', '8 US', '8.5 US', '9 US', '9.5 US', '10 US', '10.5 US', '11 US', '11.5 US', '12 US', '13 US'];
+                    const isShoeSizeOther = shoeSizeValue && !shoeSizeOptions.includes(shoeSizeValue);
+                  %>
+                  <select id="shoe_size_pp" name="shoe_size">
+                    <option value="">Select...</option>
+                    <% shoeSizeOptions.forEach(opt => { %>
+                      <option value="<%= opt %>" <%= shoeSizeValue === opt ? 'selected' : '' %>><%= opt %></option>
+                    <% }); %>
+                    <option value="Other" <%= isShoeSizeOther ? 'selected' : '' %>>Other</option>
+                  </select>
+                  <input type="text" id="shoe_size_other_pp" name="shoe_size_other" value="<%= isShoeSizeOther ? shoeSizeValue : '' %>" placeholder="Enter shoe size" style="margin-top: 0.5rem; display: <%= isShoeSizeOther ? 'block' : 'none' %>;">
+                  <% if (fieldHasError('shoe_size')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('shoe_size') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('eye_color') ? 'has-error' : '' %>">
+                  <label for="eye_color_pp">Eye Color</label>
+                  <% 
+                    const eyeColorValue = valueFor('eye_color');
+                    const eyeColorOptions = ['Brown', 'Blue', 'Green', 'Hazel', 'Gray', 'Amber', 'Other'];
+                    const isEyeColorOther = eyeColorValue && !eyeColorOptions.includes(eyeColorValue);
+                  %>
+                  <select id="eye_color_pp" name="eye_color">
+                    <option value="">Select...</option>
+                    <% eyeColorOptions.filter(opt => opt !== 'Other').forEach(opt => { %>
+                      <option value="<%= opt %>" <%= eyeColorValue === opt ? 'selected' : '' %>><%= opt %></option>
+                    <% }); %>
+                    <option value="Other" <%= isEyeColorOther ? 'selected' : '' %>>Other</option>
+                  </select>
+                  <input type="text" id="eye_color_other_pp" name="eye_color_other" value="<%= isEyeColorOther ? eyeColorValue : '' %>" placeholder="Enter eye color" style="margin-top: 0.5rem; display: <%= isEyeColorOther ? 'block' : 'none' %>;">
+                  <% if (fieldHasError('eye_color')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('eye_color') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('hair_color') ? 'has-error' : '' %>">
+                  <label for="hair_color_pp">Hair Color</label>
+                  <% 
+                    const hairColorValue = valueFor('hair_color');
+                    const hairColorOptions = ['Black', 'Brown', 'Blonde', 'Red', 'Auburn', 'Gray', 'White', 'Other'];
+                    const isHairColorOther = hairColorValue && !hairColorOptions.includes(hairColorValue);
+                  %>
+                  <select id="hair_color_pp" name="hair_color">
+                    <option value="">Select...</option>
+                    <% hairColorOptions.filter(opt => opt !== 'Other').forEach(opt => { %>
+                      <option value="<%= opt %>" <%= hairColorValue === opt ? 'selected' : '' %>><%= opt %></option>
+                    <% }); %>
+                    <option value="Other" <%= isHairColorOther ? 'selected' : '' %>>Other</option>
+                  </select>
+                  <input type="text" id="hair_color_other_pp" name="hair_color_other" value="<%= isHairColorOther ? hairColorValue : '' %>" placeholder="Enter hair color" style="margin-top: 0.5rem; display: <%= isHairColorOther ? 'block' : 'none' %>;">
+                  <% if (fieldHasError('hair_color')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('hair_color') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('hair_length') ? 'has-error' : '' %>">
+                  <label for="hair_length_pp">Hair Length</label>
+                  <select id="hair_length_pp" name="hair_length">
+                    <option value="">Select...</option>
+                    <option value="Short" <%= valueFor('hair_length') === 'Short' ? 'selected' : '' %>>Short</option>
+                    <option value="Medium" <%= valueFor('hair_length') === 'Medium' ? 'selected' : '' %>>Medium</option>
+                    <option value="Long" <%= valueFor('hair_length') === 'Long' ? 'selected' : '' %>>Long</option>
+                    <option value="Very Long" <%= valueFor('hair_length') === 'Very Long' ? 'selected' : '' %>>Very Long</option>
+                  </select>
+                  <% if (fieldHasError('hair_length')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('hair_length') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('skin_tone') ? 'has-error' : '' %>">
+                  <label for="skin_tone_pp">Skin Tone</label>
+                  <% 
+                    const skinToneValue = valueFor('skin_tone');
+                    const skinToneOptions = ['Fair', 'Light', 'Medium', 'Olive', 'Tan', 'Brown', 'Dark', 'Other'];
+                    const isSkinToneOther = skinToneValue && !skinToneOptions.includes(skinToneValue);
+                  %>
+                  <select id="skin_tone_pp" name="skin_tone">
+                    <option value="">Select...</option>
+                    <% skinToneOptions.filter(opt => opt !== 'Other').forEach(opt => { %>
+                      <option value="<%= opt %>" <%= skinToneValue === opt ? 'selected' : '' %>><%= opt %></option>
+                    <% }); %>
+                    <option value="Other" <%= isSkinToneOther ? 'selected' : '' %>>Other</option>
+                  </select>
+                  <input type="text" id="skin_tone_other_pp" name="skin_tone_other" value="<%= isSkinToneOther ? skinToneValue : '' %>" placeholder="Enter skin tone" style="margin-top: 0.5rem; display: <%= isSkinToneOther ? 'block' : 'none' %>;">
+                  <% if (fieldHasError('skin_tone')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('skin_tone') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience & Training Section -->
+        <div class="talent-accordion__item" data-section="experience-training">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Experience & Training</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.experienceTraining?.status || 'incomplete' %>">
+                <%= sectionStatuses.experienceTraining?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('experience_level') ? 'has-error' : '' %>">
+                  <label for="experience_level_et">Experience Level</label>
+                  <select id="experience_level_et" name="experience_level">
+                    <option value="">Select...</option>
+                    <option value="Beginner" <%= valueFor('experience_level') === 'Beginner' ? 'selected' : '' %>>Beginner</option>
+                    <option value="Intermediate" <%= valueFor('experience_level') === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+                    <option value="Experienced" <%= valueFor('experience_level') === 'Experienced' ? 'selected' : '' %>>Experienced</option>
+                    <option value="Professional" <%= valueFor('experience_level') === 'Professional' ? 'selected' : '' %>>Professional</option>
+                  </select>
+                  <% if (fieldHasError('experience_level')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('experience_level') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('training') ? 'has-error' : '' %>">
+                  <label for="training_et">Training</label>
+                  <textarea id="training_et" name="training" rows="3" placeholder="Formal training in editorial modeling and commercial acting."><%= valueFor('training') %></textarea>
+                  <% if (fieldHasError('training')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('training') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-field" style="margin-top: 1.5rem;">
+                <label>Experience</label>
+                <p class="form-field__help">Select all that apply</p>
+                <div class="checkbox-group" id="experience-checkboxes-et">
+                  <% 
+                    const specialtiesValue = valueFor('specialties', '');
+                    const experienceDetailsValue = valueFor('experience_details', '');
+                    let experienceDetailsObj = {};
+                    if (experienceDetailsValue) {
+                      try {
+                        experienceDetailsObj = typeof experienceDetailsValue === 'string' ? JSON.parse(experienceDetailsValue) : experienceDetailsValue;
+                      } catch (e) {
+                        experienceDetailsObj = {};
+                      }
+                    }
+                    let specialtiesArray = [];
+                    if (Array.isArray(specialtiesValue)) {
+                      specialtiesArray = specialtiesValue;
+                    } else if (typeof specialtiesValue === 'string') {
+                      try {
+                        specialtiesArray = JSON.parse(specialtiesValue);
+                      } catch (e) {
+                        specialtiesArray = specialtiesValue ? specialtiesValue.split(',').map(s => s.trim()).filter(s => s) : [];
+                      }
+                    }
+                    const hasSpecialty = (val) => specialtiesArray.includes(val);
+                    const experienceOptions = ['Runway', 'Acting', 'Dancing', 'Music', 'Art', 'Content Creation'];
+                  %>
+                  <% experienceOptions.forEach(option => { %>
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="specialties" value="<%= option %>" <%= hasSpecialty(option) ? 'checked' : '' %> data-experience="<%= option.toLowerCase().replace(/\s+/g, '-') %>">
+                      <span><%= option %></span>
+                    </label>
+                  <% }); %>
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="specialties" value="Other" <%= hasSpecialty('Other') ? 'checked' : '' %> data-experience="other">
+                    <span>Other</span>
+                  </label>
+                </div>
+                <div id="experience-details-container-et" style="margin-top: 1rem;"></div>
+                <input type="hidden" id="experience_details_et" name="experience_details" value='<%= typeof experienceDetailsValue === "string" ? experienceDetailsValue : JSON.stringify(experienceDetailsObj) %>'>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills & Lifestyle Section -->
+        <div class="talent-accordion__item" data-section="skills-lifestyle">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Skills & Lifestyle</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.skillsLifestyle?.status || 'incomplete' %>">
+                <%= sectionStatuses.skillsLifestyle?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <div class="form-field">
+                <label>Languages</label>
+                <p class="form-field__help">Add languages you speak</p>
+                <% 
+                  const languagesValue = valueFor('languages', '');
+                  let languagesArray = [];
+                  if (Array.isArray(languagesValue)) {
+                    languagesArray = languagesValue;
+                  } else if (typeof languagesValue === 'string') {
+                    try {
+                      languagesArray = JSON.parse(languagesValue);
+                    } catch (e) {
+                      languagesArray = languagesValue ? languagesValue.split(',').map(l => l.trim()).filter(l => l) : [];
+                    }
+                  }
+                  const languageOptions = ['English', 'Spanish', 'French', 'Italian', 'German', 'Portuguese', 'Mandarin', 'Japanese', 'Korean'];
+                  const selectedLanguages = languagesArray.filter(l => languageOptions.includes(l));
+                  const otherLanguages = languagesArray.filter(l => !languageOptions.includes(l));
+                %>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <select id="add-language-select-sl" style="flex: 1;">
+                    <option value="">Select a language...</option>
+                    <% languageOptions.forEach(lang => { %>
+                      <option value="<%= lang %>" <%= selectedLanguages.includes(lang) ? 'disabled' : '' %>><%= lang %></option>
+                    <% }); %>
+                    <option value="Other">Other</option>
+                  </select>
+                  <button type="button" id="add-language-btn-sl" class="button button-secondary" style="width: auto; padding: 0.5rem 1rem;">Add</button>
+            </div>
+                <input type="text" id="language-other-input-sl" name="language_other_input" placeholder="Enter custom language" style="margin-bottom: 0.5rem; display: none; width: 100%; padding: 0.5rem;">
+                <div id="selected-languages-container-sl" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                  <% selectedLanguages.forEach(lang => { %>
+                    <span class="language-tag" data-language="<%= lang %>" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: #f0f0f0; border-radius: 4px; font-size: 0.9rem;">
+                      <%= lang %>
+                      <button type="button" class="remove-language" data-language="<%= lang %>" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; line-height: 1; color: #666;">&times;</button>
+                    </span>
+                  <% }); %>
+                  <% otherLanguages.forEach(lang => { %>
+                    <span class="language-tag" data-language="<%= lang %>" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: #f0f0f0; border-radius: 4px; font-size: 0.9rem;">
+                      <%= lang %>
+                      <button type="button" class="remove-language" data-language="<%= lang %>" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; line-height: 1; color: #666;">&times;</button>
+                    </span>
+                  <% }); %>
+                </div>
+                <input type="hidden" id="languages_sl" name="languages" value='<%= JSON.stringify(languagesArray) %>'>
+              </div>
+
+              <div class="form-grid" style="margin-top: 1.5rem;">
+                <div class="form-field <%= fieldHasError('ethnicity') ? 'has-error' : '' %>">
+                  <label for="ethnicity_sl">Ethnicity <span class="form-label__optional">(optional)</span></label>
+                  <input id="ethnicity_sl" name="ethnicity" type="text" value="<%= valueFor('ethnicity') %>"
+                    placeholder="Optional">
+                  <% if (fieldHasError('ethnicity')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('ethnicity') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('union_membership') ? 'has-error' : '' %>">
+                  <label for="union_membership_sl">Union Membership <span class="form-label__optional">(optional)</span></label>
+                  <input id="union_membership_sl" name="union_membership" type="text" value="<%= valueFor('union_membership') %>"
+                    placeholder="SAG-AFTRA, AEA, etc.">
+                  <% if (fieldHasError('union_membership')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('union_membership') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-field <%= fieldHasError('tattoos') ? 'has-error' : '' %>">
+                  <label>
+                    <input type="checkbox" name="tattoos" value="true" <%= valueFor('tattoos') === 'true' || valueFor('tattoos') === true ? 'checked' : '' %>>
+                    <span>Has Tattoos</span>
+                  </label>
+                  <% if (fieldHasError('tattoos')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('tattoos') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('piercings') ? 'has-error' : '' %>">
+                  <label>
+                    <input type="checkbox" name="piercings" value="true" <%= valueFor('piercings') === 'true' || valueFor('piercings') === true ? 'checked' : '' %>>
+                    <span>Has Piercings</span>
+                  </label>
+                  <% if (fieldHasError('piercings')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('piercings') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comfort & Boundaries Section -->
+        <div class="talent-accordion__item" data-section="comfort-boundaries">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Comfort & Boundaries</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.comfortBoundaries?.status || 'incomplete' %>">
+                <%= sectionStatuses.comfortBoundaries?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <div class="form-field">
+                <label>Comfort Level</label>
+                <p class="form-field__help">Select all that apply</p>
+                <% 
+                  const comfortLevelsValue = valueFor('comfort_levels', '');
+                  let comfortLevelsArray = [];
+                  if (Array.isArray(comfortLevelsValue)) {
+                    comfortLevelsArray = comfortLevelsValue;
+                  } else if (typeof comfortLevelsValue === 'string') {
+                    try {
+                      comfortLevelsArray = JSON.parse(comfortLevelsValue);
+                    } catch (e) {
+                      comfortLevelsArray = comfortLevelsValue ? comfortLevelsValue.split(',').map(c => c.trim()).filter(c => c) : [];
+                    }
+                  }
+                  const hasComfortLevel = (val) => comfortLevelsArray.includes(val);
+                  const comfortOptions = ['Swimwear', 'Lingerie', 'Implied Nudity', 'Not Comfortable'];
+                %>
+                <div class="checkbox-group">
+                  <% comfortOptions.forEach(option => { %>
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="comfort_levels" value="<%= option %>" <%= hasComfortLevel(option) ? 'checked' : '' %>>
+                      <span><%= option %></span>
+                    </label>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Availability & Locations Section -->
+        <div class="talent-accordion__item" data-section="availability-locations">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Availability & Locations</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.availabilityLocations?.status || 'incomplete' %>">
+                <%= sectionStatuses.availabilityLocations?.message || 'Complete profile' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('availability_travel') ? 'has-error' : '' %>">
+                  <label>
+                    <input type="checkbox" name="availability_travel" value="true" <%= valueFor('availability_travel') === 'true' || valueFor('availability_travel') === true ? 'checked' : '' %>>
+                    <span>Available for Travel</span>
+                  </label>
+                  <% if (fieldHasError('availability_travel')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('availability_travel') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('availability_schedule') ? 'has-error' : '' %>">
+                  <label for="availability_schedule_al">Availability Schedule</label>
+                  <select id="availability_schedule_al" name="availability_schedule">
+                    <option value="">Select...</option>
+                    <option value="Full-time" <%= valueFor('availability_schedule') === 'Full-time' ? 'selected' : '' %>>Full-time</option>
+                    <option value="Part-time" <%= valueFor('availability_schedule') === 'Part-time' ? 'selected' : '' %>>Part-time</option>
+                    <option value="Flexible" <%= valueFor('availability_schedule') === 'Flexible' ? 'selected' : '' %>>Flexible</option>
+                    <option value="Weekends only" <%= valueFor('availability_schedule') === 'Weekends only' ? 'selected' : '' %>>Weekends only</option>
+                  </select>
+                  <% if (fieldHasError('availability_schedule')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('availability_schedule') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-grid" style="margin-top: 1.5rem;">
+                <div class="form-field <%= fieldHasError('city_secondary') ? 'has-error' : '' %>">
+                  <label for="city_secondary_al">Secondary City <span class="form-label__optional">(optional)</span></label>
+                  <input id="city_secondary_al" name="city_secondary" type="text" autocomplete="address-level2" value="<%= valueFor('city_secondary') %>"
+                    placeholder="New York, NY">
+                  <% if (fieldHasError('city_secondary')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('city_secondary') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social & Portfolio Section -->
+        <div class="talent-accordion__item" data-section="social-portfolio">
+          <button class="talent-accordion__header" type="button" aria-expanded="false">
+            <div class="talent-accordion__header-content">
+              <h3 class="talent-accordion__title">Social & Portfolio</h3>
+              <span class="talent-accordion__status talent-accordion__status--<%= sectionStatuses.socialPortfolio?.status || 'incomplete' %>">
+                <%= sectionStatuses.socialPortfolio?.message || 'Add portfolio' %>
+              </span>
+            </div>
+            <svg class="talent-accordion__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="talent-accordion__content">
+            <div class="talent-accordion__body">
+              <p class="form-field__help" style="margin-bottom: 1rem; font-size: 0.9rem;">
+                Free users: Handles display as text only. Studio+ users: Handles are clickable links.
+              </p>
+              
+              <div class="form-grid">
+                <div class="form-field <%= fieldHasError('instagram_handle') ? 'has-error' : '' %>">
+                  <label for="instagram_handle_sp">Instagram Handle</label>
+                  <input id="instagram_handle_sp" name="instagram_handle" type="text" value="<%= valueFor('instagram_handle') %>"
+                    placeholder="@username or username">
+                  <% if (fieldHasError('instagram_handle')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('instagram_handle') %>
+                    </p>
+                    <% } %>
+            </div>
+
+                <div class="form-field <%= fieldHasError('twitter_handle') ? 'has-error' : '' %>">
+                  <label for="twitter_handle_sp">Twitter/X Handle</label>
+                  <input id="twitter_handle_sp" name="twitter_handle" type="text" value="<%= valueFor('twitter_handle') %>"
+                    placeholder="@username or username">
+                  <% if (fieldHasError('twitter_handle')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('twitter_handle') %>
+                    </p>
+                    <% } %>
+                </div>
+
+                <div class="form-field <%= fieldHasError('tiktok_handle') ? 'has-error' : '' %>">
+                  <label for="tiktok_handle_sp">TikTok Handle</label>
+                  <input id="tiktok_handle_sp" name="tiktok_handle" type="text" value="<%= valueFor('tiktok_handle') %>"
+                    placeholder="@username or username">
+                  <% if (fieldHasError('tiktok_handle')) { %>
+                    <p class="form-field__error">
+                      <%= fieldError('tiktok_handle') %>
+                    </p>
+                    <% } %>
+                </div>
+              </div>
+
+              <div class="form-field" style="margin-top: 1.5rem;">
+                <label for="portfolio_url_sp">Portfolio URL</label>
+                <input id="portfolio_url_sp" name="portfolio_url" type="url" value="<%= valueFor('portfolio_url') %>"
+                  placeholder="https://yourportfolio.com">
+                <% if (fieldHasError('portfolio_url')) { %>
+                  <p class="form-field__error">
+                    <%= fieldError('portfolio_url') %>
+                  </p>
+                  <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- End of Talent Accordion -->
+      <div class="form-actions" style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border);">
+        <button class="btn-primary" type="submit">Save All Changes</button>
+      </div>
+      </form>
+        </div> <!-- End .section-card dossier -->
+
+      </div> <!-- End .canvas-content -->
+    </main> <!-- End .app-canvas -->
+    
+    <!-- 3. INSPECTOR PANEL (Right) — #5, #10, #11 -->
+    <aside class="app-inspector">
+      
+      <!-- Profile Card with SVG Progress Ring — #5 -->
+      <div class="inspector-section">
+        <div class="inspector-profile">
+          <!-- Avatar with SVG Progress Ring -->
+          <div class="inspector-avatar-wrapper">
+            <svg class="avatar-progress-ring" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="45" stroke-width="4" fill="none"/>
+              <circle class="ring-progress" cx="50" cy="50" r="45" stroke-width="4" fill="none"
+                stroke-dasharray="283"
+                stroke-dashoffset="<%= 283 - (283 * (safeCompleteness.percentage || 0) / 100) %>"/>
+            </svg>
+            <div class="inspector-avatar">
+              <% if (safeProfile.hero_image_path) { %>
+                <img src="<%= normalizeImagePath(safeProfile.hero_image_path) %>" alt="">
+              <% } else if (safeMedia && safeMedia.length > 0) { %>
+                <img src="<%= normalizeImagePath(safeMedia[0].path) %>" alt="">
+              <% } else { %>
+                <div class="inspector-avatar-placeholder"><%= (safeProfile.first_name || 'U')[0] %></div>
+              <% } %>
+            </div>
+          </div>
+          
+          <h2 class="inspector-name"><%= safeProfile.first_name || 'Your' %> <%= safeProfile.last_name || 'Name' %></h2>
+          <p class="inspector-tagline"><%= safeProfile.city || 'Add Location' %><% if (safeProfile.gender) { %> · <%= safeProfile.gender %><% } %></p>
+          
+          <!-- Completion Badge Below Avatar — #5 -->
+          <div class="inspector-completion-badge">
+            🎯 <%= safeCompleteness.percentage || 0 %>% Complete
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quick Actions — FIRST (Above the fold) -->
+      <div class="inspector-section" style="padding-bottom: 20px;">
+        <h4 class="inspector-section-title">Quick Actions</h4>
+        <div class="quick-actions-grid">
+          <a href="/agencies" class="quick-action-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Browse</span>
+          </a>
+          <button class="quick-action-btn" onclick="document.getElementById('media').click()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Upload</span>
+          </button>
+          <a href="#dossier-section" class="quick-action-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Edit</span>
+          </a>
+          <a href="#apps-section" class="quick-action-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Apps</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Messages — Condensed (hidden if empty) -->
+      <div class="inspector-section" style="padding-top: 0;">
+        <h4 class="inspector-section-title" style="display: flex; align-items: center; justify-content: space-between;">
+          Messages
+          <span style="font-size: 11px; color: var(--slate-light); font-weight: 500;">0 new</span>
+        </h4>
+        <p style="font-size: 13px; color: var(--slate); margin: 0;">No messages yet — apply to agencies to start conversations.</p>
+      </div>
+
+
+      <!-- CTA Buttons -->
+      <div class="inspector-section">
+        <button class="inspector-cta inspector-cta-primary" onclick="document.getElementById('pdf-theme-modal').hidden = false;">
+          Download Comp Card
+        </button>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="inspector-section">
+        <h4 class="inspector-section-title">Recent Activity</h4>
+        <div class="activity-list">
+          <div class="activity-item">
+            <span class="activity-icon">💡</span>
+            <div class="activity-text">
+              <span>Complete your profile to get discovered by agencies</span>
+              <div class="activity-time">Tip</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+    </aside>
+
+    
+  </div> <!-- End .dashboard-shell -->
+
+
+  <div class="pdf-theme-modal" id="pdf-theme-modal" hidden>
+    <div class="pdf-theme-modal__backdrop"></div>
+    <div class="pdf-theme-modal__content">
+      <header class="pdf-theme-modal__header">
+        <div class="pdf-theme-modal__header-content">
+          <h2 class="pdf-theme-modal__title">Select PDF Theme</h2>
+          <p class="pdf-theme-modal__subtitle">Choose a theme for your comp card PDF</p>
+        </div>
+        <button type="button" class="pdf-theme-modal__close" aria-label="Close">&times;</button>
+      </header>
+      <div class="pdf-theme-modal__body">
+        <div class="pdf-theme-modal__tabs">
+          <button type="button" class="pdf-theme-modal__tab pdf-theme-modal__tab--active" data-theme-filter="all">All Themes</button>
+          <button type="button" class="pdf-theme-modal__tab" data-theme-filter="free">Free</button>
+          <button type="button" class="pdf-theme-modal__tab" data-theme-filter="pro">Studio+</button>
+        </div>
+        <div class="pdf-theme-grid" id="pdf-theme-grid">
+          <!-- Themes will be populated by JavaScript -->
+        </div>
+        <div class="pdf-theme-modal__preview" id="pdf-theme-preview" style="display: none;">
+          <div class="pdf-theme-modal__preview-header">
+            <h3 class="pdf-theme-modal__preview-title">Live Preview</h3>
+          </div>
+          <div class="pdf-theme-modal__preview-container">
+            <iframe id="pdf-theme-preview-iframe" class="pdf-theme-modal__preview-iframe" title="Theme Preview" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+      <footer class="pdf-theme-modal__footer">
+        <button type="button" class="button button-secondary" id="pdf-theme-cancel">Cancel</button>
+        <% if (safeProfile.is_pro) { %>
+          <a href="/dashboard/pdf-customizer" class="button button-secondary" id="pdf-theme-customize" style="display: none;">Customize</a>
+        <% } %>
+        <button type="button" class="button button-primary" id="pdf-theme-apply">Apply Theme</button>
+        <a href="#" class="button button-primary" id="pdf-theme-download">Download PDF</a>
+      </footer>
+    </div>
+  </div>
+  
+  <script>
+    // Pass theme data to JavaScript
+    <% if (typeof profile !== 'undefined' && profile && profile.id) { %>
+      window.PDF_THEME_DATA = {
+        allThemes: <%- JSON.stringify(typeof allThemes !== 'undefined' ? allThemes : {}) %>,
+        freeThemes: <%- JSON.stringify(typeof freeThemes !== 'undefined' ? freeThemes : []) %>,
+        proThemes: <%- JSON.stringify(typeof proThemes !== 'undefined' ? proThemes : []) %>,
+        currentTheme: '<%= (typeof currentTheme !== 'undefined' ? currentTheme : safeProfile.pdf_theme) || 'classic-serif' %>',
+        isPro: <%= safeProfile.is_pro ? 'true' : 'false' %>,
+        profileSlug: '<%= slug %>',
+        baseUrl: '<%= typeof baseUrl !== 'undefined' ? baseUrl : '' %>'
+      };
+    <% } else { %>
+      // No profile exists - set empty data to prevent errors
+      window.PDF_THEME_DATA = {
+        allThemes: {},
+        freeThemes: [],
+        proThemes: [],
+        currentTheme: 'classic-serif',
+        isPro: false,
+        profileSlug: '',
+        baseUrl: '<%= typeof baseUrl !== 'undefined' ? baseUrl : '' %>'
+      };
+    <% } %>
+
+    // Auto-calculate age from date of birth
+    (function() {
+      const dateOfBirthInput = document.getElementById('date_of_birth');
+      const ageInput = document.getElementById('age');
+      
+      if (dateOfBirthInput && ageInput) {
+        function calculateAge(dateString) {
+          if (!dateString) return null;
+          
+          const birthDate = new Date(dateString);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          
+          return age >= 0 ? age : null;
+        }
+        
+        function updateAge() {
+          const dateOfBirth = dateOfBirthInput.value;
+          if (dateOfBirth) {
+            const age = calculateAge(dateOfBirth);
+            if (age !== null) {
+              ageInput.value = age;
+            } else {
+              ageInput.value = '';
+            }
+          } else {
+            ageInput.value = '';
+          }
+        }
+        
+        dateOfBirthInput.addEventListener('change', updateAge);
+        dateOfBirthInput.addEventListener('input', updateAge);
+        
+        // Calculate age on page load if date of birth is already set
+        if (dateOfBirthInput.value) {
+          updateAge();
+        }
+      }
+    })();
+
+    // Load and display applications
+    (function() {
+      const applicationsContainer = document.getElementById('applications-container');
+      if (!applicationsContainer) return;
+
+      async function loadApplications() {
+        try {
+          const response = await fetch('/api/talent/applications');
+          if (!response.ok) throw new Error('Failed to load applications');
+          
+          const applications = await response.json();
+          renderApplications(applications);
+        } catch (error) {
+          console.error('Error loading applications:', error);
+          applicationsContainer.innerHTML = '<div class="applications-error" style="text-align: center; padding: 2rem; color: #ef4444;"><p>Failed to load applications. Please refresh the page.</p></div>';
+          
+          // Show toast notification if available
+          if (typeof showToast === 'function') {
+            showToast('Failed to load applications', 'error');
+          }
+        }
+      }
+
+      function renderApplications(applications) {
+        if (applications.length === 0) {
+          applicationsContainer.innerHTML = '<div class="applications-empty" style="text-align: center; padding: 2rem;"><p>You haven\'t applied to any agencies yet.</p><p style="margin-top: 0.5rem; color: #64748b;">Use the <a href="/apply">application form</a> to get started.</p></div>';
+          return;
+        }
+
+        const statusColors = {
+          pending: '#f59e0b',
+          accepted: '#10b981',
+          declined: '#ef4444',
+          archived: '#6b7280'
+        };
+
+        applicationsContainer.innerHTML = `
+          <div class="applications-list">
+            ${applications.map(app => `
+              <div class="application-card" data-application-id="${app.id}">
+                <div class="application-card__header">
+                  <h3 class="application-card__agency">${app.agencyName || app.agencyEmail}</h3>
+                  <span class="application-card__status application-card__status--${app.status}" style="background: ${statusColors[app.status] || '#6b7280'}; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem; font-weight: 600;">
+                    ${app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                  </span>
+                </div>
+                <div class="application-card__meta">
+                  <span>Applied: ${new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  ${app.invitedByAgency ? '<span style="color: #f59e0b;">• Invited by agency</span>' : ''}
+                </div>
+                ${app.status === 'declined' ? '<p style="margin-top: 0.75rem; color: #64748b; font-size: 0.875rem;">Upgrade to Studio+ to get discovered by our entire network of partner agencies.</p>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // Load applications on page load
+      loadApplications();
+
+      // Poll for updates every 30 seconds
+      setInterval(loadApplications, 30000);
+    })();
+
+    // Visibility toggle handler (for new HUD switch)
+    function toggleVisibility() {
+      const toggle = document.getElementById('discoverability-toggle');
+      const switchEl = document.getElementById('visibility-toggle-switch');
+      if (toggle && switchEl) {
+        toggle.checked = !toggle.checked;
+        if (toggle.checked) {
+          switchEl.classList.add('active');
+        } else {
+          switchEl.classList.remove('active');
+        }
+        // Trigger change event for the existing handler
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+
+    // Discoverability toggle handler
+    (function() {
+      const toggle = document.getElementById('discoverability-toggle');
+      if (!toggle) return;
+
+      toggle.addEventListener('change', async function() {
+        const isDiscoverable = this.checked;
+        const originalChecked = this.checked;
+
+        // Optimistically update UI
+        this.disabled = true;
+
+        try {
+          const response = await fetch('/api/talent/discoverability', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ isDiscoverable })
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'Failed to update discoverability');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            // Success - keep the toggle state
+            console.log('Discoverability updated:', isDiscoverable);
+          } else {
+            throw new Error('Update failed');
+          }
+        } catch (error) {
+          console.error('Error updating discoverability:', error);
+          alert(`Failed to update discoverability: ${error.message}`);
+          // Revert toggle
+          this.checked = !originalChecked;
+        } finally {
+          this.disabled = false;
+        }
+      });
+    })();
+  </script>
+
+  <!-- Debug: Log profile data available to template -->
+  <script>
+    (function() {
+      const debugData = {
+        hasProfile: <%= typeof profile !== 'undefined' && profile !== null ? 'true' : 'false' %>,
+        profileKeysCount: <%= typeof safeProfile !== 'undefined' && safeProfile ? Object.keys(safeProfile).length : 0 %>,
+          rawProfileSample: {
+          city: '<%= (safeProfile && safeProfile.city) ? safeProfile.city : "(null/undefined)" %>',
+          phone: '<%= (safeProfile && safeProfile.phone) ? safeProfile.phone : "(null/undefined)" %>',
+          height_cm: '<%= (safeProfile && safeProfile.height_cm !== null && safeProfile.height_cm !== undefined) ? String(safeProfile.height_cm) : "(null/undefined)" %>',
+          gender: '<%= (safeProfile && safeProfile.gender) ? safeProfile.gender : "(null/undefined)" %>',
+          date_of_birth: '<%= (safeProfile && safeProfile.date_of_birth) ? safeProfile.date_of_birth : "(null/undefined)" %>',
+          weight_lbs: '<%= (safeProfile && safeProfile.weight_lbs !== null && safeProfile.weight_lbs !== undefined) ? String(safeProfile.weight_lbs) : "(null/undefined)" %>',
+          weight_kg: '<%= (safeProfile && safeProfile.weight_kg !== null && safeProfile.weight_kg !== undefined) ? String(safeProfile.weight_kg) : "(null/undefined)" %>',
+          bust: '<%= (safeProfile && safeProfile.bust !== null && safeProfile.bust !== undefined) ? String(safeProfile.bust) : "(null/undefined)" %>',
+          waist: '<%= (safeProfile && safeProfile.waist !== null && safeProfile.waist !== undefined) ? String(safeProfile.waist) : "(null/undefined)" %>',
+          hips: '<%= (safeProfile && safeProfile.hips !== null && safeProfile.hips !== undefined) ? String(safeProfile.hips) : "(null/undefined)" %>',
+          first_name: '<%= (safeProfile && safeProfile.first_name) ? safeProfile.first_name : "(null/undefined)" %>',
+          last_name: '<%= (safeProfile && safeProfile.last_name) ? safeProfile.last_name : "(null/undefined)" %>',
+          bio_raw: '<%= (safeProfile && safeProfile.bio_raw) ? safeProfile.bio_raw.substring(0, 50) + "..." : "(null/empty)" %>',
+          reference_name: '<%= (safeProfile && safeProfile.reference_name) ? safeProfile.reference_name : "(null/undefined)" %>',
+          reference_email: '<%= (safeProfile && safeProfile.reference_email) ? safeProfile.reference_email : "(null/undefined)" %>',
+          emergency_contact_name: '<%= (safeProfile && safeProfile.emergency_contact_name) ? safeProfile.emergency_contact_name : "(null/undefined)" %>'
+        },
+        editDefaultsSample: {
+          city: '<%= valueFor("city") || "(empty after valueFor)" %>',
+          phone: '<%= valueFor("phone") || "(empty after valueFor)" %>',
+          height_cm: '<%= valueFor("height_cm") || "(empty after valueFor)" %>',
+          gender: '<%= valueFor("gender") || "(empty after valueFor)" %>',
+          date_of_birth: '<%= valueFor("date_of_birth") || "(empty after valueFor)" %>',
+          weight: '<%= valueFor("weight") || "(empty after valueFor)" %>',
+          weight_lbs: '<%= valueFor("weight_lbs") || "(empty after valueFor)" %>',
+          weight_kg: '<%= valueFor("weight_kg") || "(empty after valueFor)" %>'
+        }
+      };
+      console.log('[Dashboard Template Debug] Profile data available to template:', debugData);
+      console.log('[Dashboard Template Debug] 🔍 RAW vs PROCESSED DATA COMPARISON:');
+      console.table(debugData.rawProfileSample);
+      console.table(debugData.editDefaultsSample);
+    })();
+  </script>
+  
+  <!-- Sidebar Dropdown Toggle -->
+  <script>
+    function toggleSidebarDropdown() {
+      const dropdown = document.getElementById('sidebar-dropdown');
+      const trigger = document.getElementById('profile-dropdown-trigger');
+      
+      if (dropdown.hidden) {
+        dropdown.hidden = false;
+        trigger.classList.add('open');
+      } else {
+        dropdown.hidden = true;
+        trigger.classList.remove('open');
+      }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('sidebar-dropdown');
+      const trigger = document.getElementById('profile-dropdown-trigger');
+      
+      if (!trigger.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.hidden = true;
+        trigger.classList.remove('open');
+      }
+    });
+    
+    // Toggle profile editing form
+    function toggleProfileForm() {
+      const form = document.getElementById('dossier-section');
+      const cta = document.getElementById('edit-profile-cta');
+      
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+        cta.style.display = 'none';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        form.style.display = 'none';
+        cta.style.display = 'block';
+      }
+    }
+  </script>

@@ -5,6 +5,8 @@ const { requireRole } = require('../../middleware/auth');
 const { upload, processImage } = require('../../lib/uploader');
 const { v4: uuidv4 } = require('uuid');
 const { calculateMatchScore } = require('../../lib/match-scoring');
+const { sendApplicationStatusEmail, sendNewMessageEmail } = require('../../lib/email');
+const { embed, toVectorLiteral } = require('../../lib/ai/embeddings');
 
 // Helper function to recalculate match scores for all applications in a board
 async function recalculateBoardScores(boardId, agencyId) {
@@ -664,7 +666,11 @@ router.get('/api/agency/applications', requireRole('AGENCY'), async (req, res, n
       search = '',
       min_height = '',
       max_height = '',
-      status = ''
+      status = '',
+      gender = '',
+      tags = '',
+      date_from = '',
+      date_to = ''
     } = req.query;
 
     let query = knex('profiles')
@@ -713,6 +719,39 @@ router.get('/api/agency/applications', requireRole('AGENCY'), async (req, res, n
     if (!Number.isNaN(maxHeightNumber)) {
       query = query.where('profiles.height_cm', '<=', maxHeightNumber);
     }
+
+    // Gender filter
+    if (gender) {
+      query = query.where('profiles.gender', gender);
+    }
+
+    // Date range filter
+    if (date_from) {
+      query = query.where('applications.created_at', '>=', new Date(date_from));
+    }
+    if (date_to) {
+      // Add one day to include the entire end date
+      const endDate = new Date(date_to);
+      endDate.setDate(endDate.getDate() + 1);
+      query = query.where('applications.created_at', '<', endDate);
+    }
+
+    // Tags filter - application must have ALL specified tags
+    if (tags) {
+      const tagArray = typeof tags === 'string' ? tags.split(',').map(t => t.trim()) :
+                       Array.isArray(tags) ? tags : [];
+      if (tagArray.length > 0) {
+        query = query.whereIn('applications.id', function() {
+          this.select('application_id')
+            .from('application_tags')
+            .where({ agency_id: req.session.userId })
+            .whereIn('tag', tagArray)
+            .groupBy('application_id')
+            .havingRaw('COUNT(DISTINCT tag) = ?', [tagArray.length]);
+        });
+      }
+    }
+
     if (sort === 'city') {
       query = query.orderBy(['profiles.city', 'profiles.last_name']);
     } else {
@@ -723,12 +762,12 @@ router.get('/api/agency/applications', requireRole('AGENCY'), async (req, res, n
 
     // Fetch images
     const profileIds = profiles.map(p => p.id);
-    const allImages = profileIds.length > 0 
+    const allImages = profileIds.length > 0
       ? await knex('images')
           .whereIn('profile_id', profileIds)
           .orderBy(['profile_id', 'sort', 'created_at'])
       : [];
-    
+
     const imagesByProfile = {};
     allImages.forEach(img => {
       if (!imagesByProfile[img.profile_id]) {
@@ -737,8 +776,25 @@ router.get('/api/agency/applications', requireRole('AGENCY'), async (req, res, n
       imagesByProfile[img.profile_id].push(img);
     });
 
+    // Fetch tags for each application
+    const applicationIds = profiles.map(p => p.application_id).filter(Boolean);
+    const allTags = applicationIds.length > 0
+      ? await knex('application_tags')
+          .whereIn('application_id', applicationIds)
+          .where({ agency_id: req.session.userId })
+      : [];
+
+    const tagsByApplication = {};
+    allTags.forEach(tag => {
+      if (!tagsByApplication[tag.application_id]) {
+        tagsByApplication[tag.application_id] = [];
+      }
+      tagsByApplication[tag.application_id].push(tag);
+    });
+
     profiles.forEach(profile => {
       profile.images = imagesByProfile[profile.id] || [];
+      profile.tags = tagsByApplication[profile.application_id] || [];
     });
 
     return res.json({ profiles, count: profiles.length });
@@ -789,6 +845,506 @@ router.get('/api/agency/stats', requireRole('AGENCY'), async (req, res, next) =>
   }
 });
 
+// Helper function to log application activities
+async function logActivity(knex, applicationId, agencyId, userId, activityType, description, metadata = {}) {
+  const { v4: uuidv4 } = require('uuid');
+  try {
+    await knex('application_activities').insert({
+      id: uuidv4(),
+      application_id: applicationId,
+      agency_id: agencyId,
+      user_id: userId,
+      activity_type: activityType,
+      description,
+      metadata: JSON.stringify(metadata),
+      created_at: knex.fn.now()
+    });
+  } catch (error) {
+    console.error('[Activity Logging] Error:', error);
+    // Don't fail the main operation if logging fails
+  }
+}
+
+// POST /api/agency/applications/:applicationId/accept - Accept application
+router.post('/api/agency/applications/:applicationId/accept', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const oldStatus = application.status;
+
+    // Update status
+    await knex('applications')
+      .where({ id: applicationId })
+      .update({
+        status: 'accepted',
+        accepted_at: knex.fn.now(),
+        updated_at: knex.fn.now()
+      });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'status_change',
+      'Application accepted',
+      { old_status: oldStatus, new_status: 'accepted' }
+    );
+
+    // Send email notification (async, non-blocking)
+    (async () => {
+      try {
+        // Get talent info
+        const talent = await knex('users')
+          .where({ id: application.talent_id })
+          .first();
+
+        // Get agency info
+        const agency = await knex('users')
+          .where({ id: agencyId })
+          .first();
+
+        if (talent && talent.email && agency) {
+          await sendApplicationStatusEmail({
+            to: talent.email,
+            talentName: talent.name || 'there',
+            agencyName: agency.name || 'the agency',
+            status: 'accepted'
+          });
+        }
+      } catch (emailError) {
+        console.error('[Accept Application] Email notification error:', emailError);
+        // Don't fail the main operation if email fails
+      }
+    })();
+
+    return res.json({ success: true, message: 'Application accepted' });
+  } catch (error) {
+    console.error('[Accept Application API] Error:', error);
+    return res.status(500).json({ error: 'Failed to accept application' });
+  }
+});
+
+// POST /api/agency/applications/:applicationId/decline - Decline application
+router.post('/api/agency/applications/:applicationId/decline', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const oldStatus = application.status;
+
+    // Update status
+    await knex('applications')
+      .where({ id: applicationId })
+      .update({
+        status: 'declined',
+        updated_at: knex.fn.now()
+      });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'status_change',
+      'Application declined',
+      { old_status: oldStatus, new_status: 'declined' }
+    );
+
+    // Send email notification (async, non-blocking)
+    (async () => {
+      try {
+        // Get talent info
+        const talent = await knex('users')
+          .where({ id: application.talent_id })
+          .first();
+
+        // Get agency info
+        const agency = await knex('users')
+          .where({ id: agencyId })
+          .first();
+
+        if (talent && talent.email && agency) {
+          await sendApplicationStatusEmail({
+            to: talent.email,
+            talentName: talent.name || 'there',
+            agencyName: agency.name || 'the agency',
+            status: 'declined'
+          });
+        }
+      } catch (emailError) {
+        console.error('[Decline Application] Email notification error:', emailError);
+        // Don't fail the main operation if email fails
+      }
+    })();
+
+    return res.json({ success: true, message: 'Application declined' });
+  } catch (error) {
+    console.error('[Decline Application API] Error:', error);
+    return res.status(500).json({ error: 'Failed to decline application' });
+  }
+});
+
+// POST /api/agency/applications/:applicationId/archive - Archive application
+router.post('/api/agency/applications/:applicationId/archive', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const oldStatus = application.status;
+
+    // Update status
+    await knex('applications')
+      .where({ id: applicationId })
+      .update({
+        status: 'archived',
+        updated_at: knex.fn.now()
+      });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'status_change',
+      'Application archived',
+      { old_status: oldStatus, new_status: 'archived' }
+    );
+
+    return res.json({ success: true, message: 'Application archived' });
+  } catch (error) {
+    console.error('[Archive Application API] Error:', error);
+    return res.status(500).json({ error: 'Failed to archive application' });
+  }
+});
+
+// GET /api/agency/applications/:applicationId/timeline - Get activity timeline
+router.get('/api/agency/applications/:applicationId/timeline', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    // Fetch all activities
+    const activities = await knex('application_activities')
+      .where({ application_id: applicationId })
+      .orderBy('created_at', 'desc');
+
+    // Parse metadata JSON
+    const parsedActivities = activities.map(activity => ({
+      ...activity,
+      metadata: typeof activity.metadata === 'string'
+        ? JSON.parse(activity.metadata)
+        : activity.metadata
+    }));
+
+    return res.json(parsedActivities);
+  } catch (error) {
+    console.error('[Timeline API] Error:', error);
+    return res.status(500).json({ error: 'Failed to fetch timeline' });
+  }
+});
+
+// POST /api/agency/applications/bulk-accept - Bulk accept applications
+router.post('/api/agency/applications/bulk-accept', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationIds } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs array is required' });
+    }
+
+    // Verify all applications belong to this agency
+    const applications = await knex('applications')
+      .whereIn('id', applicationIds)
+      .where({ agency_id: agencyId });
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ error: 'Some applications not found' });
+    }
+
+    // Update all to accepted
+    await knex('applications')
+      .whereIn('id', applicationIds)
+      .update({
+        status: 'accepted',
+        accepted_at: knex.fn.now(),
+        updated_at: knex.fn.now()
+      });
+
+    // Log activities for each
+    for (const app of applications) {
+      await logActivity(
+        knex,
+        app.id,
+        agencyId,
+        agencyId,
+        'status_change',
+        'Application accepted (bulk)',
+        { old_status: app.status, new_status: 'accepted', bulk_operation: true }
+      );
+    }
+
+    return res.json({ success: true, count: applicationIds.length });
+  } catch (error) {
+    console.error('[Bulk Accept API] Error:', error);
+    return res.status(500).json({ error: 'Failed to accept applications' });
+  }
+});
+
+// POST /api/agency/applications/bulk-decline - Bulk decline applications
+router.post('/api/agency/applications/bulk-decline', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationIds } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs array is required' });
+    }
+
+    // Verify all applications belong to this agency
+    const applications = await knex('applications')
+      .whereIn('id', applicationIds)
+      .where({ agency_id: agencyId });
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ error: 'Some applications not found' });
+    }
+
+    // Update all to declined
+    await knex('applications')
+      .whereIn('id', applicationIds)
+      .update({
+        status: 'declined',
+        updated_at: knex.fn.now()
+      });
+
+    // Log activities for each
+    for (const app of applications) {
+      await logActivity(
+        knex,
+        app.id,
+        agencyId,
+        agencyId,
+        'status_change',
+        'Application declined (bulk)',
+        { old_status: app.status, new_status: 'declined', bulk_operation: true }
+      );
+    }
+
+    return res.json({ success: true, count: applicationIds.length });
+  } catch (error) {
+    console.error('[Bulk Decline API] Error:', error);
+    return res.status(500).json({ error: 'Failed to decline applications' });
+  }
+});
+
+// POST /api/agency/applications/bulk-archive - Bulk archive applications
+router.post('/api/agency/applications/bulk-archive', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationIds } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs array is required' });
+    }
+
+    // Verify all applications belong to this agency
+    const applications = await knex('applications')
+      .whereIn('id', applicationIds)
+      .where({ agency_id: agencyId });
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ error: 'Some applications not found' });
+    }
+
+    // Update all to archived
+    await knex('applications')
+      .whereIn('id', applicationIds)
+      .update({
+        status: 'archived',
+        updated_at: knex.fn.now()
+      });
+
+    // Log activities for each
+    for (const app of applications) {
+      await logActivity(
+        knex,
+        app.id,
+        agencyId,
+        agencyId,
+        'status_change',
+        'Application archived (bulk)',
+        { old_status: app.status, new_status: 'archived', bulk_operation: true }
+      );
+    }
+
+    return res.json({ success: true, count: applicationIds.length });
+  } catch (error) {
+    console.error('[Bulk Archive API] Error:', error);
+    return res.status(500).json({ error: 'Failed to archive applications' });
+  }
+});
+
+// POST /api/agency/applications/bulk-tag - Bulk add tag to applications
+router.post('/api/agency/applications/bulk-tag', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationIds, tag, color } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs array is required' });
+    }
+
+    if (!tag || !tag.trim()) {
+      return res.status(400).json({ error: 'Tag name is required' });
+    }
+
+    // Verify all applications belong to this agency
+    const applications = await knex('applications')
+      .whereIn('id', applicationIds)
+      .where({ agency_id: agencyId });
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ error: 'Some applications not found' });
+    }
+
+    // Add tag to each application (skip if already exists)
+    let addedCount = 0;
+    for (const app of applications) {
+      // Check if tag already exists
+      const existing = await knex('application_tags')
+        .where({ application_id: app.id, agency_id: agencyId, tag: tag.trim() })
+        .first();
+
+      if (!existing) {
+        const { v4: uuidv4 } = require('uuid');
+        await knex('application_tags').insert({
+          id: uuidv4(),
+          application_id: app.id,
+          agency_id: agencyId,
+          tag: tag.trim(),
+          color: color || null,
+          created_at: knex.fn.now()
+        });
+
+        await logActivity(
+          knex,
+          app.id,
+          agencyId,
+          agencyId,
+          'tag_added',
+          `Tag "${tag.trim()}" added (bulk)`,
+          { tag_name: tag.trim(), tag_color: color, bulk_operation: true }
+        );
+
+        addedCount++;
+      }
+    }
+
+    return res.json({ success: true, count: addedCount });
+  } catch (error) {
+    console.error('[Bulk Tag API] Error:', error);
+    return res.status(500).json({ error: 'Failed to add tags' });
+  }
+});
+
+// POST /api/agency/applications/bulk-remove-tag - Bulk remove tag from applications
+router.post('/api/agency/applications/bulk-remove-tag', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationIds, tag } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs array is required' });
+    }
+
+    if (!tag || !tag.trim()) {
+      return res.status(400).json({ error: 'Tag name is required' });
+    }
+
+    // Verify all applications belong to this agency
+    const applications = await knex('applications')
+      .whereIn('id', applicationIds)
+      .where({ agency_id: agencyId });
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ error: 'Some applications not found' });
+    }
+
+    // Remove tag from each application
+    let removedCount = 0;
+    for (const app of applications) {
+      const deleted = await knex('application_tags')
+        .where({ application_id: app.id, agency_id: agencyId, tag: tag.trim() })
+        .delete();
+
+      if (deleted > 0) {
+        await logActivity(
+          knex,
+          app.id,
+          agencyId,
+          agencyId,
+          'tag_removed',
+          `Tag "${tag.trim()}" removed (bulk)`,
+          { tag_name: tag.trim(), bulk_operation: true }
+        );
+
+        removedCount++;
+      }
+    }
+
+    return res.json({
+      success: true,
+      count: removedCount,
+      data: { message: `Tag removed from ${removedCount} application${removedCount !== 1 ? 's' : ''}` }
+    });
+  } catch (error) {
+    console.error('[Bulk Remove Tag API] Error:', error);
+    return res.status(500).json({ error: 'Failed to remove tags' });
+  }
+});
+
 // PUT /api/agency/profile - Update agency profile
 router.put('/api/agency/profile', requireRole('AGENCY'), async (req, res, next) => {
   try {
@@ -830,6 +1386,7 @@ router.post('/api/agency/branding', requireRole('AGENCY'), upload.single('agency
     } else if (req.file) {
       // Process and save new logo
       const processedImage = await processImage(req.file, {
+        agencyId: agencyId,
         maxWidth: 400,
         maxHeight: 400,
         quality: 90
@@ -1114,6 +1671,17 @@ router.post('/api/agency/applications/:applicationId/notes', requireRole('AGENCY
       })
       .returning('*');
 
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'note_added',
+      'Note added',
+      { note_id: noteId, note_preview: note.trim().substring(0, 100) }
+    );
+
     return res.json(newNote);
   } catch (error) {
     console.error('[Notes API] Error:', error);
@@ -1158,6 +1726,17 @@ router.put('/api/agency/applications/:applicationId/notes/:noteId', requireRole(
       })
       .returning('*');
 
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'note_edited',
+      'Note edited',
+      { note_id: noteId }
+    );
+
     return res.json(updatedNote);
   } catch (error) {
     console.error('[Notes API] Error:', error);
@@ -1192,6 +1771,17 @@ router.delete('/api/agency/applications/:applicationId/notes/:noteId', requireRo
     await knex('application_notes')
       .where({ id: noteId })
       .delete();
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'note_deleted',
+      'Note deleted',
+      { note_id: noteId }
+    );
 
     return res.json({ success: true });
   } catch (error) {
@@ -1267,6 +1857,17 @@ router.post('/api/agency/applications/:applicationId/tags', requireRole('AGENCY'
       })
       .returning('*');
 
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'tag_added',
+      `Tag "${tag.trim()}" added`,
+      { tag_id: tagId, tag_name: tag.trim(), tag_color: color }
+    );
+
     return res.json(newTag);
   } catch (error) {
     console.error('[Tags API] Error:', error);
@@ -1305,10 +1906,42 @@ router.delete('/api/agency/applications/:applicationId/tags/:tagId', requireRole
       .where({ id: tagId })
       .delete();
 
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'tag_removed',
+      `Tag "${existingTag.tag}" removed`,
+      { tag_id: tagId, tag_name: existingTag.tag }
+    );
+
     return res.json({ success: true });
   } catch (error) {
     console.error('[Tags API] Error:', error);
     return res.status(500).json({ error: 'Failed to delete tag' });
+  }
+});
+
+// GET /api/agency/tags - Get all unique tags for this agency
+router.get('/api/agency/tags', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+
+    // Get all unique tags with their most common color and usage count
+    const tags = await knex('application_tags')
+      .select('tag')
+      .select(knex.raw('MAX(color) as color'))
+      .select(knex.raw('COUNT(*) as usage_count'))
+      .where({ agency_id: agencyId })
+      .groupBy('tag')
+      .orderBy('usage_count', 'desc');
+
+    return res.json(tags);
+  } catch (error) {
+    console.error('[Tags API] Error:', error);
+    return res.status(500).json({ error: 'Failed to fetch tags' });
   }
 });
 
@@ -1715,6 +2348,1361 @@ router.get('/api/agency/overview/stats', requireRole('AGENCY'), async (req, res,
       error: 'Failed to load overview stats',
       details: process.env.NODE_ENV !== 'production' ? error.message : undefined
     });
+  }
+});
+
+// GET /api/agency/discover - Get discoverable talent (for React frontend)
+// Supports optional ?q= parameter for semantic (vibe) search via pgvector.
+router.get('/api/agency/discover', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const {
+      sort = 'az',
+      city = '',
+      letter = '',
+      search = '',
+      min_height = '',
+      max_height = '',
+      min_age = '',
+      max_age = '',
+      gender = '',
+      eye_color = '',
+      hair_color = '',
+      page = '1',
+      limit = '20',
+      q = '',           // semantic / vibe search query
+    } = req.query;
+
+    const agencyId = req.session.userId;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const offset = (pageNum - 1) * limitNum;
+
+    // Get existing application profile IDs
+    const existingApplicationProfileIds = await knex('applications')
+      .where({ agency_id: agencyId })
+      .pluck('profile_id');
+
+    let query = knex('profiles')
+      .select('profiles.*', 'users.email as owner_email')
+      .leftJoin('users', 'profiles.user_id', 'users.id')
+      .where({ 'profiles.is_discoverable': true, 'profiles.profile_status': 'active' })
+      .whereNotNull('profiles.bio_curated');
+
+    // Exclude profiles that already have applications
+    if (existingApplicationProfileIds.length > 0) {
+      query = query.whereNotIn('profiles.id', existingApplicationProfileIds);
+    }
+
+    // Apply filters
+    if (city) {
+      query = query.whereILike('profiles.city', `%${city}%`);
+    }
+
+    if (letter) {
+      query = query.whereILike('profiles.last_name', `${letter}%`);
+    }
+
+    if (search) {
+      query = query.andWhere((qb) => {
+        qb.whereILike('profiles.first_name', `%${search}%`)
+          .orWhereILike('profiles.last_name', `%${search}%`);
+      });
+    }
+
+    const minHeightNumber = parseInt(min_height, 10);
+    const maxHeightNumber = parseInt(max_height, 10);
+    if (!Number.isNaN(minHeightNumber)) {
+      query = query.where('profiles.height_cm', '>=', minHeightNumber);
+    }
+    if (!Number.isNaN(maxHeightNumber)) {
+      query = query.where('profiles.height_cm', '<=', maxHeightNumber);
+    }
+
+    const minAgeNumber = parseInt(min_age, 10);
+    const maxAgeNumber = parseInt(max_age, 10);
+    if (!Number.isNaN(minAgeNumber)) {
+      query = query.where('profiles.age', '>=', minAgeNumber);
+    }
+    if (!Number.isNaN(maxAgeNumber)) {
+      query = query.where('profiles.age', '<=', maxAgeNumber);
+    }
+
+    if (gender) {
+      query = query.where('profiles.gender', gender);
+    }
+
+    if (eye_color) {
+      query = query.where('profiles.eye_color', eye_color);
+    }
+
+    if (hair_color) {
+      query = query.where('profiles.hair_color', hair_color);
+    }
+
+    // Get total count before applying sort/pagination
+    const countQuery = query.clone().clearSelect().clearOrder().count('* as count');
+    const [countResult] = await countQuery;
+    const totalCount = parseInt(countResult?.count || 0, 10);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    // ── Sort: semantic (vibe) search if ?q= provided, else normal sort ────
+    const isPostgres = knex.client.config.client === 'pg' || knex.client.config.client === 'postgresql';
+    let usedSemanticSort = false;
+
+    if (q && isPostgres && process.env.OPENAI_API_KEY) {
+      try {
+        const queryEmbedding = await embed(q);
+        const vectorLiteral = toVectorLiteral(queryEmbedding);
+
+        query = query
+          .leftJoin('talent_text_embeddings as tte', function() {
+            this.on('tte.profile_id', '=', 'profiles.id')
+                .andOnVal('tte.source', 'full_profile');
+          })
+          .select(knex.raw('tte.embedding <=> ?::vector as vibe_distance', [vectorLiteral]))
+          .orderByRaw('tte.embedding <=> ?::vector ASC NULLS LAST', [vectorLiteral]);
+
+        usedSemanticSort = true;
+        console.log(`[Discover] Semantic sort active — query: "${q}"`);
+      } catch (embedErr) {
+        console.warn('[Discover] Semantic sort failed, using default sort:', embedErr.message);
+      }
+    }
+
+    if (!usedSemanticSort) {
+      if (sort === 'city') {
+        query = query.orderBy(['profiles.city', 'profiles.last_name']);
+      } else if (sort === 'newest') {
+        query = query.orderBy('profiles.created_at', 'desc');
+      } else {
+        query = query.orderBy(['profiles.last_name', 'profiles.first_name']);
+      }
+    }
+
+    // Apply pagination
+    query = query.limit(limitNum).offset(offset);
+
+    const profiles = await query;
+
+    // Fetch images
+    const profileIds = profiles.map(p => p.id);
+    const allImages = profileIds.length > 0
+      ? await knex('images')
+          .whereIn('profile_id', profileIds)
+          .orderBy(['profile_id', 'sort', 'created_at'])
+      : [];
+
+    const imagesByProfile = {};
+    allImages.forEach(img => {
+      if (!imagesByProfile[img.profile_id]) {
+        imagesByProfile[img.profile_id] = [];
+      }
+      imagesByProfile[img.profile_id].push(img);
+    });
+
+    profiles.forEach(profile => {
+      profile.images = imagesByProfile[profile.id] || [];
+    });
+
+    return res.json({
+      profiles,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        totalPages: totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1
+      },
+      meta: {
+        semantic_search: usedSemanticSort,
+        query: usedSemanticSort ? q : null
+      }
+    });
+  } catch (error) {
+    console.error('[API/Agency/Discover] Error:', error);
+    return next(error);
+  }
+});
+
+// GET /api/agency/discover/:profileId/preview - Get profile preview
+router.get('/api/agency/discover/:profileId/preview', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { profileId } = req.params;
+
+    const profile = await knex('profiles')
+      .where({ id: profileId, is_discoverable: true })
+      .first();
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found or not discoverable' });
+    }
+
+    // Get images
+    const images = await knex('images')
+      .where({ profile_id: profileId })
+      .orderBy(['sort', 'created_at']);
+
+    return res.json({
+      success: true,
+      profile: {
+        ...profile,
+        images: images.map(img => ({
+          path: img.path,
+          alt: img.alt || `${profile.first_name} ${profile.last_name}`
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('[API/Agency/Discover Preview] Error:', error);
+    return res.status(500).json({ error: 'Failed to load profile preview' });
+  }
+});
+
+// POST /api/agency/discover/:profileId/invite - Invite talent to apply
+router.post('/api/agency/discover/:profileId/invite', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { profileId } = req.params;
+    const agencyId = req.session.userId;
+
+    const profile = await knex('profiles')
+      .where({ id: profileId, is_discoverable: true })
+      .first();
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found or not discoverable' });
+    }
+
+    const existingApplication = await knex('applications')
+      .where({ profile_id: profileId, agency_id: agencyId })
+      .first();
+
+    if (existingApplication) {
+      return res.status(409).json({ error: 'You have already invited this talent' });
+    }
+
+    const applicationId = require('crypto').randomUUID();
+    await knex('applications').insert({
+      id: applicationId,
+      profile_id: profileId,
+      agency_id: agencyId,
+      status: 'pending',
+      invited_by_agency_id: agencyId,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now()
+    });
+
+    // Send invitation email (optional)
+    try {
+      const { sendAgencyInviteEmail } = require('../../lib/email');
+      const talentUser = await knex('users')
+        .where({ id: profile.user_id })
+        .first();
+
+      const agency = await knex('users')
+        .where({ id: agencyId })
+        .first();
+
+      if (talentUser && agency) {
+        await sendAgencyInviteEmail({
+          talentEmail: talentUser.email,
+          talentName: `${profile.first_name} ${profile.last_name}`,
+          agencyName: agency.agency_name || agency.email
+        });
+      }
+    } catch (emailError) {
+      console.error('[Discover Invite] Email send error:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    return res.json({ success: true, message: 'Invitation sent successfully' });
+  } catch (error) {
+    console.error('[API/Agency/Invite] Error:', error);
+    return next(error);
+  }
+});
+
+// ============================================================================
+// Messaging API
+// ============================================================================
+
+// GET /api/agency/messages/threads - Get all conversation threads for agency
+router.get('/api/agency/messages/threads', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+
+    // Subquery to get the latest message for each application
+    const latestMessageSubquery = knex('messages')
+      .select('application_id')
+      .max('created_at as max_created_at')
+      .groupBy('application_id')
+      .as('latest_msgs');
+
+    // Get threads with latest message info
+    const threads = await knex('messages as m')
+      .join('applications as a', 'm.application_id', 'a.id')
+      .join('profiles as p', 'a.profile_id', 'p.id')
+      .leftJoin('boards as b', 'a.board_id', 'b.id')
+      .join(latestMessageSubquery, function() {
+        this.on('m.application_id', '=', 'latest_msgs.application_id')
+        this.andOn('m.created_at', '=', 'latest_msgs.max_created_at');
+      })
+      .where('a.agency_id', agencyId)
+      .select([
+        'a.id as id',
+        knex.raw("p.first_name || ' ' || p.last_name as \"senderName\""),
+        'b.name as board_name',
+        'm.message as preview',
+        'm.created_at as timestamp',
+        'p.id as profile_id'
+      ])
+      .orderBy('m.created_at', 'desc');
+
+    // Get unread counts for each application
+    const unreadCounts = await knex('messages')
+      .join('applications', 'messages.application_id', 'applications.id')
+      .where('applications.agency_id', agencyId)
+      .where('messages.is_read', false)
+      .where('messages.sender_type', 'TALENT')
+      .groupBy('messages.application_id')
+      .select('messages.application_id')
+      .count('* as count');
+
+    const unreadMap = {};
+    unreadCounts.forEach(row => {
+      unreadMap[row.application_id] = parseInt(row.count);
+    });
+
+    // Get primary images for avatars
+    const profileIds = threads.map(t => t.profile_id);
+    const images = profileIds.length > 0 
+      ? await knex('images')
+          .whereIn('profile_id', profileIds)
+          .where('is_primary', true)
+      : [];
+    
+    const imageMap = {};
+    images.forEach(img => {
+      imageMap[img.profile_id] = img.path;
+    });
+
+    // Format threads for frontend
+    const formattedThreads = threads.map(t => ({
+      id: t.id,
+      senderName: t.senderName,
+      senderAvatar: imageMap[t.profile_id] ? `/${imageMap[t.profile_id]}` : null,
+      applicationLabel: `Application #${t.id.substring(0, 4).toUpperCase()} · ${t.board_name || 'General'}`,
+      preview: t.preview,
+      timestamp: t.timestamp,
+      unread: !!unreadMap[t.id],
+      unreadCount: unreadMap[t.id] || 0
+    }));
+
+    return res.json({
+      success: true,
+      data: formattedThreads
+    });
+  } catch (error) {
+    console.error('[Messages API] Error fetching threads:', error);
+    return res.status(500).json({ error: 'Failed to load conversation threads' });
+  }
+});
+
+
+// GET /api/agency/applications/:applicationId/messages - Get all messages for an application
+router.get('/api/agency/applications/:applicationId/messages', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    // Get all messages for this application
+    const messages = await knex('messages')
+      .where({ application_id: applicationId })
+      .leftJoin('users', 'messages.sender_id', 'users.id')
+      .select(
+        'messages.*',
+        'users.email as sender_email',
+        'users.name as sender_name'
+      )
+      .orderBy('messages.created_at', 'asc');
+
+    return res.json({
+      success: true,
+      data: messages
+    });
+  } catch (error) {
+    console.error('[Messages API] Error fetching messages:', error);
+    return res.status(500).json({ error: 'Failed to load messages' });
+  }
+});
+
+// POST /api/agency/applications/:applicationId/messages - Send a message
+router.post('/api/agency/applications/:applicationId/messages', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const { message, attachment_url } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const { v4: uuidv4 } = require('uuid');
+    const messageId = uuidv4();
+
+    await knex('messages').insert({
+      id: messageId,
+      application_id: applicationId,
+      sender_id: agencyId,
+      sender_type: 'AGENCY',
+      message: message.trim(),
+      attachment_url: attachment_url || null,
+      is_read: false,
+      created_at: knex.fn.now()
+    });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'message_sent',
+      'Message sent to talent',
+      { message_preview: message.trim().substring(0, 100) }
+    );
+
+    // Send email notification (async, non-blocking)
+    (async () => {
+      try {
+        // Get talent info
+        const talent = await knex('users')
+          .where({ id: application.talent_id })
+          .first();
+
+        // Get agency info
+        const agency = await knex('users')
+          .where({ id: agencyId })
+          .first();
+
+        if (talent && talent.email && agency) {
+          const messagePreview = message.trim().length > 150
+            ? message.trim().substring(0, 150) + '...'
+            : message.trim();
+
+          await sendNewMessageEmail({
+            to: talent.email,
+            recipientName: talent.name || 'there',
+            senderName: agency.name || 'An agency',
+            messagePreview
+          });
+        }
+      } catch (emailError) {
+        console.error('[Send Message] Email notification error:', emailError);
+        // Don't fail the main operation if email fails
+      }
+    })();
+
+    const newMessage = await knex('messages')
+      .where({ id: messageId })
+      .leftJoin('users', 'messages.sender_id', 'users.id')
+      .select(
+        'messages.*',
+        'users.email as sender_email',
+        'users.name as sender_name'
+      )
+      .first();
+
+    return res.json({
+      success: true,
+      data: newMessage
+    });
+  } catch (error) {
+    console.error('[Messages API] Error sending message:', error);
+    return res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// POST /api/agency/messages/:messageId/read - Mark message as read
+router.post('/api/agency/messages/:messageId/read', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Get message and verify access
+    const message = await knex('messages')
+      .where({ 'messages.id': messageId })
+      .join('applications', 'messages.application_id', 'applications.id')
+      .where({ 'applications.agency_id': agencyId })
+      .select('messages.*')
+      .first();
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Mark as read
+    await knex('messages')
+      .where({ id: messageId })
+      .update({
+        is_read: true,
+        read_at: knex.fn.now()
+      });
+
+    return res.json({
+      success: true,
+      data: { message: 'Message marked as read' }
+    });
+  } catch (error) {
+    console.error('[Messages API] Error marking message as read:', error);
+    return res.status(500).json({ error: 'Failed to mark message as read' });
+  }
+});
+
+// GET /api/agency/messages/unread-count - Get unread message count
+router.get('/api/agency/messages/unread-count', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+
+    const result = await knex('messages')
+      .join('applications', 'messages.application_id', 'applications.id')
+      .where({ 'applications.agency_id': agencyId })
+      .where({ 'messages.is_read': false })
+      .where('messages.sender_type', '!=', 'AGENCY') // Only count messages FROM talent
+      .count('* as count')
+      .first();
+
+    return res.json({
+      success: true,
+      data: {
+        unread_count: parseInt(result.count || 0)
+      }
+    });
+  } catch (error) {
+    console.error('[Messages API] Error getting unread count:', error);
+    return res.status(500).json({ error: 'Failed to get unread count' });
+  }
+});
+
+// ============================================================================
+// Filter Presets API
+// ============================================================================
+
+// GET /api/agency/filter-presets - List all filter presets for agency
+router.get('/api/agency/filter-presets', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+
+    const presets = await knex('filter_presets')
+      .where({ agency_id: agencyId })
+      .orderBy([
+        { column: 'is_default', order: 'desc' },
+        { column: 'created_at', order: 'desc' }
+      ]);
+
+    // Parse filters JSON
+    const parsedPresets = presets.map(preset => ({
+      ...preset,
+      filters: JSON.parse(preset.filters)
+    }));
+
+    return res.json({
+      success: true,
+      data: parsedPresets
+    });
+  } catch (error) {
+    console.error('[Filter Presets API] Error listing presets:', error);
+    return res.status(500).json({ error: 'Failed to load filter presets' });
+  }
+});
+
+// POST /api/agency/filter-presets - Create new filter preset
+router.post('/api/agency/filter-presets', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { name, filters } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Preset name is required' });
+    }
+
+    if (!filters || typeof filters !== 'object') {
+      return res.status(400).json({ error: 'Filters object is required' });
+    }
+
+    const { v4: uuidv4 } = require('uuid');
+    const presetId = uuidv4();
+
+    await knex('filter_presets').insert({
+      id: presetId,
+      agency_id: agencyId,
+      name: name.trim(),
+      filters: JSON.stringify(filters),
+      is_default: false,
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now()
+    });
+
+    const preset = await knex('filter_presets')
+      .where({ id: presetId })
+      .first();
+
+    return res.json({
+      success: true,
+      data: {
+        ...preset,
+        filters: JSON.parse(preset.filters)
+      }
+    });
+  } catch (error) {
+    console.error('[Filter Presets API] Error creating preset:', error);
+    return res.status(500).json({ error: 'Failed to create filter preset' });
+  }
+});
+
+// PUT /api/agency/filter-presets/:id - Update filter preset
+router.put('/api/agency/filter-presets/:id', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, filters } = req.body;
+    const agencyId = req.session.userId;
+
+    // Verify ownership
+    const preset = await knex('filter_presets')
+      .where({ id, agency_id: agencyId })
+      .first();
+
+    if (!preset) {
+      return res.status(404).json({ error: 'Preset not found' });
+    }
+
+    const updateData = { updated_at: knex.fn.now() };
+    if (name !== undefined) updateData.name = name.trim();
+    if (filters !== undefined) updateData.filters = JSON.stringify(filters);
+
+    await knex('filter_presets')
+      .where({ id })
+      .update(updateData);
+
+    const updated = await knex('filter_presets')
+      .where({ id })
+      .first();
+
+    return res.json({
+      success: true,
+      data: {
+        ...updated,
+        filters: JSON.parse(updated.filters)
+      }
+    });
+  } catch (error) {
+    console.error('[Filter Presets API] Error updating preset:', error);
+    return res.status(500).json({ error: 'Failed to update filter preset' });
+  }
+});
+
+// DELETE /api/agency/filter-presets/:id - Delete filter preset
+router.delete('/api/agency/filter-presets/:id', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify ownership
+    const preset = await knex('filter_presets')
+      .where({ id, agency_id: agencyId })
+      .first();
+
+    if (!preset) {
+      return res.status(404).json({ error: 'Preset not found' });
+    }
+
+    await knex('filter_presets')
+      .where({ id })
+      .delete();
+
+    return res.json({
+      success: true,
+      data: { message: 'Preset deleted successfully' }
+    });
+  } catch (error) {
+    console.error('[Filter Presets API] Error deleting preset:', error);
+    return res.status(500).json({ error: 'Failed to delete filter preset' });
+  }
+});
+
+// PUT /api/agency/filter-presets/:id/set-default - Set preset as default
+router.put('/api/agency/filter-presets/:id/set-default', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify ownership
+    const preset = await knex('filter_presets')
+      .where({ id, agency_id: agencyId })
+      .first();
+
+    if (!preset) {
+      return res.status(404).json({ error: 'Preset not found' });
+    }
+
+    // Remove default flag from all other presets
+    await knex('filter_presets')
+      .where({ agency_id: agencyId })
+      .update({ is_default: false });
+
+    // Set this preset as default
+    await knex('filter_presets')
+      .where({ id })
+      .update({ is_default: true, updated_at: knex.fn.now() });
+
+    const updated = await knex('filter_presets')
+      .where({ id })
+      .first();
+
+    return res.json({
+      success: true,
+      data: {
+        ...updated,
+        filters: JSON.parse(updated.filters)
+      }
+    });
+  } catch (error) {
+    console.error('[Filter Presets API] Error setting default preset:', error);
+    return res.status(500).json({ error: 'Failed to set default preset' });
+  }
+});
+
+// ============================================================================
+// Interview Scheduling API
+// ============================================================================
+
+// POST /api/agency/applications/:applicationId/interviews - Schedule interview
+router.post('/api/agency/applications/:applicationId/interviews', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const {
+      proposed_datetime,
+      duration_minutes = 30,
+      interview_type,
+      location,
+      meeting_url,
+      notes
+    } = req.body;
+    const agencyId = req.session.userId;
+
+    // Validate required fields
+    if (!proposed_datetime || !interview_type) {
+      return res.status(400).json({ error: 'Proposed date/time and interview type are required' });
+    }
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const interviewId = uuidv4();
+
+    await knex('interviews').insert({
+      id: interviewId,
+      application_id: applicationId,
+      agency_id: agencyId,
+      talent_id: application.talent_id,
+      proposed_datetime,
+      duration_minutes,
+      interview_type,
+      location: location || null,
+      meeting_url: meeting_url || null,
+      notes: notes || null,
+      status: 'pending',
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now()
+    });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'interview_scheduled',
+      'Interview scheduled',
+      {
+        interview_id: interviewId,
+        datetime: proposed_datetime,
+        type: interview_type
+      }
+    );
+
+    const interview = await knex('interviews')
+      .where({ id: interviewId })
+      .first();
+
+    return res.json({
+      success: true,
+      data: interview,
+      message: 'Interview scheduled successfully'
+    });
+  } catch (error) {
+    console.error('[Interviews API] Error scheduling interview:', error);
+    return res.status(500).json({ error: 'Failed to schedule interview' });
+  }
+});
+
+// GET /api/agency/interviews - Get all interviews for agency
+router.get('/api/agency/interviews', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+    const { status, upcoming } = req.query;
+
+    let query = knex('interviews')
+      .where({ 'interviews.agency_id': agencyId })
+      .leftJoin('applications', 'interviews.application_id', 'applications.id')
+      .leftJoin('users as talent', 'interviews.talent_id', 'talent.id')
+      .leftJoin('profiles', 'talent.id', 'profiles.user_id')
+      .select(
+        'interviews.*',
+        'talent.name as talent_name',
+        'talent.email as talent_email',
+        'profiles.slug as talent_slug'
+      );
+
+    // Filter by status
+    if (status) {
+      query = query.where({ 'interviews.status': status });
+    }
+
+    // Filter for upcoming interviews only
+    if (upcoming === 'true') {
+      query = query
+        .where('interviews.proposed_datetime', '>=', knex.fn.now())
+        .whereIn('interviews.status', ['pending', 'accepted']);
+    }
+
+    const interviews = await query.orderBy('interviews.proposed_datetime', 'asc');
+
+    return res.json({
+      success: true,
+      data: interviews
+    });
+  } catch (error) {
+    console.error('[Interviews API] Error fetching interviews:', error);
+    return res.status(500).json({ error: 'Failed to load interviews' });
+  }
+});
+
+// GET /api/agency/applications/:applicationId/interviews - Get interviews for specific application
+router.get('/api/agency/applications/:applicationId/interviews', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const interviews = await knex('interviews')
+      .where({ application_id: applicationId })
+      .orderBy('proposed_datetime', 'desc');
+
+    return res.json({
+      success: true,
+      data: interviews
+    });
+  } catch (error) {
+    console.error('[Interviews API] Error fetching application interviews:', error);
+    return res.status(500).json({ error: 'Failed to load interviews' });
+  }
+});
+
+// PATCH /api/agency/interviews/:interviewId - Update/reschedule interview
+router.patch('/api/agency/interviews/:interviewId', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { interviewId } = req.params;
+    const {
+      proposed_datetime,
+      duration_minutes,
+      interview_type,
+      location,
+      meeting_url,
+      notes,
+      status
+    } = req.body;
+    const agencyId = req.session.userId;
+
+    // Verify interview belongs to this agency
+    const interview = await knex('interviews')
+      .where({ id: interviewId, agency_id: agencyId })
+      .first();
+
+    if (!interview) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    const updates = { updated_at: knex.fn.now() };
+
+    if (proposed_datetime !== undefined) updates.proposed_datetime = proposed_datetime;
+    if (duration_minutes !== undefined) updates.duration_minutes = duration_minutes;
+    if (interview_type !== undefined) updates.interview_type = interview_type;
+    if (location !== undefined) updates.location = location;
+    if (meeting_url !== undefined) updates.meeting_url = meeting_url;
+    if (notes !== undefined) updates.notes = notes;
+    if (status !== undefined) updates.status = status;
+
+    await knex('interviews')
+      .where({ id: interviewId })
+      .update(updates);
+
+    // Log activity if rescheduled
+    if (proposed_datetime !== undefined) {
+      await logActivity(
+        knex,
+        interview.application_id,
+        agencyId,
+        agencyId,
+        'interview_rescheduled',
+        'Interview rescheduled',
+        {
+          interview_id: interviewId,
+          old_datetime: interview.proposed_datetime,
+          new_datetime: proposed_datetime
+        }
+      );
+    }
+
+    const updated = await knex('interviews')
+      .where({ id: interviewId })
+      .first();
+
+    return res.json({
+      success: true,
+      data: updated,
+      message: 'Interview updated successfully'
+    });
+  } catch (error) {
+    console.error('[Interviews API] Error updating interview:', error);
+    return res.status(500).json({ error: 'Failed to update interview' });
+  }
+});
+
+// DELETE /api/agency/interviews/:interviewId - Cancel interview
+router.delete('/api/agency/interviews/:interviewId', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { interviewId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify interview belongs to this agency
+    const interview = await knex('interviews')
+      .where({ id: interviewId, agency_id: agencyId })
+      .first();
+
+    if (!interview) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    // Mark as cancelled instead of deleting
+    await knex('interviews')
+      .where({ id: interviewId })
+      .update({
+        status: 'cancelled',
+        updated_at: knex.fn.now()
+      });
+
+    // Log activity
+    await logActivity(
+      knex,
+      interview.application_id,
+      agencyId,
+      agencyId,
+      'interview_cancelled',
+      'Interview cancelled',
+      {
+        interview_id: interviewId,
+        datetime: interview.proposed_datetime
+      }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Interview cancelled successfully'
+    });
+  } catch (error) {
+    console.error('[Interviews API] Error cancelling interview:', error);
+    return res.status(500).json({ error: 'Failed to cancel interview' });
+  }
+});
+
+// ============================================================================
+// Reminders API
+// ============================================================================
+
+// POST /api/agency/applications/:applicationId/reminders - Create reminder
+router.post('/api/agency/applications/:applicationId/reminders', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const {
+      reminder_type,
+      reminder_date,
+      title,
+      notes,
+      priority = 'normal'
+    } = req.body;
+    const agencyId = req.session.userId;
+
+    // Validate required fields
+    if (!reminder_type || !reminder_date || !title) {
+      return res.status(400).json({ error: 'Reminder type, date, and title are required' });
+    }
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const reminderId = uuidv4();
+
+    await knex('reminders').insert({
+      id: reminderId,
+      application_id: applicationId,
+      agency_id: agencyId,
+      reminder_type,
+      reminder_date,
+      title,
+      notes: notes || null,
+      priority,
+      status: 'pending',
+      created_at: knex.fn.now(),
+      updated_at: knex.fn.now()
+    });
+
+    // Log activity
+    await logActivity(
+      knex,
+      applicationId,
+      agencyId,
+      agencyId,
+      'reminder_created',
+      'Reminder set',
+      {
+        reminder_id: reminderId,
+        reminder_date,
+        title
+      }
+    );
+
+    const reminder = await knex('reminders')
+      .where({ id: reminderId })
+      .first();
+
+    return res.json({
+      success: true,
+      data: reminder,
+      message: 'Reminder created successfully'
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error creating reminder:', error);
+    return res.status(500).json({ error: 'Failed to create reminder' });
+  }
+});
+
+// GET /api/agency/reminders - Get all reminders for agency
+router.get('/api/agency/reminders', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+    const { status, due, priority } = req.query;
+
+    let query = knex('reminders')
+      .where({ 'reminders.agency_id': agencyId })
+      .leftJoin('applications', 'reminders.application_id', 'applications.id')
+      .leftJoin('users as talent', 'applications.talent_id', 'talent.id')
+      .leftJoin('profiles', 'talent.id', 'profiles.user_id')
+      .select(
+        'reminders.*',
+        'talent.name as talent_name',
+        'talent.email as talent_email',
+        'profiles.slug as talent_slug'
+      );
+
+    // Filter by status
+    if (status) {
+      query = query.where({ 'reminders.status': status });
+    }
+
+    // Filter by priority
+    if (priority) {
+      query = query.where({ 'reminders.priority': priority });
+    }
+
+    // Filter for due reminders (due today or overdue)
+    if (due === 'true') {
+      query = query
+        .where('reminders.reminder_date', '<=', knex.fn.now())
+        .where({ 'reminders.status': 'pending' });
+    }
+
+    const reminders = await query.orderBy('reminders.reminder_date', 'asc');
+
+    return res.json({
+      success: true,
+      data: reminders
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error fetching reminders:', error);
+    return res.status(500).json({ error: 'Failed to load reminders' });
+  }
+});
+
+// GET /api/agency/reminders/due - Get count of due reminders
+router.get('/api/agency/reminders/due', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const agencyId = req.session.userId;
+
+    const result = await knex('reminders')
+      .where({ agency_id: agencyId, status: 'pending' })
+      .where('reminder_date', '<=', knex.fn.now())
+      .count('* as count')
+      .first();
+
+    return res.json({
+      success: true,
+      data: { count: parseInt(result.count) }
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error fetching due reminders count:', error);
+    return res.status(500).json({ error: 'Failed to get due reminders count' });
+  }
+});
+
+// GET /api/agency/applications/:applicationId/reminders - Get reminders for specific application
+router.get('/api/agency/applications/:applicationId/reminders', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify application belongs to this agency
+    const application = await knex('applications')
+      .where({ id: applicationId, agency_id: agencyId })
+      .first();
+
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const reminders = await knex('reminders')
+      .where({ application_id: applicationId })
+      .orderBy('reminder_date', 'asc');
+
+    return res.json({
+      success: true,
+      data: reminders
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error fetching application reminders:', error);
+    return res.status(500).json({ error: 'Failed to load reminders' });
+  }
+});
+
+// PATCH /api/agency/reminders/:reminderId - Update reminder
+router.patch('/api/agency/reminders/:reminderId', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { reminderId } = req.params;
+    const {
+      reminder_type,
+      reminder_date,
+      title,
+      notes,
+      priority,
+      status
+    } = req.body;
+    const agencyId = req.session.userId;
+
+    // Verify reminder belongs to this agency
+    const reminder = await knex('reminders')
+      .where({ id: reminderId, agency_id: agencyId })
+      .first();
+
+    if (!reminder) {
+      return res.status(404).json({ error: 'Reminder not found' });
+    }
+
+    const updates = { updated_at: knex.fn.now() };
+
+    if (reminder_type !== undefined) updates.reminder_type = reminder_type;
+    if (reminder_date !== undefined) updates.reminder_date = reminder_date;
+    if (title !== undefined) updates.title = title;
+    if (notes !== undefined) updates.notes = notes;
+    if (priority !== undefined) updates.priority = priority;
+    if (status !== undefined) {
+      updates.status = status;
+      if (status === 'completed') {
+        updates.completed_at = knex.fn.now();
+      }
+    }
+
+    await knex('reminders')
+      .where({ id: reminderId })
+      .update(updates);
+
+    const updated = await knex('reminders')
+      .where({ id: reminderId })
+      .first();
+
+    return res.json({
+      success: true,
+      data: updated,
+      message: 'Reminder updated successfully'
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error updating reminder:', error);
+    return res.status(500).json({ error: 'Failed to update reminder' });
+  }
+});
+
+// POST /api/agency/reminders/:reminderId/complete - Mark reminder as completed
+router.post('/api/agency/reminders/:reminderId/complete', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { reminderId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify reminder belongs to this agency
+    const reminder = await knex('reminders')
+      .where({ id: reminderId, agency_id: agencyId })
+      .first();
+
+    if (!reminder) {
+      return res.status(404).json({ error: 'Reminder not found' });
+    }
+
+    await knex('reminders')
+      .where({ id: reminderId })
+      .update({
+        status: 'completed',
+        completed_at: knex.fn.now(),
+        updated_at: knex.fn.now()
+      });
+
+    // Log activity
+    await logActivity(
+      knex,
+      reminder.application_id,
+      agencyId,
+      agencyId,
+      'reminder_completed',
+      'Reminder completed',
+      {
+        reminder_id: reminderId,
+        title: reminder.title
+      }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Reminder marked as completed'
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error completing reminder:', error);
+    return res.status(500).json({ error: 'Failed to complete reminder' });
+  }
+});
+
+// POST /api/agency/reminders/:reminderId/snooze - Snooze reminder
+router.post('/api/agency/reminders/:reminderId/snooze', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { reminderId } = req.params;
+    const { snooze_until } = req.body;
+    const agencyId = req.session.userId;
+
+    if (!snooze_until) {
+      return res.status(400).json({ error: 'Snooze until date is required' });
+    }
+
+    // Verify reminder belongs to this agency
+    const reminder = await knex('reminders')
+      .where({ id: reminderId, agency_id: agencyId })
+      .first();
+
+    if (!reminder) {
+      return res.status(404).json({ error: 'Reminder not found' });
+    }
+
+    await knex('reminders')
+      .where({ id: reminderId })
+      .update({
+        status: 'snoozed',
+        snoozed_until: snooze_until,
+        updated_at: knex.fn.now()
+      });
+
+    return res.json({
+      success: true,
+      message: 'Reminder snoozed'
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error snoozing reminder:', error);
+    return res.status(500).json({ error: 'Failed to snooze reminder' });
+  }
+});
+
+// DELETE /api/agency/reminders/:reminderId - Delete reminder
+router.delete('/api/agency/reminders/:reminderId', requireRole('AGENCY'), async (req, res, next) => {
+  try {
+    const { reminderId } = req.params;
+    const agencyId = req.session.userId;
+
+    // Verify reminder belongs to this agency
+    const reminder = await knex('reminders')
+      .where({ id: reminderId, agency_id: agencyId })
+      .first();
+
+    if (!reminder) {
+      return res.status(404).json({ error: 'Reminder not found' });
+    }
+
+    // Soft delete by marking as cancelled
+    await knex('reminders')
+      .where({ id: reminderId })
+      .update({
+        status: 'cancelled',
+        updated_at: knex.fn.now()
+      });
+
+    return res.json({
+      success: true,
+      message: 'Reminder cancelled'
+    });
+  } catch (error) {
+    console.error('[Reminders API] Error deleting reminder:', error);
+    return res.status(500).json({ error: 'Failed to delete reminder' });
   }
 });
 

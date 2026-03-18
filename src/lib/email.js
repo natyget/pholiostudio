@@ -1,166 +1,100 @@
 /**
- * Email service for sending notifications to users
- * Currently uses console.log for development, can be extended with actual email service
+ * Email Service
+ * Handles all email notifications for the platform
  */
 
-/**
- * Send email to rejected applicant promoting Pro upgrade
- * @param {Object} options
- * @param {string} options.talentEmail - Email address of the talent
- * @param {string} options.talentName - Name of the talent
- * @param {string} options.agencyName - Name of the agency that declined
- * @param {string} options.agencyEmail - Email of the agency (optional)
- * @returns {Promise<void>}
- */
-async function sendRejectedApplicantEmail({ talentEmail, talentName, agencyName, agencyEmail }) {
-  // TODO: Implement actual email sending service (e.g., SendGrid, AWS SES, etc.)
-  
-  const subject = `Update on your application to ${agencyName}`;
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const upgradeUrl = `${baseUrl}/pro/upgrade?source=rejected&agency=${encodeURIComponent(agencyName)}`;
-  
-  const emailBody = `
-Hi ${talentName || 'there'},
+const nodemailer = require('nodemailer');
 
-Thank you for your interest in ${agencyName}. After careful consideration, we've decided to move forward with other candidates at this time.
-
-While this particular opportunity isn't the right fit, there's a way to get seen by our entire network of partner agencies:
-
-Upgrade to Studio+ ($9.99/mo) and make your profile discoverable to all partner agencies. With Studio+, you can:
-
-• Get discovered by our entire network of partner agencies
-• Make your profile visible in Scout Talent
-• Increase your chances of being found by the right agency
-
-Upgrade now: ${upgradeUrl}
-
-Best,
-The Pholio Team
-  `.trim();
-
-  // For now, log the email (in production, this would send via email service)
-  console.log('='.repeat(60));
-  console.log('[EMAIL] Rejected Applicant Notification');
-  console.log('='.repeat(60));
-  console.log(`To: ${talentEmail}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Body:\n${emailBody}`);
-  console.log('='.repeat(60));
-
-  // In production, uncomment and configure:
-  // const sgMail = require('@sendgrid/mail');
-  // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  // await sgMail.send({
-  //   to: talentEmail,
-  //   from: process.env.FROM_EMAIL || 'noreply@zipsite.me',
-  //   subject: subject,
-  //   text: emailBody,
-  //   html: emailBody.replace(/\n/g, '<br>')
-  // });
-
-  return Promise.resolve();
-}
-
-/**
- * Send email notification when application status changes
- * @param {Object} options
- * @param {string} options.talentEmail - Email address of the talent
- * @param {string} options.talentName - Name of the talent
- * @param {string} options.agencyName - Name of the agency
- * @param {string} options.status - New status (accepted, declined, archived)
- * @returns {Promise<void>}
- */
-async function sendApplicationStatusChangeEmail({ talentEmail, talentName, agencyName, status }) {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const dashboardUrl = `${baseUrl}/dashboard/talent`;
-  
-  let subject = '';
-  let emailBody = '';
-
-  if (status === 'accepted') {
-    subject = `Congratulations! ${agencyName} wants to work with you`;
-    emailBody = `
-Hi ${talentName || 'there'},
-
-Great news! ${agencyName} has accepted your application and wants to work with you.
-
-Next steps:
-1. Check your dashboard for more details: ${dashboardUrl}
-2. The agency will be in touch with you soon
-
-Congratulations on this exciting opportunity!
-
-Best,
-The Pholio Team
-    `.trim();
-  } else if (status === 'archived') {
-    subject = `Update on your application to ${agencyName}`;
-    emailBody = `
-Hi ${talentName || 'there'},
-
-Your application to ${agencyName} has been archived.
-
-You can view all your applications in your dashboard: ${dashboardUrl}
-
-Best,
-The Pholio Team
-    `.trim();
-  } else {
-    // Declined is handled by sendRejectedApplicantEmail
-    return Promise.resolve();
+// Create transporter (development mode - logs to console)
+const transporter = {
+  sendMail: async (mailOptions) => {
+    console.log('[Email] Would send:', {
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      text: mailOptions.text?.substring(0, 200) + '...'
+    });
+    return { messageId: 'dev-' + Date.now() };
   }
+};
 
-  console.log('='.repeat(60));
-  console.log('[EMAIL] Application Status Change Notification');
-  console.log('='.repeat(60));
-  console.log(`To: ${talentEmail}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Body:\n${emailBody}`);
-  console.log('='.repeat(60));
+/**
+ * Send email
+ */
+async function sendEmail({ to, subject, html, text }) {
+  try {
+    const mailOptions = {
+      from: 'Pholio <noreply@pholio.studio>',
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, '')
+    };
 
-  return Promise.resolve();
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Email] Sent:', info.messageId, 'to', to);
+    return info;
+  } catch (error) {
+    console.error('[Email] Error sending email:', error);
+    throw error;
+  }
 }
 
 /**
- * Send email when agency invites talent from Scout Talent
- * @param {Object} options
- * @param {string} options.talentEmail - Email address of the talent
- * @param {string} options.talentName - Name of the talent
- * @param {string} options.agencyName - Name of the agency
- * @returns {Promise<void>}
+ * Email Templates
  */
-async function sendAgencyInviteEmail({ talentEmail, talentName, agencyName }) {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const dashboardUrl = `${baseUrl}/dashboard/talent`;
-  
-  const subject = `You've been invited to apply to ${agencyName}`;
-  const emailBody = `
-Hi ${talentName || 'there'},
+function getBaseTemplate(content) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #8b5cf6; color: white; padding: 20px; text-align: center; }
+    .content { background: #fff; padding: 30px; border: 1px solid #e5e7eb; }
+    .button { display: inline-block; padding: 12px 24px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 6px; }
+    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>Pholio</h1></div>
+    <div class="content">${content}</div>
+    <div class="footer"><p>© 2026 Pholio. All rights reserved.</p></div>
+  </div>
+</body>
+</html>
+  `;
+}
 
-Great news! ${agencyName} has discovered your profile and invited you to apply.
+/**
+ * Application Status Change Notification
+ */
+async function sendApplicationStatusEmail({ to, talentName, agencyName, status }) {
+  const messages = {
+    accepted: { subject: `🎉 Your application to ${agencyName} has been accepted!`, message: `Congratulations! ${agencyName} has accepted your application.` },
+    declined: { subject: `Application update from ${agencyName}`, message: `${agencyName} has declined your application at this time.` }
+  };
 
-This is an exciting opportunity - the agency has already seen your portfolio and wants to learn more about you.
+  const { subject, message } = messages[status] || { subject: `Application update`, message: `Your application status has been updated.` };
 
-View your invitation and respond in your dashboard: ${dashboardUrl}
+  const html = getBaseTemplate(`<h2>Hi ${talentName},</h2><p>${message}</p><p>Best regards,<br>The Pholio Team</p>`);
 
-Best,
-The Pholio Team
-  `.trim();
+  return sendEmail({ to, subject, html });
+}
 
-  console.log('='.repeat(60));
-  console.log('[EMAIL] Agency Invite Notification');
-  console.log('='.repeat(60));
-  console.log(`To: ${talentEmail}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Body:\n${emailBody}`);
-  console.log('='.repeat(60));
-
-  return Promise.resolve();
+/**
+ * New Message Notification
+ */
+async function sendNewMessageEmail({ to, recipientName, senderName, messagePreview }) {
+  const subject = `💬 New message from ${senderName}`;
+  const html = getBaseTemplate(`<h2>Hi ${recipientName},</h2><p>You have a new message from <strong>${senderName}</strong>:</p><blockquote style="border-left: 4px solid #8b5cf6; padding-left: 16px; margin: 20px 0; color: #6b7280;">${messagePreview}</blockquote><p>Best regards,<br>The Pholio Team</p>`);
+  return sendEmail({ to, subject, html });
 }
 
 module.exports = {
-  sendRejectedApplicantEmail,
-  sendApplicationStatusChangeEmail,
-  sendAgencyInviteEmail
+  sendEmail,
+  sendApplicationStatusEmail,
+  sendNewMessageEmail
 };
-

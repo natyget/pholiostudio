@@ -1,4 +1,5 @@
 // Firebase Authentication client-side handling - ES Module
+// Follows official Firebase documentation: https://firebase.google.com/docs/auth/web/google-signin
 // Import Firebase Auth functions from CDN
 import { 
   signInWithEmailAndPassword,
@@ -8,7 +9,6 @@ import {
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
-  OAuthProvider,
   sendPasswordResetEmail as sendPasswordReset,
   onAuthStateChanged as onAuthStateChangedFn
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
@@ -185,9 +185,18 @@ window.FirebaseAuth = {
       const auth = await getAuthInstance();
       const provider = new GoogleAuthProvider();
       
-      // Request additional scopes if needed
+      // Request additional scopes for extended profile data
       provider.addScope('profile');
       provider.addScope('email');
+      // Note: Firebase Auth doesn't directly support all Google People API scopes
+      // For birthday, addresses, gender, organization, and phone numbers,
+      // we would need to use Google People API separately with OAuth 2.0
+      // These scopes are listed here for reference but may require additional setup:
+      // provider.addScope('https://www.googleapis.com/auth/user.birthday.read');
+      // provider.addScope('https://www.googleapis.com/auth/user.addresses.read');
+      // provider.addScope('https://www.googleapis.com/auth/user.gender.read');
+      // provider.addScope('https://www.googleapis.com/auth/user.organization.read');
+      // provider.addScope('https://www.googleapis.com/auth/user.phonenumbers.read');
       
       // Set custom parameters
       provider.setCustomParameters({
@@ -197,36 +206,46 @@ window.FirebaseAuth = {
       // Use redirect if requested or if popup is likely blocked
       if (useRedirect) {
         console.log('[Firebase Auth] Using redirect flow for Google Sign-In');
-        try {
-          await signInWithRedirect(auth, provider);
-          // Redirect will happen, so we won't return here
-          // The result will be handled by getRedirectResult on page load
-          return null;
-        } catch (redirectError) {
-          // Catch errors during redirect setup (e.g., rate limiting, unauthorized domain)
-          console.error('[Firebase Auth] Redirect setup error:', redirectError);
-          // Re-throw so calling code can handle it
-          throw redirectError;
-        }
+        await signInWithRedirect(auth, provider);
+        // Redirect will happen, so we won't return here
+        // The result will be handled by getRedirectResult on page load
+        return null;
       }
       
-      // Try popup sign-in first
+      // Try popup sign-in first (follows Firebase documentation pattern)
       try {
         const userCredential = await signInWithPopup(auth, provider);
         console.log('[Firebase Auth] User signed in with Google (popup):', userCredential.user.uid);
+        
+        // Optionally extract Google OAuth token (for future use with Google APIs)
+        // const credential = GoogleAuthProvider.credentialFromResult(userCredential);
+        // const token = credential?.accessToken;
+        // const user = userCredential.user;
+        
         return userCredential;
       } catch (popupError) {
+        // Handle errors according to Firebase documentation
+        const errorCode = popupError.code;
+        const errorMessage = popupError.message;
+        // const email = popupError.customData?.email;
+        // const credential = GoogleAuthProvider.credentialFromError(popupError);
+        
         // If popup fails (blocked or closed), check the error code
-        if (popupError.code === 'auth/popup-blocked') {
+        if (errorCode === 'auth/popup-blocked') {
           console.warn('[Firebase Auth] Popup blocked, falling back to redirect flow');
           // Automatically fall back to redirect
           await signInWithRedirect(auth, provider);
           return null; // Redirect will happen
-        } else if (popupError.code === 'auth/popup-closed-by-user') {
+        } else if (errorCode === 'auth/popup-closed-by-user') {
           console.log('[Firebase Auth] Popup closed by user');
           throw popupError;
+        } else if (errorCode === 'auth/account-exists-with-different-credential') {
+          // Handle account linking (advanced case)
+          console.error('[Firebase Auth] Account exists with different credential');
+          throw popupError;
         } else {
-          // Re-throw other errors
+          // Re-throw other errors for caller to handle
+          console.error('[Firebase Auth] Popup sign-in error:', { errorCode, errorMessage });
           throw popupError;
         }
       }
@@ -237,72 +256,45 @@ window.FirebaseAuth = {
   },
 
   /**
-   * Sign in with Instagram using popup (with redirect fallback)
-   * @param {boolean} useRedirect - If true, use redirect instead of popup
-   * @returns {Promise<UserCredential>}
-   */
-  signInWithInstagram: async function(useRedirect = false) {
-    try {
-      const auth = await getAuthInstance();
-      // Instagram uses OAuth 2.0 - configure as custom OAuth provider in Firebase Console
-      // Provider ID should be set in Firebase Console (e.g., 'instagram.com')
-      const provider = new OAuthProvider('instagram.com');
-      
-      // Request additional scopes if needed
-      provider.addScope('user_profile');
-      provider.addScope('user_media');
-      
-      // Use redirect if requested or if popup is likely blocked
-      if (useRedirect) {
-        console.log('[Firebase Auth] Using redirect flow for Instagram Sign-In');
-        await signInWithRedirect(auth, provider);
-        // Redirect will happen, so we won't return here
-        // The result will be handled by getRedirectResult on page load
-        return null;
-      }
-      
-      // Try popup sign-in first
-      try {
-        const userCredential = await signInWithPopup(auth, provider);
-        console.log('[Firebase Auth] User signed in with Instagram (popup):', userCredential.user.uid);
-        return userCredential;
-      } catch (popupError) {
-        // If popup fails (blocked or closed), check the error code
-        if (popupError.code === 'auth/popup-blocked') {
-          console.warn('[Firebase Auth] Popup blocked, falling back to redirect flow');
-          // Automatically fall back to redirect
-          await signInWithRedirect(auth, provider);
-          return null; // Redirect will happen
-        } else if (popupError.code === 'auth/popup-closed-by-user') {
-          console.log('[Firebase Auth] Popup closed by user');
-          throw popupError;
-        } else {
-          // Re-throw other errors
-          throw popupError;
-        }
-      }
-    } catch (error) {
-      console.error('[Firebase Auth] Instagram Sign-In error:', error);
-      throw error;
-    }
-  },
-
-  /**
    * Get the result of a redirect-based sign-in
    * Should be called on page load to handle redirect results
+   * Follows Firebase official documentation pattern
    * @returns {Promise<UserCredential|null>}
    */
   getRedirectResult: async function() {
     try {
       const auth = await getAuthInstance();
       const result = await getRedirectResult(auth);
+      
       if (result) {
         console.log('[Firebase Auth] Redirect sign-in successful:', result.user.uid);
+        
+        // Optionally extract Google OAuth token (for future use with Google APIs)
+        // const credential = GoogleAuthProvider.credentialFromResult(result);
+        // const token = credential?.accessToken;
+        // if (token) {
+        //   console.log('[Firebase Auth] Google OAuth token available');
+        // }
+        
         return result;
       }
+      
+      // No redirect result - user just loaded the page normally
       return null;
     } catch (error) {
-      console.error('[Firebase Auth] Error getting redirect result:', error);
+      // Handle errors according to Firebase documentation
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      
+      // Extract credential from error if available
+      // const credential = GoogleAuthProvider.credentialFromError(error);
+      
+      console.error('[Firebase Auth] Error getting redirect result:', {
+        code: errorCode,
+        message: errorMessage
+      });
+      
+      // Re-throw for caller to handle
       throw error;
     }
   }
@@ -325,16 +317,9 @@ window.getFirebaseErrorMessage = function(error) {
     'auth/invalid-credential': 'Invalid email or password.',
     'auth/popup-closed-by-user': 'Sign-in popup was closed. Please try again.',
     'auth/popup-blocked': 'Sign-in popup was blocked. Please allow popups for this site.',
-    'auth/too-many-requests': 'Too many sign-in attempts. Please wait a few minutes and try again.',
-    'auth/quota-exceeded': 'Service temporarily unavailable due to high demand. Please try again in a few minutes.',
+    'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
     'auth/network-request-failed': 'Network error. Please check your connection.',
-    'auth/requires-recent-login': 'Please sign in again to complete this action.',
-    'auth/unauthorized-domain': 'This domain is not authorized for sign-in. Please contact support.',
-    'auth/configuration-not-found': 'Firebase configuration is missing. Please contact support.',
-    'auth/invalid-api-key': 'Firebase API key is invalid. Please contact support.',
-    'auth/app-not-authorized': 'Firebase app is not authorized. Please contact support.',
-    'auth/account-exists-with-different-credential': 'An account already exists with a different sign-in method.',
-    'auth/credential-already-in-use': 'This credential is already associated with a different account.'
+    'auth/requires-recent-login': 'Please sign in again to complete this action.'
   };
 
   return errorMessages[error.code] || error.message || 'An authentication error occurred. Please try again.';

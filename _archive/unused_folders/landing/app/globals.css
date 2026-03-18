@@ -1,0 +1,121 @@
+/* Google Fonts - must be first */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@100;300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  
+  --color-cream: #FAF9F7; /* Brand Guideline: Primary Background */
+  --color-cream-warm: #F5F4F2; /* Brand: Secondary Background */
+  --color-white: #FFFFFF;
+  
+  --color-ink: #0F172A; /* Brand: Dark Text */
+  --color-ink-soft: #64748B; /* Brand: Slate Text */
+  --color-ink-muted: #94A3B8; /* Brand: Light Text */
+  
+  --color-gold: #C9A55A; /* Brand: Primary Gold */
+  --color-gold-rich: #B08D45; /* Brand: Hover Gold */
+  --color-gold-muted: rgba(201, 165, 90, 0.25);
+  --color-gold-bright: #E5C178;
+  
+  --color-velvet-black: #050505;
+}
+
+/* Pholio — Editorial Foundation (Cream / Ink / Gold) */
+
+:root {
+  /* Core Palette — Luxury Editorial */
+  --cream: #FAF9F6;
+  --cream-warm: #F7F5F1;
+  --cream-dark: #F0EDE8;
+  --white: #FFFFFF;
+  --ink: #0A0A0A;
+  --ink-soft: #1A1A1A;
+  --ink-muted: #404040;
+  --gold: #C9A55A;
+  --gold-rich: #D4AF6A;
+  --gold-muted: rgba(201, 165, 90, 0.25);
+  --gold-bright: #E5C178;
+  --velvet-black: #050505;
+
+  /* Semantic */
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --accent: var(--gold);
+  --border: var(--gold-muted);
+
+  /* Luxury Materials */
+  --paper-texture: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='paper' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='50' cy='50' r='0.5' fill='%23000000' opacity='0.02'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23paper)'/%3E%3C/svg%3E");
+
+  /* Typography */
+  --font-serif: 'Noto Serif Display', Georgia, serif;
+  --font-sans: 'Noto Serif Display', Georgia, serif;
+
+  /* Animation */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.4s;
+  --duration-slow: 0.8s;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Marquee ticker ─────────────────────────────────────── */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  animation: ticker 35s linear infinite;
+  will-change: transform;
+}
+.ticker-track:hover { animation-play-state: paused; }
+
+/* ── Floating idle animation ────────────────────────────── */
+@keyframes idle-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+.idle-float-a { animation: idle-float 4s ease-in-out infinite; }
+.idle-float-b { animation: idle-float 5.5s ease-in-out infinite 0.8s; }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  font-family: 'Noto Serif Display', Georgia, serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  line-height: 1.7;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+
+/* Serif typography */
+.font-serif {
+  font-family: 'Noto Serif Display', Georgia, serif;
+}

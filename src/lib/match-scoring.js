@@ -230,7 +230,7 @@ function scoreMeasurements(profile, requirements) {
   
   // Bust
   if (requirements.min_bust !== null || requirements.max_bust !== null) {
-    const bust = parseFloat(profile.bust) || 0;
+    const bust = parseFloat(profile.bust_cm) || 0;
     if (bust === 0) {
       scores.push(0);
     } else {
@@ -242,7 +242,7 @@ function scoreMeasurements(profile, requirements) {
 
   // Waist
   if (requirements.min_waist !== null || requirements.max_waist !== null) {
-    const waist = parseFloat(profile.waist) || 0;
+    const waist = parseFloat(profile.waist_cm) || 0;
     if (waist === 0) {
       scores.push(0);
     } else {
@@ -254,7 +254,7 @@ function scoreMeasurements(profile, requirements) {
 
   // Hips
   if (requirements.min_hips !== null || requirements.max_hips !== null) {
-    const hips = parseFloat(profile.hips) || 0;
+    const hips = parseFloat(profile.hips_cm) || 0;
     if (hips === 0) {
       scores.push(0);
     } else {

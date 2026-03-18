@@ -12,6 +12,101 @@ const { mergeLayoutWithDefaults } = require('./pdf-layouts');
  * Theme definitions
  */
 const themes = {
+  // ─── Pholio Standard 2-page themes (used by compcard-standard.ejs) ───
+  'pholio-standard': {
+    key: 'pholio-standard',
+    name: 'Pholio Standard',
+    isPro: false,
+    fonts: {
+      name: 'Cormorant Garamond',
+      bio: 'Inter',
+      stats: 'Inter'
+    },
+    layout: {
+      headerPosition: 'top',
+      imageGrid: { cols: 2, rows: 2 },
+      bioPosition: 'bottom-center',
+      statsPosition: 'header-right'
+    },
+    colors: {
+      background: '#FAFAF8',
+      text: '#1C1C1C',
+      accent: '#C9A96E'
+    },
+    personality: 'Editorial, warm, timeless',
+    description: 'The Pholio Standard — warm cream background with gold accent. Always great by default.'
+  },
+  'classic-dark': {
+    key: 'classic-dark',
+    name: 'Classic Dark',
+    isPro: true,
+    fonts: {
+      name: 'Cormorant Garamond',
+      bio: 'Inter',
+      stats: 'Inter'
+    },
+    layout: {
+      headerPosition: 'top',
+      imageGrid: { cols: 2, rows: 2 },
+      bioPosition: 'bottom-center',
+      statsPosition: 'header-right'
+    },
+    colors: {
+      background: '#111111',
+      text: '#F0EEE9',
+      accent: '#C9A96E'
+    },
+    personality: 'Cinematic, dark, editorial',
+    description: 'Jet black background with warm gold accents. Dramatic and high-fashion.'
+  },
+  'studio-clean': {
+    key: 'studio-clean',
+    name: 'Studio Clean',
+    isPro: true,
+    fonts: {
+      name: 'Work Sans',
+      bio: 'Inter',
+      stats: 'Inter'
+    },
+    layout: {
+      headerPosition: 'top',
+      imageGrid: { cols: 2, rows: 2 },
+      bioPosition: 'bottom-center',
+      statsPosition: 'header-right'
+    },
+    colors: {
+      background: '#FFFFFF',
+      text: '#1A1A1A',
+      accent: '#2563EB'
+    },
+    personality: 'Modern, clean, commercial',
+    description: 'Pure white with cobalt blue accent. Clean and professional.'
+  },
+  'bold-editorial': {
+    key: 'bold-editorial',
+    name: 'Bold Editorial',
+    isPro: true,
+    fonts: {
+      name: 'Bodoni Moda',
+      bio: 'Inter',
+      stats: 'Inter'
+    },
+    layout: {
+      headerPosition: 'top',
+      imageGrid: { cols: 2, rows: 2 },
+      bioPosition: 'bottom-center',
+      statsPosition: 'header-right'
+    },
+    colors: {
+      background: '#F5F5F5',
+      text: '#0A0A0A',
+      accent: '#D4A017'
+    },
+    personality: 'Bold, high-contrast, editorial',
+    description: 'Neutral off-white with antique gold. Striking and editorial.'
+  },
+
+  // ─── Legacy 1-page themes (used by compcard.ejs) ─────────────────────
   // Free Themes (3 high-quality, locked)
   'classic-serif': {
     key: 'classic-serif',

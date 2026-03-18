@@ -1,0 +1,161 @@
+  <!-- Mobile Overlay (outside sidebar to avoid transform issues) -->
+  <div class="agency-sidebar__mobile-overlay" id="sidebar-mobile-overlay"></div>
+  
+  <!-- Fixed Sidebar Navigation -->
+  <aside class="agency-sidebar" id="agency-sidebar">
+    <div class="agency-sidebar__inner">
+      <!-- Logo & Brand Section -->
+      <div class="agency-sidebar__header">
+        <div class="agency-sidebar__header-top">
+          <a href="/" class="agency-sidebar__logo">
+            <%- include('../logo', { className: 'agency-sidebar__logo-pholio' }) %>
+          </a>
+          <button class="agency-sidebar__close-mobile" id="sidebar-close-mobile" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="agency-sidebar__brand">
+          <div class="agency-sidebar__brand-dot" style="background-color: <%= brandColor %>;"></div>
+          <span class="agency-sidebar__brand-name">
+            <%= currentUser && currentUser.agency_name ? currentUser.agency_name : 'Agency' %>
+          </span>
+        </div>
+        
+        <!-- Command Palette Trigger -->
+        <button 
+          class="agency-sidebar__search-trigger" 
+          id="command-palette-trigger"
+          aria-label="Open command palette"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span>Quick Find...</span>
+          <kbd class="agency-sidebar__kbd">⌘K</kbd>
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="agency-sidebar__nav">
+        <a 
+          href="/dashboard/agency" 
+          class="agency-sidebar__nav-item <%= (typeof page === 'undefined' || page === 'overview') ? 'agency-sidebar__nav-item--active' : '' %>"
+          data-page="overview"
+        >
+          <div class="agency-sidebar__nav-indicator"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>Overview</span>
+        </a>
+        
+        <a 
+          href="/dashboard/agency/applicants" 
+          class="agency-sidebar__nav-item <%= (typeof page !== 'undefined' && page === 'applicants') ? 'agency-sidebar__nav-item--active' : '' %>"
+          data-page="applicants"
+        >
+          <div class="agency-sidebar__nav-indicator"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>My Applicants</span>
+          <% 
+            const pendingCount = safeStats ? ((safeStats.pending || 0) + (safeStats.new || 0)) : 0;
+          %>
+          <% if (pendingCount > 0) { %>
+            <span class="agency-sidebar__badge agency-sidebar__badge--pulse"><%= pendingCount %></span>
+          <% } %>
+        </a>
+        
+        <a 
+          href="/dashboard/agency/discover" 
+          class="agency-sidebar__nav-item <%= (typeof page !== 'undefined' && page === 'discover') ? 'agency-sidebar__nav-item--active' : '' %>"
+          data-page="discover"
+        >
+          <div class="agency-sidebar__nav-indicator"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span>Discover</span>
+        </a>
+        
+        <a 
+          href="/dashboard/agency/boards" 
+          class="agency-sidebar__nav-item <%= (typeof page !== 'undefined' && page === 'boards') ? 'agency-sidebar__nav-item--active' : '' %>"
+          data-page="boards"
+        >
+          <div class="agency-sidebar__nav-indicator"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>Boards</span>
+        </a>
+        
+        <a 
+          href="/dashboard/agency/analytics" 
+          class="agency-sidebar__nav-item <%= (typeof page !== 'undefined' && page === 'analytics') ? 'agency-sidebar__nav-item--active' : '' %>"
+          data-page="analytics"
+        >
+          <div class="agency-sidebar__nav-indicator"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="12" y1="20" x2="12" y2="10"/>
+            <line x1="18" y1="20" x2="18" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="16"/>
+          </svg>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <!-- Footer -->
+      <div class="agency-sidebar__footer">
+        <a 
+          href="/dashboard/settings" 
+          class="agency-sidebar__nav-item"
+          data-view="settings"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
+          </svg>
+          <span>Settings</span>
+        </a>
+        
+        <!-- User Profile Section -->
+        <div class="agency-sidebar__user-profile">
+          <div class="agency-sidebar__user-avatar">
+            <% 
+              const agencyInitials = currentUser && currentUser.agency_name 
+                ? currentUser.agency_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                : 'AG';
+            %>
+            <%= agencyInitials %>
+          </div>
+          <div class="agency-sidebar__user-info">
+            <div class="agency-sidebar__user-name">
+              <%= currentUser && currentUser.agency_name ? currentUser.agency_name : 'Agency' %>
+            </div>
+            <div class="agency-sidebar__user-location">
+              <%= currentUser && currentUser.agency_location ? currentUser.agency_location : 'Location' %>
+            </div>
+          </div>
+        </div>
+        
+        <form method="post" action="/logout" class="agency-sidebar__logout-form">
+          <button type="submit" class="agency-sidebar__logout-btn">
+            <span>Sign out</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>

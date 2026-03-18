@@ -62,5 +62,19 @@ module.exports = {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     priceId: process.env.STRIPE_PRICE_ID,
     baseUrl: process.env.BASE_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || 'http://localhost:3000'
+  },
+  // Groq AI configuration
+  groq: {
+    apiKey: process.env.GROQ_API_KEY
+  },
+  // Cloudflare R2 configuration
+  r2: {
+    bucket: process.env.R2_BUCKET,
+    accountId: process.env.R2_ACCOUNT_ID,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    publicUrl: process.env.R2_PUBLIC_URL || `https://${process.env.R2_BUCKET}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    region: 'auto'
   }
 };

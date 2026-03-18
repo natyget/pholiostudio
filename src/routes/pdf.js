@@ -5,6 +5,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { renderCompCard, loadProfile, toFeetInches } = require('../lib/pdf');
 const { getTheme, isProTheme, getDefaultTheme, mergeThemeWithCustomization, generateThemeFontsUrl, validateCustomization } = require('../lib/themes');
+const { selectCompCardImages } = require('../lib/comp-card-selector');
 const { getFontFamilyCSS } = require('../lib/fonts');
 const { generateLayoutClasses, getImageGridCSS, validateLayout } = require('../lib/pdf-layouts');
 const { requireRole } = require('../middleware/auth');
@@ -171,7 +172,8 @@ function getDemoProfile(slug) {
       measurements: '32-25-35',
       bio_raw: 'Elara is a collaborative creative professional with a background in editorial campaigns and on-set leadership. Based in Los Angeles, she balances editorial edge with commercial versatility.',
       bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
-      hero_image_path: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=75',
+      bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
+      // hero_image_path removed from demo as it is derived 
       is_pro: false,
       pdf_theme: null,
       pdf_customizations: null,
@@ -263,10 +265,97 @@ function renderSimpleError(res, statusCode, title, message) {
   return res.status(statusCode).send(html);
 }
 
+// Helper function to load archetype data for a profile (non-blocking)
+async function loadArchetype(profileId) {
+  if (!profileId || profileId === 'demo-elara-k') {
+    return { label: 'Editorial', verdict: 'Strong editorial presence with versatile commercial appeal.' };
+  }
+  try {
+    const row = await knex('onboarding_signals')
+      .where({ profile_id: profileId })
+      .select('archetype_label', 'casting_verdict')
+      .first();
+    if (!row) return null;
+    return {
+      label: row.archetype_label || null,
+      verdict: row.casting_verdict || null
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Helper function to render the new 2-page standard comp card
+async function renderStandardView(req, res, data, isDemo) {
+  const { profile, images } = data;
+
+  // Theme selection: for standard cards, default is pholio-standard
+  let themeKey = req.query.theme || profile.pdf_theme || 'pholio-standard';
+  let theme = getTheme(themeKey);
+  if (!theme) { themeKey = 'pholio-standard'; theme = getTheme(themeKey); }
+
+  // Downgrade Pro-only themes for non-Pro users
+  if (isProTheme(themeKey) && !profile.is_pro) {
+    themeKey = 'pholio-standard'; theme = getTheme(themeKey);
+  }
+
+  // Apply customizations (Pro only)
+  let customizations = null;
+  if (!isDemo && profile.is_pro && profile.pdf_customizations) {
+    try {
+      customizations = typeof profile.pdf_customizations === 'string'
+        ? JSON.parse(profile.pdf_customizations)
+        : profile.pdf_customizations;
+    } catch { customizations = null; }
+  }
+  const mergedTheme = mergeThemeWithCustomization(theme, customizations) || theme;
+
+  // Select best images for the 2-page layout
+  const { heroImage, gridImages } = selectCompCardImages(images);
+
+  // Load archetype
+  const archetype = await loadArchetype(profile.id);
+
+  // QR code (Pro + non-demo)
+  let qrCode = null;
+  if (!isDemo && profile.is_pro) {
+    try {
+      const portfolioUrl = `${req.protocol}://${req.get('host')}/portfolio/${profile.slug}`;
+      qrCode = await QRCode.toDataURL(portfolioUrl, { width: 128, margin: 1 });
+    } catch { qrCode = null; }
+  }
+
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+  res.locals.layout = false;
+  res.set('Content-Type', 'text/html; charset=utf-8');
+
+  try {
+    res.render('pdf/compcard-standard', {
+      layout: false,
+      title: `${profile.first_name} ${profile.last_name} - Comp Card`,
+      profile,
+      heroImage,
+      gridImages,
+      theme: mergedTheme,
+      themeKey,
+      archetype,
+      isPro: profile.is_pro,
+      qrCode,
+      heightFeet: toFeetInches(profile.height_cm),
+      baseUrl,
+      watermark: !profile.is_pro
+    });
+  } catch (renderError) {
+    console.error('[renderStandardView] ERROR:', renderError.message);
+    return renderSimpleError(res, 500, 'Error', 'Failed to render comp card template.');
+  }
+}
+
 // Helper function to render PDF view with profile data
 function renderPdfView(req, res, data, isDemo) {
   const { profile, images } = data;
-  const hero = profile.hero_image_path || (images[0] ? images[0].path : null);
+  const hero = profile.hero_image_path;
   const gallery = hero ? images.filter((img) => img.path !== hero) : images;
 
   // Get theme from query parameter, default to profile's saved theme or default
@@ -543,21 +632,21 @@ router.get('/pdf/view/:slug', async (req, res, next) => {
     }
 
     // Render PDF view with profile data
-    // Note: renderPdfView will handle theme selection (query param, profile theme, or default)
     console.log('[PDF View] Rendering PDF for profile:', {
       slug: data.profile.slug,
       name: data.profile.first_name + ' ' + data.profile.last_name,
       isDemo: isDemo,
       imageCount: data.images.length,
       requestedTheme: req.query.theme || 'none',
-      profileTheme: data.profile.pdf_theme || 'none',
-      isPro: data.profile.is_pro
+      legacy: req.query.legacy === 'true'
     });
 
-    // Call renderPdfView - it will call res.render() which sends the response
-    // res.render() doesn't return a Promise, so we don't need to await it
-    // If it throws an error, it will be caught by the catch block
-    renderPdfView(req, res, data, isDemo);
+    // Default: new 2-page standard template.  Add ?legacy=true for old 1-page layout.
+    if (req.query.legacy === 'true') {
+      renderPdfView(req, res, data, isDemo);
+    } else {
+      await renderStandardView(req, res, data, isDemo);
+    }
     return; // Response is sent by res.render()
   } catch (error) {
     // Log errors for debugging
@@ -584,8 +673,12 @@ router.get('/pdf/view/:slug', async (req, res, next) => {
       if (demoData) {
         console.log('[PDF View Route] Last resort: Using demo data in catch for:', slug);
         try {
-          renderPdfView(req, res, demoData, true);
-          return; // Response is sent by res.render()
+          if (req.query.legacy === 'true') {
+            renderPdfView(req, res, demoData, true);
+          } else {
+            await renderStandardView(req, res, demoData, true);
+          }
+          return;
         } catch (renderError) {
           console.error('[PDF View Route] Error rendering demo PDF in catch:', renderError.message);
           // Fall through to return error page

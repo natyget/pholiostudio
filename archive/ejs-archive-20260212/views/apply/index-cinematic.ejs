@@ -1,0 +1,1554 @@
+<div id="apply-cinematic-root"></div>
+
+<link rel="stylesheet" href="/styles/apply-cinematic.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- React and ReactDOM from CDN -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<!-- Babel Standalone for JSX transform -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Chart.js for gauge and radar chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- GSAP for animations -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<!-- Confetti for success animation -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ============================================================================
+// API FUNCTIONS
+// ============================================================================
+
+async function fetchJson(url, options = {}) {
+  const headers = {
+    Accept: 'application/json',
+    ...(options.headers || {})
+  };
+
+  const res = await fetch(url, {
+    credentials: 'include',
+    ...options,
+    headers
+  });
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(`Non-JSON response (${res.status}).`);
+    err.status = res.status;
+    err.contentType = contentType;
+    err.preview = text.substring(0, 500);
+    throw err;
+  }
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = new Error(data?.error || data?.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+}
+
+async function initializeChat() {
+  return fetchJson('/api/chat/initialize', { method: 'POST' });
+}
+
+async function sendChatMessage(message) {
+  return fetchJson('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message })
+  });
+}
+
+async function uploadImageForScout(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  return fetchJson('/api/upload', {
+    method: 'POST',
+    body: formData
+  });
+}
+
+async function getRevealData() {
+  const data = await fetchJson('/api/chat/reveal', { method: 'POST' });
+  if (!data?.success) throw new Error(data?.error || 'Failed to fetch reveal data');
+  return data;
+}
+
+// ============================================================================
+// UTILITY: Gold Confetti Burst
+// ============================================================================
+
+function triggerGoldConfetti(options = {}) {
+  if (!window.confetti) return;
+  
+  const defaults = {
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#C9A55A', '#FFD700', '#DAA520', '#F0E68C', '#B8860B'],
+    shapes: ['circle', 'square'],
+    scalar: 1.2
+  };
+  
+  window.confetti({ ...defaults, ...options });
+}
+
+function triggerConfettiBurst(x = 0.5, y = 0.5) {
+  if (!window.confetti) return;
+  
+  // Burst from specific point
+  window.confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: { x, y },
+    colors: ['#C9A55A', '#FFD700', '#DAA520'],
+    startVelocity: 30,
+    gravity: 0.8,
+    scalar: 0.8
+  });
+}
+
+// ============================================================================
+// TOAST NOTIFICATION COMPONENT
+// ============================================================================
+
+function Toast({ message, type = 'error', onClose }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => onClose(), 300);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  if (!visible) return null;
+
+  return (
+    <div className={`toast toast-${type}`} role="alert">
+      <div className="toast-content">
+        <span className="toast-icon">{type === 'error' ? '⚠️' : '✓'}</span>
+        <span className="toast-message">{message}</span>
+        <button className="toast-close" onClick={() => { setVisible(false); setTimeout(() => onClose(), 300); }}>×</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAVERICK MESSAGE COMPONENT - Full-Screen Cinematic
+// ============================================================================
+
+function MaverickFullScreen({ text, subtext, isVisible, variant = 'default' }) {
+  const containerRef = useRef(null);
+  
+  useEffect(() => {
+    if (isVisible && containerRef.current && window.gsap) {
+      const gsap = window.gsap;
+      
+      // Staggered text reveal
+      gsap.fromTo(containerRef.current.querySelector('.maverick-fullscreen-text'),
+        { opacity: 0, y: 30, filter: 'blur(10px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1, ease: 'power3.out' }
+      );
+      
+      if (subtext) {
+        gsap.fromTo(containerRef.current.querySelector('.maverick-fullscreen-subtext'),
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.8, delay: 0.5, ease: 'power2.out' }
+        );
+      }
+    }
+  }, [isVisible, text, subtext]);
+  
+  return (
+    <div ref={containerRef} className={`maverick-fullscreen ${variant} ${isVisible ? 'visible' : ''}`}>
+      <div className="maverick-fullscreen-content">
+        <div className="maverick-fullscreen-text">{text}</div>
+        {subtext && <div className="maverick-fullscreen-subtext">{subtext}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAVERICK MESSAGE COMPONENT - Split-Tone Typography (Compact)
+// ============================================================================
+
+function MaverickMessage({ text }) {
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const prevTextRef = useRef(null);
+  
+  const separator = text?.includes('|') ? '|' : (text?.includes('\n\n') ? '\n\n' : null);
+  const parts = separator ? text.split(separator) : [text];
+  const insight = parts[0]?.trim() || text;
+  const instruction = parts[1]?.trim() || null;
+  const hasInstruction = !!instruction;
+  
+  useEffect(() => {
+    if (prevTextRef.current !== null && prevTextRef.current !== text) {
+      setExiting(true);
+      setVisible(false);
+      const exitTimer = setTimeout(() => {
+        setExiting(false);
+        prevTextRef.current = text;
+        setTimeout(() => setVisible(true), 50);
+      }, 300);
+      return () => clearTimeout(exitTimer);
+    } else {
+      prevTextRef.current = text;
+      setTimeout(() => setVisible(true), 50);
+    }
+  }, [text]);
+  
+  return (
+    <div key={text} className={`maverick-message ${visible ? 'visible' : ''} ${exiting ? 'exiting' : ''} ${hasInstruction ? 'has-instruction' : ''}`}>
+      <div className="maverick-insight">{insight}</div>
+      {instruction && <div className="maverick-instruction">{instruction}</div>}
+    </div>
+  );
+}
+
+// ============================================================================
+// STAGE 1: ARRIVAL & CAPTURE - Full-Screen Welcome + Image Upload
+// ============================================================================
+
+function ArrivalStage({ onComplete, isVisible, userName, showError }) {
+  const [phase, setPhase] = useState('welcome'); // 'welcome' | 'upload' | 'scanning' | 'analyzed'
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [scoutAnalysis, setScoutAnalysis] = useState(null);
+  const [maverickText, setMaverickText] = useState('');
+  const [maverickSubtext, setMaverickSubtext] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const containerRef = useRef(null);
+  const dropZoneRef = useRef(null);
+  
+  // Initial welcome message
+  useEffect(() => {
+    if (isVisible && phase === 'welcome') {
+      const name = userName || 'there';
+      setMaverickText(`Welcome, ${name}.`);
+      setMaverickSubtext("I've analyzed your digital footprint — let's get an editorial-grade shot.");
+      
+      // Transition to upload phase after welcome
+      const timer = setTimeout(() => {
+        setPhase('upload');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, phase, userName]);
+  
+  // Animate drop zone entrance
+  useEffect(() => {
+    if (phase === 'upload' && dropZoneRef.current && window.gsap) {
+      const gsap = window.gsap;
+      gsap.fromTo(dropZoneRef.current,
+        { opacity: 0, scale: 0.9, y: 50 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+      );
+    }
+  }, [phase]);
+
+  const handleFileSelect = async (file) => {
+    // Validate file
+    if (!file) {
+      if (showError) showError('No file selected.');
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      if (showError) showError('Please select an image file.');
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      if (showError) showError('Image file is too large. Please select an image under 10MB.');
+      return;
+    }
+    
+    try {
+      setImageFile(file);
+      const reader = new FileReader();
+      
+      // Handle FileReader errors
+      reader.onerror = () => {
+        if (showError) showError('Failed to read image file.');
+        setPhase('upload');
+      };
+      
+      reader.onloadend = () => {
+        if (reader.result) {
+          setImagePreview(reader.result);
+          setPhase('scanning');
+          setMaverickText('Analyzing...');
+          setMaverickSubtext('Scout is examining your visual presence.');
+        } else {
+          if (showError) showError('Failed to load image preview.');
+          setPhase('upload');
+        }
+      };
+      
+      reader.readAsDataURL(file);
+      
+      // Upload to Scout
+      setIsUploading(true);
+      const result = await uploadImageForScout(file);
+      setIsUploading(false);
+      
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'Upload failed');
+      }
+      
+      if (result.visualIntel) {
+        setScoutAnalysis(result.visualIntel);
+        setPhase('analyzed');
+        
+        // Maverick acknowledges specifics
+        // Extract facial symmetry score from nested structure
+        const faceScore = result.visualIntel?.analysis?.facialSymmetry?.score || 
+                         result.visualIntel?.facialSymmetry?.score || 
+                         8.5;
+        
+        // Extract market fit - handle both object and string formats
+        let marketFitText = 'Editorial';
+        const marketFitObj = result.visualIntel?.analysis?.marketFit || result.visualIntel?.marketFit;
+        
+        if (typeof marketFitObj === 'string') {
+          marketFitText = marketFitObj;
+        } else if (marketFitObj && typeof marketFitObj === 'object') {
+          if (marketFitObj.overall && typeof marketFitObj.overall === 'string') {
+            const overall = marketFitObj.overall.toLowerCase();
+            if (overall.includes('editorial')) marketFitText = 'Editorial';
+            else if (overall.includes('commercial')) marketFitText = 'Commercial';
+            else if (overall.includes('runway')) marketFitText = 'Runway';
+            else {
+              if (marketFitObj.editorial === 'high') marketFitText = 'Editorial';
+              else if (marketFitObj.commercial === 'high') marketFitText = 'Commercial';
+              else if (marketFitObj.runway === 'high') marketFitText = 'Runway';
+              else marketFitText = 'Editorial';
+            }
+          } else {
+            if (marketFitObj.editorial === 'high') marketFitText = 'Editorial';
+            else if (marketFitObj.commercial === 'high') marketFitText = 'Commercial';
+            else if (marketFitObj.runway === 'high') marketFitText = 'Runway';
+            else marketFitText = 'Editorial';
+          }
+        }
+        
+        setMaverickText(`Facial symmetry elite (${faceScore}/10).`);
+        setMaverickSubtext(`Strong ${marketFitText.toLowerCase()} fit detected.`);
+        
+        // Trigger confetti on successful analysis
+        setTimeout(() => triggerGoldConfetti({ particleCount: 50, spread: 50 }), 500);
+        
+        // Auto-advance after showing results
+        const advanceTimer = setTimeout(() => {
+          onComplete(result.visualIntel);
+        }, 2500);
+        
+        // Store timer for cleanup
+        return () => clearTimeout(advanceTimer);
+      } else {
+        throw new Error('No visual intelligence data received');
+      }
+    } catch (error) {
+      setIsUploading(false);
+      setPhase('upload');
+      setImagePreview(null);
+      setImageFile(null);
+      if (showError) {
+        const errorMessage = error?.message || error?.error || 'Failed to analyze image. Please try again.';
+        showError(errorMessage);
+      }
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleInputChange = (e) => { if (e.target.files[0]) handleFileSelect(e.target.files[0]); };
+
+  return (
+    <div ref={containerRef} className={`arrival-stage ${isVisible ? 'visible' : ''}`}>
+      {/* Full-Screen Maverick Message */}
+      <MaverickFullScreen 
+        text={maverickText} 
+        subtext={maverickSubtext} 
+        isVisible={phase === 'welcome' || phase === 'scanning' || phase === 'analyzed'} 
+        variant={phase === 'analyzed' ? 'success' : 'default'}
+      />
+      
+      {/* Image Drop Zone */}
+      {(phase === 'upload' || phase === 'scanning' || phase === 'analyzed') && (
+        <div
+          ref={dropZoneRef}
+          className={`arrival-drop-zone ${imagePreview ? 'has-image' : ''} ${isDragOver ? 'drag-over' : ''} ${phase}`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+          onClick={() => phase === 'upload' && document.getElementById('arrival-image-input').click()}
+      >
+          {/* Holographic Scan Overlay */}
+          {phase === 'scanning' && <div className="holographic-scan-advanced" />}
+        
+          {/* Image Preview */}
+        {imagePreview ? (
+            <div className="arrival-image-container">
+              <img src={imagePreview} alt="Preview" className="arrival-image-preview" />
+              {phase === 'analyzed' && (
+                <div className="arrival-analysis-overlay">
+                  <div className="analysis-badge">✓ Visual Intel Captured</div>
+              </div>
+            )}
+              </div>
+          ) : (
+            <div className="arrival-drop-content">
+              <div className="arrival-drop-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21,15 16,10 5,21"/>
+                </svg>
+              </div>
+              <div className="arrival-drop-text">Drop your best shot</div>
+              <div className="arrival-drop-hint">or click to browse</div>
+            </div>
+        )}
+        
+        <input
+          id="arrival-image-input"
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleInputChange}
+          aria-label="Upload image file"
+        />
+      </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// STAGE 2: CALIBRATION - Kinetic Sliders with Pre-filled Values
+// ============================================================================
+
+function CalibrationStage({ onComplete, isVisible, visualEstimates, showError }) {
+  const [phase, setPhase] = useState('transition'); // 'transition' | 'height' | 'weight' | 'shoe' | 'proportions' | 'complete'
+  const [maverickText, setMaverickText] = useState('');
+  const [maverickSubtext, setMaverickSubtext] = useState('');
+  const [confirmedMetrics, setConfirmedMetrics] = useState({});
+  
+  // Slider states - pre-filled from Scout estimates
+  const [heightFeet, setHeightFeet] = useState(visualEstimates?.heightFeet || 5);
+  const [heightInches, setHeightInches] = useState(visualEstimates?.heightInches || 10);
+  const [weight, setWeight] = useState(visualEstimates?.weight || 140);
+  const [shoeSize, setShoeSize] = useState(visualEstimates?.shoeSize || 9);
+  const [bust, setBust] = useState(visualEstimates?.bust || 34);
+  const [waist, setWaist] = useState(visualEstimates?.waist || 26);
+  const [hips, setHips] = useState(visualEstimates?.hips || 36);
+  
+  const [shimmeringMetric, setShimmeringMetric] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const containerRef = useRef(null);
+  const sliderRef = useRef(null);
+  
+  // Initial transition
+  useEffect(() => {
+    if (isVisible && phase === 'transition') {
+      setMaverickText('Proportions calibrated.');
+      setMaverickSubtext('Surgical precision.');
+      
+      // Gold pulse effect on screen
+      let pulseTimer;
+      if (containerRef.current) {
+        containerRef.current.classList.add('gold-pulse');
+        pulseTimer = setTimeout(() => containerRef.current?.classList.remove('gold-pulse'), 1000);
+      }
+      
+      // Move to first slider
+      const timer = setTimeout(() => setPhase('height'), 2000);
+      return () => {
+        clearTimeout(timer);
+        if (pulseTimer) clearTimeout(pulseTimer);
+      };
+    }
+  }, [isVisible, phase]);
+  
+  // Animate slider entrance
+  useEffect(() => {
+    if (sliderRef.current && window.gsap && phase !== 'transition' && phase !== 'complete') {
+      const gsap = window.gsap;
+      const animation = gsap.fromTo(sliderRef.current,
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
+      );
+      
+      return () => {
+        if (animation) animation.kill();
+      };
+    }
+  }, [phase]);
+
+  const shimmerTimersRef = useRef(new Set());
+  const debounceTimersRef = useRef({});
+  
+  const triggerShimmer = useCallback((metric) => {
+    // Clear any existing timer for this metric
+    shimmerTimersRef.current.forEach(timer => clearTimeout(timer));
+    shimmerTimersRef.current.clear();
+    
+    setShimmeringMetric(metric);
+    const timer = setTimeout(() => {
+      setShimmeringMetric(null);
+      shimmerTimersRef.current.delete(timer);
+    }, 600);
+    shimmerTimersRef.current.add(timer);
+  }, []);
+  
+  // Cleanup shimmer and debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      shimmerTimersRef.current.forEach(timer => clearTimeout(timer));
+      shimmerTimersRef.current.clear();
+      Object.values(debounceTimersRef.current).forEach(timer => clearTimeout(timer));
+      debounceTimersRef.current = {};
+    };
+  }, []);
+  
+  const handleConfirm = useCallback(async (metric, value, unit = '') => {
+    setIsSubmitting(true);
+    triggerConfettiBurst(0.5, 0.5);
+    
+    try {
+      const message = `User confirmed ${metric}: ${value}${unit}`;
+      await sendChatMessage(message);
+      
+      // Use functional update to ensure we get the latest state
+      setConfirmedMetrics(prev => {
+        const updated = { ...prev, [metric.toLowerCase()]: value };
+        
+        // Progress to next slider
+        const phases = ['height', 'weight', 'shoe', 'proportions', 'complete'];
+        const currentIndex = phases.indexOf(phase);
+        
+        if (currentIndex < phases.length - 1) {
+          const nextPhase = phases[currentIndex + 1];
+          
+          // Animate out current slider
+          if (sliderRef.current && window.gsap) {
+            const gsap = window.gsap;
+            gsap.to(sliderRef.current, {
+              opacity: 0,
+              y: -30,
+              duration: 0.4,
+              ease: 'power2.in',
+              onComplete: () => setPhase(nextPhase)
+            });
+          } else {
+            setPhase(nextPhase);
+          }
+          
+          // If next phase is complete, call onComplete with updated metrics
+          if (nextPhase === 'complete') {
+            setTimeout(() => {
+              triggerGoldConfetti({ particleCount: 100, spread: 80 });
+              onComplete(updated);
+            }, 500);
+          }
+        }
+        
+        return updated;
+      });
+    } catch (error) {
+      if (showError) showError(error.message || 'Failed to save. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [phase, showError, onComplete]);
+
+  // Render current slider based on phase
+  const renderSlider = () => {
+    switch (phase) {
+      case 'height':
+        const isProjectedHeight = visualEstimates?.heightFeet === heightFeet && visualEstimates?.heightInches === heightInches;
+        return (
+          <div ref={sliderRef} className="calibration-slider-card">
+            <div className="calibration-slider-label">HEIGHT</div>
+            <div className="calibration-height-display">
+              <div className="height-main-controls">
+                <button 
+                  className="calibration-btn" 
+                  onClick={() => { 
+                    setHeightFeet(f => Math.max(3, Math.min(8, f - 1))); 
+                    triggerShimmer('height'); 
+                  }}
+                  aria-label="Decrease feet"
+                >−</button>
+                <div className={`calibration-value ${shimmeringMetric === 'height' ? 'shimmering' : ''}`}>
+                  {isProjectedHeight && <span className="projected-label">PROJECTED</span>}
+                  <div className="height-display-row">
+                    <span className="height-feet">{heightFeet}'</span>
+                    <span className="height-inches">{heightInches}"</span>
+                  </div>
+                </div>
+                <button 
+                  className="calibration-btn" 
+                  onClick={() => { 
+                    setHeightFeet(f => Math.max(3, Math.min(8, f + 1))); 
+                    triggerShimmer('height'); 
+                  }}
+                  aria-label="Increase feet"
+                >+</button>
+              </div>
+              <div className="height-inches-controls">
+                <button className="calibration-btn small" onClick={() => { setHeightInches(i => i === 0 ? 11 : i - 1); triggerShimmer('height'); }}>−</button>
+                <div className="height-inches-label">inches</div>
+                <button className="calibration-btn small" onClick={() => { setHeightInches(i => i === 11 ? 0 : i + 1); triggerShimmer('height'); }}>+</button>
+              </div>
+            </div>
+            <button 
+              className="calibration-confirm-btn" 
+              onClick={() => {
+                const heightCm = Math.round((heightFeet * 30.48) + (heightInches * 2.54));
+                handleConfirm('Height', `${heightFeet}'${heightInches}" (${heightCm} cm)`);
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Confirming...' : 'Confirm'}
+            </button>
+          </div>
+        );
+        
+      case 'weight':
+        const isProjectedWeight = visualEstimates?.weight === weight;
+        return (
+          <div ref={sliderRef} className="calibration-slider-card">
+            <div className="calibration-slider-label">WEIGHT</div>
+            <div className="calibration-metric-display">
+              <button 
+                className="calibration-btn" 
+                onClick={() => { 
+                  setWeight(w => Math.max(80, Math.min(300, w - 5))); 
+                  triggerShimmer('weight'); 
+                }}
+                aria-label="Decrease weight"
+              >−</button>
+              <div className={`calibration-value ${shimmeringMetric === 'weight' ? 'shimmering' : ''}`}>
+                {isProjectedWeight && <span className="projected-label">PROJECTED</span>}
+                {weight}<span className="unit">lbs</span>
+              </div>
+              <button 
+                className="calibration-btn" 
+                onClick={() => { 
+                  setWeight(w => Math.max(80, Math.min(300, w + 5))); 
+                  triggerShimmer('weight'); 
+                }}
+                aria-label="Increase weight"
+              >+</button>
+            </div>
+            <button 
+              className="calibration-confirm-btn" 
+              onClick={() => {
+                if (weight < 80 || weight > 300) {
+                  if (showError) showError('Weight must be between 80 and 300 lbs.');
+                  return;
+                }
+                handleConfirm('Weight', weight, ' lbs');
+              }}
+              disabled={isSubmitting}
+              aria-label="Confirm weight"
+            >
+              {isSubmitting ? 'Confirming...' : 'Confirm'}
+            </button>
+          </div>
+        );
+        
+      case 'shoe':
+        const isProjectedShoe = visualEstimates?.shoeSize === shoeSize;
+          return (
+          <div ref={sliderRef} className="calibration-slider-card">
+            <div className="calibration-slider-label">SHOE SIZE</div>
+            <div className="calibration-metric-display">
+              <button className="calibration-btn" onClick={() => { setShoeSize(s => Math.max(4, s - 0.5)); triggerShimmer('shoe'); }}>−</button>
+              <div className={`calibration-value ${shimmeringMetric === 'shoe' ? 'shimmering' : ''}`}>
+                {isProjectedShoe && <span className="projected-label">PROJECTED</span>}
+                {shoeSize}<span className="unit">US</span>
+              </div>
+              <button className="calibration-btn" onClick={() => { setShoeSize(s => Math.min(15, s + 0.5)); triggerShimmer('shoe'); }}>+</button>
+            </div>
+            <button 
+              className="calibration-confirm-btn" 
+              onClick={() => handleConfirm('Shoe Size', shoeSize)}
+                disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Confirming...' : 'Confirm'}
+              </button>
+    </div>
+  );
+        
+      case 'proportions':
+        const isProjectedBust = visualEstimates?.bust === bust;
+        const isProjectedWaist = visualEstimates?.waist === waist;
+        const isProjectedHips = visualEstimates?.hips === hips;
+  return (
+          <div ref={sliderRef} className="calibration-slider-card proportions">
+            <div className="calibration-slider-label">PROPORTIONS</div>
+            <div className="calibration-proportions-grid">
+              <div className="proportion-item">
+                <span className="proportion-label">BUST</span>
+                <div className="proportion-controls">
+                  <button className="calibration-btn small" onClick={() => { setBust(b => Math.max(28, b - 1)); triggerShimmer('bust'); }}>−</button>
+                  <div className={`proportion-value ${shimmeringMetric === 'bust' ? 'shimmering' : ''}`}>
+                    {isProjectedBust && <span className="projected-label-small">PROJ</span>}
+                    {bust}"
+      </div>
+                  <button className="calibration-btn small" onClick={() => { setBust(b => Math.min(50, b + 1)); triggerShimmer('bust'); }}>+</button>
+          </div>
+        </div>
+              <div className="proportion-item">
+                <span className="proportion-label">WAIST</span>
+                <div className="proportion-controls">
+                  <button className="calibration-btn small" onClick={() => { setWaist(w => Math.max(20, w - 1)); triggerShimmer('waist'); }}>−</button>
+                  <div className={`proportion-value ${shimmeringMetric === 'waist' ? 'shimmering' : ''}`}>
+                    {isProjectedWaist && <span className="projected-label-small">PROJ</span>}
+                    {waist}"
+        </div>
+                  <button className="calibration-btn small" onClick={() => { setWaist(w => Math.min(45, w + 1)); triggerShimmer('waist'); }}>+</button>
+      </div>
+    </div>
+              <div className="proportion-item">
+                <span className="proportion-label">HIPS</span>
+                <div className="proportion-controls">
+                  <button className="calibration-btn small" onClick={() => { setHips(h => Math.max(30, h - 1)); triggerShimmer('hips'); }}>−</button>
+                  <div className={`proportion-value ${shimmeringMetric === 'hips' ? 'shimmering' : ''}`}>
+                    {isProjectedHips && <span className="projected-label-small">PROJ</span>}
+                    {hips}"
+                  </div>
+                  <button className="calibration-btn small" onClick={() => { setHips(h => Math.min(55, h + 1)); triggerShimmer('hips'); }}>+</button>
+      </div>
+    </div>
+            </div>
+            <button 
+              className="calibration-confirm-btn" 
+              onClick={() => handleConfirm('Proportions', `${bust}/${waist}/${hips}`)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Confirming...' : 'Confirm All'}
+      </button>
+    </div>
+  );
+        
+      default:
+        return null;
+    }
+  };
+  
+    return (
+    <div ref={containerRef} className={`calibration-stage ${isVisible ? 'visible' : ''}`}>
+      {/* Transition Message */}
+      {phase === 'transition' && (
+        <MaverickFullScreen text={maverickText} subtext={maverickSubtext} isVisible={true} variant="calibration" />
+      )}
+      
+      {/* Slider Cards */}
+      {phase !== 'transition' && phase !== 'complete' && (
+        <div className="calibration-content">
+          {renderSlider()}
+        </div>
+      )}
+      </div>
+    );
+  }
+
+// ============================================================================
+// STAGE 3: THE REVEAL - Full-Screen Cinematic Presentation
+// ============================================================================
+
+function RevealOverlay({ onComplete, showError }) {
+  const [revealData, setRevealData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentCard, setCurrentCard] = useState(0); // 0 = Score, 1 = Radar, 2 = Comp
+  const [maverickText, setMaverickText] = useState('Everything aligned.');
+  const [maverickSubtext, setMaverickSubtext] = useState('Let me reveal your Pholio potential.');
+  
+  const overlayRef = useRef(null);
+  const scoreCardRef = useRef(null);
+  const radarCardRef = useRef(null);
+  const compCardRef = useRef(null);
+  const gaugeChartRef = useRef(null);
+  const radarChartRef = useRef(null);
+  const gaugeCanvasRef = useRef(null);
+  const radarCanvasRef = useRef(null);
+
+  // Fetch reveal data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        console.log('[RevealOverlay] Fetching reveal data...');
+        const data = await getRevealData();
+        console.log('[RevealOverlay] Reveal data received:', {
+          hasModelScore: !!data.modelScore,
+          hasRadarData: !!data.radarData,
+          hasMarketTags: !!data.marketTags,
+          hasHeroImage: !!data.heroImage,
+          hasBioPreview: !!data.bioPreview
+        });
+        setRevealData(data);
+        console.log('[RevealOverlay] Reveal data set, will show cards in 1.5s');
+        
+        // Show Maverick message first, then reveal cards
+        setTimeout(() => {
+          console.log('[RevealOverlay] Loading complete, showing cards');
+          setLoading(false);
+        }, 1500);
+      } catch (error) {
+        console.error('[RevealOverlay] Error fetching reveal data:', error);
+        if (showError) showError(error.message || 'Failed to load profile preview.');
+        setLoading(false);
+        // Set empty data to show error state
+        setRevealData(null);
+      }
+    };
+    fetchData();
+  }, [showError]);
+
+  // Initialize Score Card with GSAP staggered sequence
+  useEffect(() => {
+    if (!loading && revealData && currentCard === 0 && scoreCardRef.current) {
+      if (!window.gsap) {
+        // GSAP not available, show card without animation
+        scoreCardRef.current.style.opacity = '1';
+        scoreCardRef.current.style.transform = 'scale(1)';
+        return;
+      }
+      
+      const gsap = window.gsap;
+      const card = scoreCardRef.current;
+      
+      // Create GSAP timeline for staggered reveal
+      const tl = gsap.timeline();
+      gsapTimelinesRef.current.push(tl);
+      
+      // Fade in card
+      tl.fromTo(card,
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }
+      );
+      
+      // Initialize gauge after card appears
+      tl.add(() => {
+        if (gaugeCanvasRef.current && window.Chart) {
+          const ctx = gaugeCanvasRef.current.getContext('2d');
+          if (gaugeChartRef.current) gaugeChartRef.current.destroy();
+          
+          const score = revealData.modelScore || 0;
+          
+          gaugeChartRef.current = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              datasets: [{
+                data: [score, Math.max(0, 100 - score)],
+                backgroundColor: ['rgba(201, 165, 90, 1)', 'rgba(201, 165, 90, 0.1)'],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              cutout: '75%',
+              plugins: { legend: { display: false }, tooltip: { enabled: false } },
+              animation: { duration: 2000, easing: 'easeOutQuart' }
+            }
+          });
+        }
+      }, '-=0.3');
+      
+      // Animate score number
+      tl.fromTo(card.querySelector('.reveal-gauge-number'),
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.7)' },
+        '-=1.5'
+      );
+      
+      // Confetti burst when gauge fills
+      tl.add(() => {
+        triggerGoldConfetti({ particleCount: 80, spread: 70, origin: { y: 0.4 } });
+      }, '-=0.5');
+      
+      // Stagger breakdown items
+      tl.fromTo(card.querySelectorAll('.gauge-breakdown-item'),
+        { opacity: 0, x: -30 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.15, ease: 'power2.out' },
+        '-=0.3'
+      );
+      
+      // Fade in button
+      const button = card.querySelector('.reveal-button');
+      if (button) {
+        tl.fromTo(button,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
+        );
+      } else {
+      }
+    }
+  }, [loading, revealData, currentCard]);
+
+  // Initialize Radar Card
+  useEffect(() => {
+    if (currentCard === 1 && radarCardRef.current && revealData) {
+      if (!window.gsap) {
+        // Fallback: show card without animation
+        if (radarCardRef.current) {
+          radarCardRef.current.style.opacity = '1';
+          radarCardRef.current.style.transform = 'scale(1)';
+        }
+        return;
+      }
+      
+      if (!window.Chart) {
+        if (showError) showError('Chart library not loaded. Please refresh the page.');
+        return;
+      }
+      
+      const gsap = window.gsap;
+      const card = radarCardRef.current;
+      
+      const tl = gsap.timeline();
+      gsapTimelinesRef.current.push(tl);
+      
+      tl.fromTo(card,
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+      
+      // Initialize radar chart
+      tl.add(() => {
+        if (radarCanvasRef.current && window.Chart && revealData) {
+          const ctx = radarCanvasRef.current.getContext('2d');
+          if (radarChartRef.current) radarChartRef.current.destroy();
+          
+          const radarLabels = revealData.radarData?.labels || ['Height', 'Bust', 'Waist', 'Hips', 'Shoe'];
+          const radarValues = revealData.radarData?.values || [0, 0, 0, 0, 0];
+          
+                  radarChartRef.current = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                      labels: radarLabels,
+                      datasets: [{
+                        label: 'Your Proportions',
+                        data: radarValues,
+                        backgroundColor: 'rgba(201, 165, 90, 0.2)',
+                        borderColor: 'rgba(201, 165, 90, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(201, 165, 90, 1)',
+                pointBorderColor: '#FAF9F7'
+                      }]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      scales: {
+                        r: {
+                          beginAtZero: true,
+                          max: 100,
+                          ticks: { display: false },
+                          grid: { color: 'rgba(201, 165, 90, 0.2)' },
+                  pointLabels: { color: '#FAF9F7', font: { family: 'Montserrat', size: 11, weight: 500 } }
+                }
+              },
+              plugins: { legend: { display: false } },
+                      animation: { duration: 1500, easing: 'easeOutQuart' }
+                    }
+                  });
+                }
+      }, '-=0.3');
+      
+      // Stagger market tags with pulse
+      tl.fromTo(card.querySelectorAll('.reveal-tag'),
+        { opacity: 0, scale: 0.8, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'back.out(1.7)' },
+        '-=0.5'
+      );
+    }
+  }, [currentCard, revealData]);
+
+  // Initialize Comp Card
+  useEffect(() => {
+    if (currentCard === 2 && compCardRef.current && revealData) {
+      if (!window.gsap) {
+        // Fallback: show card without animation
+        if (compCardRef.current) {
+          compCardRef.current.style.opacity = '1';
+          compCardRef.current.style.transform = 'scale(1)';
+        }
+        return;
+      }
+      
+      const gsap = window.gsap;
+      const card = compCardRef.current;
+      
+      const tl = gsap.timeline();
+      gsapTimelinesRef.current.push(tl);
+      
+      // Card entrance
+      tl.fromTo(card,
+                  { opacity: 0, scale: 0.95 },
+                  { opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }
+      );
+      
+      // Hero image zoom + film grain
+      const heroImg = card.querySelector('.reveal-comp-image');
+      if (heroImg) {
+        tl.fromTo(heroImg,
+          { scale: 1.2, filter: 'blur(10px) brightness(0.5)' },
+          { scale: 1, filter: 'blur(0px) brightness(1)', duration: 1.5, ease: 'power2.out' },
+          '-=0.4'
+        );
+      }
+      
+      // Bio preview fade in
+      tl.fromTo(card.querySelector('.reveal-comp-bio'),
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' },
+        '-=0.8'
+      );
+      
+      // Action plan bullets stagger
+      tl.fromTo(card.querySelectorAll('.reveal-comp-action-item'),
+        { opacity: 0, x: -40 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.12, ease: 'power2.out' },
+        '-=0.3'
+      );
+      
+      // Final CTA with shimmer
+      tl.fromTo(card.querySelector('.reveal-finish-button'),
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.7)' }
+      );
+    }
+  }, [currentCard, revealData]);
+
+  // Cleanup GSAP timelines and Chart.js instances
+  const gsapTimelinesRef = useRef([]);
+  
+  useEffect(() => {
+    return () => {
+      // Kill all GSAP timelines
+      gsapTimelinesRef.current.forEach(tl => {
+        if (tl && tl.kill) tl.kill();
+      });
+      gsapTimelinesRef.current = [];
+      
+      // Destroy Chart.js instances
+      if (gaugeChartRef.current) {
+        gaugeChartRef.current.destroy();
+        gaugeChartRef.current = null;
+      }
+      if (radarChartRef.current) {
+        radarChartRef.current.destroy();
+        radarChartRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleNextCard = () => {
+    if (currentCard >= 2) return;
+    
+    const currentRef = currentCard === 0 ? scoreCardRef : radarCardRef;
+    
+    if (window.gsap && currentRef.current) {
+      gsap.to(currentRef.current, {
+        opacity: 0,
+        scale: 0.95,
+        duration: 0.4,
+        ease: 'power2.in',
+        onComplete: () => setCurrentCard(c => c + 1)
+        });
+      } else {
+      setCurrentCard(c => c + 1);
+    }
+  };
+
+  const handleComplete = () => {
+    // Final confetti celebration
+    triggerGoldConfetti({ particleCount: 150, spread: 100 });
+    
+    setTimeout(() => {
+      if (onComplete) onComplete();
+      else window.location.href = '/dashboard/talent';
+    }, 500);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="reveal-overlay loading">
+        <MaverickFullScreen text={maverickText} subtext={maverickSubtext} isVisible={true} variant="reveal" />
+        <div className="reveal-loading">
+          <div className="reveal-loading-spinner"></div>
+          <div className="reveal-loading-text">Calibrating your potential...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!revealData) {
+    return (
+      <div className="reveal-overlay">
+        <MaverickFullScreen text="Unable to load preview." subtext="Proceeding to dashboard..." isVisible={true} variant="reveal" />
+        <div className="reveal-error">Failed to load profile preview.</div>
+        <button className="reveal-button" onClick={handleComplete}>Go to Dashboard</button>
+      </div>
+    );
+  }
+
+  // Ensure we have minimum required data with fallbacks
+  const safeRevealData = {
+    modelScore: revealData.modelScore || 0,
+    scoreBreakdown: revealData.scoreBreakdown || {
+      completeness: 0,
+      proportionsBalance: 0,
+      photoQuality: 0
+    },
+    radarData: revealData.radarData || { labels: [], values: [] },
+    marketTags: revealData.marketTags || [],
+    bioPreview: revealData.bioPreview || 'Your AI-curated bio will appear here once profile is complete.',
+    heroImage: revealData.heroImage || null,
+    actionPlan: revealData.actionPlan || [],
+    firstName: revealData.firstName || 'Talent'
+  };
+
+
+  return (
+    <div ref={overlayRef} className="reveal-overlay">
+      {/* Card 1: Model Score */}
+      {currentCard === 0 && (
+        <div ref={scoreCardRef} className="reveal-card reveal-score-card-full">
+          <div className="reveal-score-label">Model Score</div>
+          <div className="reveal-gauge-container">
+            <canvas ref={gaugeCanvasRef} className="reveal-gauge-chart"></canvas>
+            <div className="reveal-gauge-value">
+              <span className="reveal-gauge-number">{safeRevealData.modelScore}</span>
+              <span className="reveal-gauge-max">/100</span>
+            </div>
+          </div>
+          <div className="reveal-gauge-breakdown">
+            <div className="gauge-breakdown-item">
+              <span className="breakdown-label">Completeness</span>
+              <span className="breakdown-value">{safeRevealData.scoreBreakdown.completeness}</span>
+            </div>
+            <div className="gauge-breakdown-item">
+              <span className="breakdown-label">Proportions</span>
+              <span className="breakdown-value">{safeRevealData.scoreBreakdown.proportionsBalance || safeRevealData.scoreBreakdown.proportions || 0}</span>
+            </div>
+            <div className="gauge-breakdown-item">
+              <span className="breakdown-label">Photo Quality</span>
+              <span className="breakdown-value">{safeRevealData.scoreBreakdown.photoQuality}</span>
+            </div>
+          </div>
+          <button className="reveal-button reveal-next-button" onClick={handleNextCard}>Next</button>
+        </div>
+      )}
+
+      {/* Card 2: Proportions Radar */}
+      {currentCard === 1 && (
+        <div ref={radarCardRef} className="reveal-card reveal-radar-card-full">
+          <div className="reveal-radar-label">Proportions Analysis</div>
+          <div className="reveal-radar-container">
+            <canvas ref={radarCanvasRef} className="reveal-radar-chart"></canvas>
+          </div>
+          {safeRevealData.marketTags && safeRevealData.marketTags.length > 0 && (
+            <div className="reveal-market-tags">
+              <div className="reveal-market-label">Market Potential</div>
+              <div className="reveal-tags-container">
+                {safeRevealData.marketTags.map((tag, i) => (
+                  <span key={i} className="reveal-tag">{tag}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <button className="reveal-button reveal-next-button" onClick={handleNextCard}>Next</button>
+        </div>
+      )}
+
+      {/* Card 3: Comp Card Preview */}
+      {currentCard === 2 && (
+        <div ref={compCardRef} className="reveal-card reveal-comp-card-full">
+          {safeRevealData.heroImage && (
+            <div className="reveal-comp-image-wrapper">
+              <img src={safeRevealData.heroImage} alt="Hero" className="reveal-comp-image" />
+              <div className="reveal-film-grain"></div>
+              <div className="reveal-comp-overlay">
+                <div className="reveal-comp-title">Your Comp Card Preview</div>
+              </div>
+            </div>
+          )}
+          {safeRevealData.bioPreview && (
+            <div className="reveal-comp-bio">
+              <div className="reveal-comp-bio-label">AI-Curated Bio Preview</div>
+              <div className="reveal-comp-bio-text">{safeRevealData.bioPreview}</div>
+            </div>
+          )}
+          {safeRevealData.actionPlan && safeRevealData.actionPlan.length > 0 && (
+            <div className="reveal-comp-action-plan">
+              <div className="reveal-comp-action-label">Your Action Plan</div>
+              <ul className="reveal-comp-action-list">
+                {safeRevealData.actionPlan.map((action, i) => (
+                  <li key={i} className="reveal-comp-action-item">
+                    <span className="action-item-icon">→</span>
+                    <span className="action-item-text">{action}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button 
+            className="reveal-button reveal-finish-button reveal-gold-shimmer" 
+            onClick={handleComplete}
+            aria-label="Enter dashboard"
+            type="button"
+          >
+            Enter Dashboard
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// SOCIAL AUTH STAGE (Kept for initial entry)
+// ============================================================================
+
+function SocialAuthStage({ onContinue, isVisible, onMaverickMessage, onAuthSuccess, showError }) {
+  const handleGoogle = async () => {
+    try {
+      let attempts = 0;
+      while (!window.FirebaseAuth || typeof window.FirebaseAuth.signInWithGoogle !== 'function') {
+        if (attempts >= 30) {
+          alert('Authentication system not ready. Please refresh.');
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      const userCredential = await window.FirebaseAuth.signInWithGoogle();
+      if (!userCredential) return; // Redirect flow
+
+      const user = userCredential.user;
+      const idToken = await user.getIdToken();
+
+      const authResponse = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include',
+        redirect: 'manual',
+        body: JSON.stringify({ firebase_token: idToken })
+      });
+
+      if (onAuthSuccess) onAuthSuccess();
+      else window.location.reload();
+    } catch (error) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        if (showError) showError(error.message || 'Google Sign-In failed.');
+      }
+    }
+  };
+
+  const handleManual = async () => {
+    const response = await sendChatMessage('I want to continue manually');
+    if (response.message && onMaverickMessage) {
+      onMaverickMessage(response.message, response.action, response.stage, response.tool_trigger);
+    }
+    if (response.action !== 'continue') await onContinue();
+  };
+
+  return (
+    <div className={`stage-container social-auth-stage glass-entry ${isVisible ? 'visible' : ''}`}>
+      <button className="social-auth-button" onClick={handleGoogle}>
+        <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Sign up with Google
+        </button>
+      <a className="continue-manually" onClick={handleManual} style={{ cursor: 'pointer' }}>
+        Or continue manually
+      </a>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN APPLICATION COMPONENT
+// ============================================================================
+
+function ApplyCinematic() {
+  // Flow states: 'auth' | 'arrival' | 'calibration' | 'reveal' | 'complete'
+  const [flowState, setFlowState] = useState('auth');
+  const [isVisible, setIsVisible] = useState(true);
+  const [maverickMessage, setMaverickMessage] = useState("Welcome to Pholio.");
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [userName, setUserName] = useState('');
+  const [visualEstimates, setVisualEstimates] = useState(null);
+  
+  const showError = (message) => setToasts(prev => [...prev, { id: Date.now(), message, type: 'error' }]);
+  const showSuccess = (message) => setToasts(prev => [...prev, { id: Date.now(), message, type: 'success' }]);
+  const removeToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+
+  // Initialize
+  useEffect(() => {
+    // Add class to body to hide header/footer
+    document.body.classList.add('apply-cinematic-active');
+    
+    const init = async () => {
+      try {
+      const response = await initializeChat();
+        
+        // Extract user name if available
+        if (response.userData?.firstName) {
+          setUserName(response.userData.firstName);
+        }
+        
+        // Determine starting flow state based on backend stage
+        if (response.stage >= 2) {
+          // User is authenticated, skip to arrival
+          setFlowState('arrival');
+        }
+        
+        if (response.message) setMaverickMessage(response.message);
+        setIsInitialized(true);
+    } catch (error) {
+        // Init failed - error handling below
+        // 401/403 here is expected for logged-out users; stay in auth flow.
+        if (error?.status === 401 || error?.status === 403) {
+          setFlowState('auth');
+          setIsInitialized(true);
+          return;
+        }
+        showError('Failed to initialize. Please refresh.');
+      }
+    };
+    init();
+    
+    // Cleanup: Remove class when component unmounts
+    return () => {
+      document.body.classList.remove('apply-cinematic-active');
+    };
+  }, []);
+
+  // Auth success handler
+  const handleAuthSuccess = async () => {
+      try {
+        const response = await initializeChat();
+      if (response.userData?.firstName) setUserName(response.userData.firstName);
+        setIsInitialized(true);
+        
+      // Transition to arrival
+      setIsVisible(false);
+      setTimeout(() => {
+        setFlowState('arrival');
+        setIsVisible(true);
+      }, 500);
+      } catch (error) {
+      window.location.reload();
+    }
+  };
+
+  // Handle arrival completion (after Scout analysis)
+  const handleArrivalComplete = (scoutData) => {
+    // Store visual estimates for calibration pre-fill
+    setVisualEstimates({
+      heightFeet: scoutData?.heightEstimateFeet || 5,
+      heightInches: scoutData?.heightEstimateInches || 9,
+      weight: scoutData?.weightEstimate || 135,
+      shoeSize: scoutData?.shoeSizeEstimate || 8,
+      bust: scoutData?.bustEstimate || 34,
+      waist: scoutData?.waistEstimate || 26,
+      hips: scoutData?.hipsEstimate || 36
+    });
+    
+    // Transition to calibration
+    setIsVisible(false);
+    setTimeout(() => {
+      setFlowState('calibration');
+      setIsVisible(true);
+    }, 500);
+  };
+
+  // Handle calibration completion
+  const handleCalibrationComplete = (metrics) => {
+    // Transition to reveal
+    setIsVisible(false);
+    setTimeout(() => {
+      setFlowState('reveal');
+    setIsVisible(true);
+    }, 500);
+  };
+
+  // Handle reveal completion
+  const handleRevealComplete = () => {
+    window.location.href = '/dashboard/talent';
+  };
+
+  // Handle Maverick message (for auth stage)
+  const handleMaverickMessage = (message, action, stage, toolTrigger) => {
+    setMaverickMessage(message);
+    
+    // Check for reveal trigger
+    if (action === 'reveal') {
+      setFlowState('reveal');
+      return;
+    }
+  };
+
+  // Progress calculation
+  const flowStages = ['auth', 'arrival', 'calibration', 'reveal'];
+  const visibleStages = ['arrival', 'calibration']; // Stages to show in progress bar
+  const currentIndex = flowStages.indexOf(flowState);
+  
+  // Calculate progress based on visible stages only
+  const visibleIndex = visibleStages.indexOf(flowState);
+  const progressPercentage = visibleIndex >= 0 
+    ? ((visibleIndex + 1) / visibleStages.length) * 100 
+    : 0;
+  
+  const stageNames = {
+    auth: 'Authentication',
+    arrival: 'Visual Capture',
+    calibration: 'Calibration',
+    reveal: 'Your Reveal'
+  };
+
+  return (
+    <div className="apply-cinematic">
+      {/* Progress Bar with Segmented Labels - Show only during arrival and calibration */}
+      {flowState === 'arrival' || flowState === 'calibration' ? (
+        <div className="apply-progress-header">
+          <div className="apply-progress-segments">
+            {visibleStages.map((stage, index) => {
+              const isActive = flowState === stage || (flowState === 'calibration' && stage === 'arrival');
+              const isCurrent = flowState === stage;
+              return (
+                <div 
+                  key={stage} 
+                  className={`progress-segment ${isActive ? 'active' : ''} ${isCurrent ? 'current' : ''}`}
+                >
+                  <div className="progress-segment-label">{stageNames[stage] || stage}</div>
+                  <div className="progress-segment-indicator"></div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="apply-progress-bar">
+            <div className="apply-progress-bar-fill" style={{ width: `${progressPercentage}%` }}></div>
+          </div>
+        </div>
+      ) : null}
+
+            {/* Toast Notifications */}
+      <div className="toast-container">
+              {toasts.map(toast => (
+          <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
+              ))}
+            </div>
+
+      {/* Flow Stages */}
+      {flowState === 'auth' && (
+        <div className={`onboarding-container ${isVisible ? '' : 'onboarding-exit'}`}>
+          <div className="chat-container">
+            <MaverickMessage text={maverickMessage} />
+            <SocialAuthStage 
+              onContinue={() => {}} 
+              isVisible={isVisible} 
+              onMaverickMessage={handleMaverickMessage}
+              onAuthSuccess={handleAuthSuccess}
+              showError={showError}
+            />
+          </div>
+        </div>
+      )}
+
+      {flowState === 'arrival' && (
+        <ArrivalStage 
+          onComplete={handleArrivalComplete}
+          isVisible={isVisible}
+          userName={userName}
+          showError={showError}
+        />
+      )}
+
+      {flowState === 'calibration' && (
+        <CalibrationStage 
+          onComplete={handleCalibrationComplete}
+          isVisible={isVisible}
+          visualEstimates={visualEstimates}
+          showError={showError}
+        />
+      )}
+
+      {flowState === 'reveal' && (
+        <RevealOverlay 
+          onComplete={handleRevealComplete}
+          showError={showError}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// RENDER
+// ============================================================================
+
+const container = document.getElementById('apply-cinematic-root');
+const root = ReactDOM.createRoot(container);
+root.render(<ApplyCinematic />);
+
+// Mouse tracking for background gradient
+setTimeout(() => {
+  const applyCinematic = document.querySelector('.apply-cinematic');
+  if (applyCinematic) {
+    applyCinematic.addEventListener('mousemove', (e) => {
+      const rect = applyCinematic.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      applyCinematic.style.setProperty('--mouse-x', `${x}%`);
+      applyCinematic.style.setProperty('--mouse-y', `${y}%`);
+    });
+  }
+}, 100);
+</script>

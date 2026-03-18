@@ -4,10 +4,29 @@ const knex = require('../src/db/knex');
 const app = require('../src/app');
 
 beforeAll(async () => {
-  await knex.migrate.rollback({}, true);
+  // Clear any stale migration locks before starting
+  try {
+    await knex.raw('UPDATE knex_migrations_lock SET is_locked = 0 WHERE is_locked = 1');
+  } catch (err) {
+    // Lock table might not exist yet, that's okay
+  }
+  
+  try {
+    // Rollback all migrations first
+    await knex.migrate.rollback({}, true);
+  } catch (err) {
+    // If rollback fails, clear lock and continue
+    try {
+      await knex.raw('UPDATE knex_migrations_lock SET is_locked = 0');
+    } catch (unlockErr) {
+      // Ignore
+    }
+  }
+  
+  // Run migrations
   await knex.migrate.latest();
   await knex.seed.run();
-});
+}, 30000); // 30 second timeout for migrations
 
 afterAll(async () => {
   await knex.destroy();

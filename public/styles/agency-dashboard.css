@@ -6,44 +6,45 @@
    ============================================ */
 
 :root {
-  /* Premium Editorial Palette */
-  --agency-bg-canvas: #FAF9F7;
-  --agency-bg-surface: #FFFFFF;
+  /* Map agency variables to brand tokens for consistency */
+  --agency-font-serif: var(--font-family-display);
+  --agency-font-sans: var(--font-family-primary);
+
+  --agency-bg-canvas: var(--color-bg-primary);
+  --agency-bg-surface: var(--color-bg-surface);
   --agency-bg-elevated: #F8F8F7;
-  --agency-border: rgba(15, 23, 42, 0.05);
-  --agency-text-primary: #0F172A;
+  --agency-text-primary: var(--color-text-dark);
   --agency-text-secondary: #475569;
-  --agency-text-tertiary: #94A3B8;
-  --agency-accent-gold: #C9A55A;
+  --agency-text-tertiary: var(--color-text-light);
+  --agency-accent-gold: var(--color-primary);
   --agency-accent-gold-light: rgba(201, 165, 90, 0.1);
   --agency-accent-gold-dark: #B8954F;
+  --agency-border: rgba(15, 23, 42, 0.05);
+
   /* Brand color (set dynamically, falls back to accent-gold) */
-  --agency-brand-color: var(--agency-accent-gold, #C9A55A);
-  --agency-brand-color-light: var(--agency-brand-color-light, rgba(201, 165, 90, 0.1));
-  --agency-brand-color-dark: var(--agency-brand-color-dark, #B8954F);
-  
-  /* Editorial Shadows - Softer, more luxurious */
-  --agency-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
-  --agency-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
-  --agency-shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.08);
-  --agency-shadow-xl: 0 16px 64px rgba(15, 23, 42, 0.12);
-  
-  /* Editorial Typography */
-  --agency-font-serif: 'Noto Serif Display', 'Times New Roman', serif;
-  --agency-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  
-  /* Editorial Spacing */
-  --agency-spacing-xs: 0.5rem;
-  --agency-spacing-sm: 1rem;
-  --agency-spacing-md: 1.5rem;
-  --agency-spacing-lg: 2rem;
-  --agency-spacing-xl: 3rem;
-  --agency-spacing-2xl: 4rem;
-  
-  /* Editorial Transitions */
-  --agency-transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --agency-transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --agency-transition-smooth: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --agency-brand-color: var(--color-primary);
+  --agency-brand-color-light: rgba(201, 165, 90, 0.1);
+  --agency-brand-color-dark: var(--color-primary-hover);
+
+  /* Update shadows to brand guidelines */
+  --agency-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --agency-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --agency-shadow-lg: var(--shadow-card);
+  --agency-shadow-xl: 0 16px 64px rgba(0, 0, 0, 0.12);
+
+  /* Update spacing to brand guidelines (8px base) */
+  --agency-spacing-xs: var(--spacing-xs);    /* 8px */
+  --agency-spacing-sm: var(--spacing-sm);    /* 12px - was 16px */
+  --agency-spacing-md: var(--spacing-md);    /* 16px - was 24px */
+  --agency-spacing-lg: var(--spacing-lg);    /* 24px - was 32px */
+  --agency-spacing-xl: var(--spacing-xl);    /* 32px - was 48px */
+  --agency-spacing-2xl: var(--spacing-2xl);  /* 40px - was 64px */
+  --agency-spacing-3xl: var(--spacing-3xl);  /* 48px */
+
+  /* Update transitions to brand guidelines */
+  --agency-transition-fast: var(--transition-fast);   /* 0.2s */
+  --agency-transition: var(--transition-normal);      /* 0.3s - was 0.4s */
+  --agency-transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Keep for special animations */
 }
 
 /* ============================================
@@ -135,7 +136,7 @@
 .agency-hero__logo-placeholder {
   width: 80px;
   height: 80px;
-  border-radius: 20px;
+  border-radius: 16px;
   background: linear-gradient(135deg, var(--agency-brand-color, var(--agency-accent-gold)) 0%, var(--agency-brand-color-dark, var(--agency-accent-gold-dark)) 100%);
   display: flex;
   align-items: center;
@@ -573,7 +574,7 @@
   font-weight: 500;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: var(--agency-transition-fast);
 }
 
@@ -995,7 +996,7 @@
   position: relative;
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: var(--agency-spacing-xl);
   min-height: 220px;
   display: flex;
@@ -1120,7 +1121,7 @@
   align-items: center;
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1rem 1.5rem;
   box-shadow: var(--agency-shadow-sm);
   transition: var(--agency-transition);
@@ -1357,7 +1358,7 @@
 .agency-dashboard__kanban-column {
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: var(--agency-spacing-lg);
   min-height: 500px;
   display: flex;
@@ -1405,7 +1406,7 @@
   padding: 0 0.625rem;
   background: var(--agency-brand-color-light, var(--agency-accent-gold-light));
   border: 1px solid var(--agency-brand-color, var(--agency-accent-gold));
-  border-radius: 14px;
+  border-radius: 12px;
   font-family: var(--agency-font-sans);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1433,7 +1434,7 @@
 
 .agency-dashboard__kanban-cards::-webkit-scrollbar-thumb {
   background: var(--agency-border);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .agency-dashboard__kanban-cards::-webkit-scrollbar-thumb:hover {
@@ -1471,7 +1472,7 @@
 .agency-dashboard__card {
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   transition: var(--agency-transition);
   cursor: grab;
@@ -1511,7 +1512,7 @@
   left: 0.75rem;
   z-index: 10;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.25rem;
   opacity: 0;
   transition: var(--agency-transition-fast);
@@ -1576,7 +1577,7 @@
 .agency-dashboard__badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -2496,7 +2497,7 @@
   height: 32px;
   padding: 0;
   border: 1px solid var(--agency-border, #e2e8f0);
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--agency-text-secondary, #64748b);
   cursor: pointer;
@@ -3717,7 +3718,7 @@
   padding: 0.25rem 0.5rem;
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 600;
@@ -4212,7 +4213,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   padding: 0.25rem 0.625rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid;
 }
 
@@ -4273,7 +4274,7 @@
 .agency-notes-modal__color-option {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: var(--agency-transition-fast);
@@ -4422,7 +4423,7 @@
 .agency-dashboard__tag--custom {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid;
   font-weight: 500;
 }
@@ -4433,7 +4434,7 @@
   border-color: var(--agency-border);
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
 }
 
@@ -4443,7 +4444,7 @@
   gap: 0.375rem;
   padding: 0.375rem 0.625rem;
   background: var(--agency-bg-surface-elevated);
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: var(--agency-font-sans);
   font-size: 0.75rem;
   color: var(--agency-text-secondary);
@@ -4944,7 +4945,7 @@
 
 .agency-detail-modal__tag {
   padding: 0.5rem 0.875rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid;
   font-family: var(--agency-font-sans);
   font-size: 0.875rem;
@@ -5287,7 +5288,7 @@
   background: rgba(239, 68, 68, 0.9);
   color: #FFFFFF;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: var(--agency-font-sans);
   font-size: 0.75rem;
   font-weight: 500;
@@ -5521,7 +5522,7 @@
 .agency-export-modal__content {
   position: relative;
   background: var(--agency-bg-surface);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: var(--agency-shadow-xl);
   max-width: 500px;
   width: 100%;
@@ -5990,7 +5991,7 @@
 .board-editor-modal__content {
   position: relative;
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 16px;
   width: 100%;
   max-width: 900px;
   max-height: 92vh;
@@ -6350,7 +6351,7 @@
   width: 20px;
   height: 20px;
   border: 2px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #ffffff;
   display: flex;
   align-items: center;
@@ -7115,6 +7116,66 @@
   text-decoration: none;
   display: block;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.agency-sidebar__logo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 45, 0.9) 50%, rgba(26, 26, 26, 0.95) 100%);
+  mix-blend-mode: multiply;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.agency-sidebar__logo-img {
+  height: 44px;
+  width: auto;
+  display: block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: brightness(0.3) saturate(0.8) contrast(1.2);
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+/* New logo component in sidebar */
+.agency-sidebar__logo .pholio-logo__img {
+  height: 44px;
+  width: auto;
+  display: block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  position: relative;
+  z-index: 1;
+}
+
+/* Remove filter overlays when using actual logo files */
+.agency-sidebar__logo .pholio-logo {
+  position: relative;
+  z-index: 1;
+}
+
+.agency-sidebar__logo:hover::before {
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.98) 0%, rgba(26, 26, 26, 0.95) 50%, rgba(10, 10, 10, 0.98) 100%);
+}
+
+.agency-sidebar__logo:hover .agency-sidebar__logo-img {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.02);
+  filter: brightness(0.25) saturate(0.9) contrast(1.3);
+}
+
+.agency-sidebar__logo:hover .pholio-logo__img {
+  transform: translateY(-1px) scale(1.02);
+  opacity: 1;
 }
 
 .agency-sidebar__logo-text {
@@ -7190,7 +7251,7 @@
   padding: 0.125rem 0.375rem;
   background: var(--agency-bg-surface);
   border: 1px solid var(--agency-border);
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 0.5625rem;
   font-weight: 500;
   color: var(--agency-text-tertiary);
@@ -8085,7 +8146,7 @@
   padding: 0.5rem 1rem;
   background: var(--agency-bg-elevated, #f5f5f4);
   border: 1px solid var(--agency-border, #e2e8f0);
-  border-radius: 20px;
+  border-radius: 16px;
   font-family: var(--agency-font-sans);
   font-size: 0.875rem;
   font-weight: 500;
@@ -8248,7 +8309,7 @@
   width: 3rem;
   height: 4.5rem;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: var(--agency-transition-fast);
@@ -8531,7 +8592,7 @@
   background: var(--agency-text-primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: var(--agency-transition-fast);
 }
@@ -10219,7 +10280,7 @@
   padding: 0.5rem 1rem;
   background: var(--agency-bg-surface, #ffffff);
   border: 1px solid var(--agency-border, #e2e8f0);
-  border-radius: 20px;
+  border-radius: 16px;
   font-family: var(--agency-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 0.875rem;
   font-weight: 500;
@@ -10928,7 +10989,7 @@
 .applicants-filter-drawer__slider {
   width: 100%;
   height: 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--agency-bg-elevated);
   outline: none;
   -webkit-appearance: none;
@@ -11115,7 +11176,7 @@
   margin-top: 0.75rem;
   padding: 0.5rem;
   background: var(--agency-bg-elevated);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.75rem;
   color: var(--agency-text-secondary);
 }
@@ -11319,14 +11380,14 @@
   width: 100%;
   height: 6px;
   background: var(--agency-bg-elevated);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .agency-dashboard__analytics-board-fill {
   height: 100%;
   background: #1a1a1a;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 1s ease-out;
 }
 
@@ -11335,7 +11396,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color 0.2s ease;
 }
 
@@ -11776,7 +11837,7 @@
 .board-editor-modal__split-input {
   display: flex;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   transition: all 0.2s ease;
   overflow: hidden;
@@ -11852,7 +11913,7 @@
   background: #fff;
   font-size: 0.9375rem;
   color: #444;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   font-weight: 500;
 }

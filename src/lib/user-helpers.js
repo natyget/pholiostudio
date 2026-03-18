@@ -73,12 +73,11 @@ async function createUser({ firebaseUid, email, role, agencyName = null, profile
   }
 
   // For AGENCY or TALENT without profile data, just create user
-  // Allow NULL role for new users who haven't selected yet
   await knex('users').insert({
     id: userId,
     email: normalizedEmail,
     firebase_uid: firebaseUid,
-    role: role || null, // Allow NULL role
+    role: role,
     agency_name: agencyName || null
   });
 

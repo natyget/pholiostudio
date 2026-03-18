@@ -1,172 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>
-    <%= title ? (title + ' — Pholio' ) : 'Pholio' %>
-  </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Pholio' %></title>
+    <link rel="stylesheet" href="/styles/global.css">
+    
+    <!-- Firebase Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@200;300;400&family=Inter:wght@400;500;600&display=swap"
-    rel="stylesheet">
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig || {}) %>;
 
-  <!-- Global styles -->
-  <link rel="stylesheet" href="/styles/global.css?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>">
-
-  <% const inDashboard=typeof isDashboard !=='undefined' && isDashboard===true; const isHomepageFlag=typeof isHomepage
-    !=='undefined' && isHomepage===true; %>
-
-    <% if (inDashboard) { %>
-      <link rel="stylesheet" href="/styles/dashboard.css">
-      <% } %>
-</head>
-
-<body class="<%= inDashboard ? 'dashboard-shell' : 'page' %>">
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <% if (inDashboard) { %>
-    <!-- DASHBOARD HEADER -->
-    <header class="dash-header" role="banner">
-      <div class="dash-header-inner">
-        <a class="dash-logo" href="/">Pholio</a>
-
-        <nav class="dash-nav" aria-label="Dashboard">
-          <a href="/dashboard/talent" class="<%= currentUser && currentUser.role === 'TALENT' ? 'is-active' : '' %>">
-            Talent
-          </a>
-          <a href="/dashboard/agency" class="<%= currentUser && currentUser.role === 'AGENCY' ? 'is-active' : '' %>">
-            Agencies
-          </a>
-          <% if (currentProfile && currentProfile.slug) { %>
-            <a href="/portfolio/<%= currentProfile.slug %>" target="_blank" rel="noopener">
-              Public portfolio
-            </a>
-            <% } %>
-        </nav>
-
-        <div class="dash-user">
-          <% if (currentUser) { %>
-            <span class="dash-user__email" data-initial="<%= currentUser.email ? currentUser.email.charAt(0).toUpperCase() : 'U' %>">
-              <%= currentUser.email %>
-              <% if (currentProfile && currentProfile.is_pro) { %>
-                <span class="dash-header__badge dash-header__badge--pro">Studio+</span>
-              <% } else if (currentProfile && !currentProfile.is_pro) { %>
-                <span class="dash-header__badge dash-header__badge--free">Free</span>
-              <% } %>
-            </span>
-            <form action="/logout" method="post" style="margin: 0;">
-              <button type="submit" class="button-ghost" aria-label="Sign out">Logout</button>
-            </form>
-            <% } %>
-        </div>
-      </div>
-    </header>
-
-    <% } else { %>
-      <!-- UNIVERSAL HEADER -->
-      <%- include('partials/header-universal', { 
-        currentUser: typeof currentUser !== 'undefined' ? currentUser : null,
-        currentPage: typeof currentPage !== 'undefined' ? currentPage : '',
-        isHomepage: typeof isHomepage !== 'undefined' && isHomepage === true,
-        profile: typeof currentProfile !== 'undefined' ? currentProfile : (typeof profile !== 'undefined' ? profile : null)
-      }) %>
-    <% } %>
-
-                  <main id="main" class="<%= inDashboard ? 'dash-main' : 'page-main main' %>" role="main">
-                    <% const flashMessages=Array.isArray(messages) ? messages : []; %>
-                      <%- include('partials/flash', { messages: flashMessages }) %>
-                        <%- body %>
-                  </main>
-
-                  <% if (!inDashboard) { %>
-                    <%- include('partials/footer-universal', { 
-                      currentUser: typeof currentUser !== 'undefined' ? currentUser : null,
-                      currentPage: typeof currentPage !== 'undefined' ? currentPage : ''
-                    }) %>
-                    <% } %>
-
-                      <!-- Firebase SDK - ES Module -->
-                      <script type="module">
-                        // Import the functions you need from the SDKs you need
-                        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-                        import { getAuth } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-                        
-                        // Your web app's Firebase configuration (injected from server)
-                        const firebaseConfig = <%- typeof firebaseConfig !== "undefined" && firebaseConfig ? JSON.stringify({
-                          apiKey: firebaseConfig.apiKey || '',
-                          authDomain: firebaseConfig.authDomain || '',
-                          projectId: firebaseConfig.projectId || '',
-                          storageBucket: firebaseConfig.storageBucket || '',
-                          messagingSenderId: firebaseConfig.messagingSenderId || '',
-                          appId: firebaseConfig.appId || '',
-                          measurementId: firebaseConfig.measurementId || ''
-                        }) : JSON.stringify({
-                          apiKey: '',
-                          authDomain: '',
-                          projectId: '',
-                          storageBucket: '',
-                          messagingSenderId: '',
-                          appId: '',
-                          measurementId: ''
-                        }) %>;
-                        
-                        // Initialize Firebase
-                        let app;
-                        let auth;
-                        
-              try {
-                // Validate Firebase config before initializing
-                if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-                  console.error('[Firebase] ❌ Missing required configuration:', {
-                    apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
-                    authDomain: firebaseConfig.authDomain ? 'SET' : 'MISSING',
-                    projectId: firebaseConfig.projectId ? 'SET' : 'MISSING'
-                  });
-                  window.firebaseConfigError = 'Firebase configuration is incomplete. Please check environment variables.';
-                  throw new Error('Firebase configuration incomplete');
+        if (firebaseConfig.apiKey) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                window.firebaseApp = app;
+                window.firebaseAuth = getAuth(app);
+                
+                if (firebaseConfig.measurementId) {
+                    try {
+                        window.firebaseAnalytics = getAnalytics(app);
+                    } catch (e) {
+                         console.warn('Firebase Analytics failed to initialize:', e);
+                    }
                 }
                 
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                
-                // Export auth instance to window for use by other scripts
-                window.firebaseAuth = auth;
-                window.firebaseApp = app;
-                window.firebaseConfigError = null; // Clear any previous errors
-                
-                console.log('[Firebase] Initialized successfully:', {
-                  hasApiKey: !!firebaseConfig.apiKey,
-                  hasAuthDomain: !!firebaseConfig.authDomain,
-                  hasProjectId: !!firebaseConfig.projectId,
-                  authReady: !!auth
-                });
-              } catch (error) {
-                console.error('[Firebase] Initialization error:', error);
-                console.error('[Firebase] Config used:', {
-                  apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
-                  authDomain: firebaseConfig.authDomain ? 'SET' : 'MISSING',
-                  projectId: firebaseConfig.projectId ? 'SET' : 'MISSING'
-                });
-                // Set error flag for other scripts to check
-                window.firebaseConfigError = error.message || 'Firebase initialization failed';
-                window.firebaseAuth = null;
-                window.firebaseApp = null;
-              }
-                      </script>
-                      <script type="module" src="/scripts/firebase-auth.js"></script>
-                      
-                      <script src="/scripts/wire.js" defer></script>
-                      <% if (inDashboard) { %>
-                        <script src="/scripts/dashboard.js" defer></script>
-                        <% } %>
-                          <% if (!inDashboard && isHomepageFlag) { %>
-                            <script src="/scripts/homepage.js?v=<%= Date.now() %>-<%= Math.random().toString(36).substring(7) %>" defer></script>
-                            <% } %>
-</body>
+                console.log('Firebase initialized successfully in layout');
+            } catch (error) {
+                console.error('Error initializing Firebase:', error);
+            }
+        } else {
+            console.warn('Firebase config missing in layout');
+        }
+    </script>
+    
+    <!-- Shared Auth Logic -->
+    <script type="module" src="/scripts/firebase-auth.js"></script>
 
+    <style>
+        /* Basic reset and layout styles if global.css fails to load */
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; }
+        .layout-container { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex: 1; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+    <div class="layout-container">
+        <!-- Optional Header -->
+        
+        <main>
+            <%- body %>
+        </main>
+
+        <!-- Optional Footer -->
+    </div>
+</body>
 </html>

@@ -23,686 +23,14 @@
     });
   }
 
-  // Handle dress size conditional visibility
-  function setupDressSizeConditional() {
-    const genderSelect = document.getElementById('gender');
-    const dressSizeField = document.getElementById('dress-size-field');
-    
-    if (genderSelect && dressSizeField) {
-      function toggleDressSize() {
-        if (genderSelect.value === 'Male') {
-          dressSizeField.style.display = 'none';
-          // Clear value when hidden
-          const dressSizeInput = document.getElementById('dress_size');
-          if (dressSizeInput) dressSizeInput.value = '';
-        } else {
-          dressSizeField.style.display = '';
-        }
-      }
-      
-      // Initial check
-      toggleDressSize();
-      
-      // Update on change
-      genderSelect.addEventListener('change', toggleDressSize);
-    }
-  }
-
-  // Talent Dashboard Accordion
-  function initTalentAccordion() {
-    const accordionItems = document.querySelectorAll('.talent-accordion__item');
-    
-    // Auto-expand first incomplete section
-    let firstIncompleteExpanded = false;
-    
-    accordionItems.forEach((item, index) => {
-      const header = item.querySelector('.talent-accordion__header');
-      const content = item.querySelector('.talent-accordion__content');
-      const status = item.querySelector('.talent-accordion__status');
-
-      if (!header || !content) return;
-
-      // Check if section is incomplete
-      const isIncomplete = status && status.classList.contains('talent-accordion__status--incomplete');
-      
-      // Auto-expand first incomplete section
-      if (isIncomplete && !firstIncompleteExpanded) {
-        header.setAttribute('aria-expanded', 'true');
-        content.style.display = 'block';
-        firstIncompleteExpanded = true;
-        
-        // Smooth scroll to the expanded section
-        setTimeout(() => {
-          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-      } else {
-        // Set initial state (collapsed)
-        header.setAttribute('aria-expanded', 'false');
-        content.style.display = 'none';
-      }
-
-      // Click handler
-      header.addEventListener('click', () => {
-        const isExpanded = header.getAttribute('aria-expanded') === 'true';
-        
-        // Toggle this item
-        header.setAttribute('aria-expanded', !isExpanded);
-        content.style.display = isExpanded ? 'none' : 'block';
-        
-        // Smooth scroll to section when expanding
-        if (!isExpanded) {
-          setTimeout(() => {
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }, 100);
-        }
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initImagePlaceholders();
       });
-
-      // Keyboard navigation support
-      header.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          header.click();
-        } else if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          const nextItem = accordionItems[index + 1];
-          if (nextItem) {
-            const nextHeader = nextItem.querySelector('.talent-accordion__header');
-            if (nextHeader) {
-              nextHeader.focus();
-              if (nextHeader.getAttribute('aria-expanded') !== 'true') {
-                nextHeader.click();
-              }
-            }
-          }
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          const prevItem = accordionItems[index - 1];
-          if (prevItem) {
-            const prevHeader = prevItem.querySelector('.talent-accordion__header');
-            if (prevHeader) {
-              prevHeader.focus();
-              if (prevHeader.getAttribute('aria-expanded') !== 'true') {
-                prevHeader.click();
-              }
-            }
-          }
-        }
-      });
-    });
-  }
-
-  // Handle weight conversion between units
-  function setupWeightConversion() {
-    const weightInput = document.getElementById('weight');
-    const weightUnitSelect = document.getElementById('weight_unit');
-    const weightKgHidden = document.getElementById('weight_kg');
-    const weightLbsHidden = document.getElementById('weight_lbs');
-    
-    if (weightInput && weightUnitSelect && weightKgHidden && weightLbsHidden) {
-      function convertWeight() {
-        const weight = parseFloat(weightInput.value);
-        if (!weight || isNaN(weight)) {
-          weightKgHidden.value = '';
-          weightLbsHidden.value = '';
-          return;
-        }
-        
-        const unit = weightUnitSelect.value;
-        if (unit === 'kg') {
-          weightKgHidden.value = weight.toFixed(1);
-          // Convert kg to lbs: 1 kg = 2.20462 lbs
-          weightLbsHidden.value = (weight * 2.20462).toFixed(1);
-        } else {
-          weightLbsHidden.value = weight.toFixed(1);
-          // Convert lbs to kg: 1 lb = 0.453592 kg
-          weightKgHidden.value = (weight / 2.20462).toFixed(1);
-        }
-      }
-      
-      // Update hidden fields when weight or unit changes
-      weightInput.addEventListener('input', convertWeight);
-      weightInput.addEventListener('change', convertWeight);
-      weightUnitSelect.addEventListener('change', () => {
-        // When unit changes, we need to convert the displayed value
-        const currentWeight = parseFloat(weightInput.value);
-        if (currentWeight && !isNaN(currentWeight)) {
-          const currentUnit = weightUnitSelect.value === 'kg' ? 'lbs' : 'kg';
-          if (currentUnit === 'kg') {
-            // Was kg, now lbs - convert
-            weightInput.value = (currentWeight * 2.20462).toFixed(1);
-          } else {
-            // Was lbs, now kg - convert
-            weightInput.value = (currentWeight / 2.20462).toFixed(1);
-          }
-        }
-        convertWeight();
-      });
-      
-      // Initial conversion
-      convertWeight();
-    }
-  }
-
-  // Handle language dropdown with add/remove functionality
-  function setupLanguageDropdown() {
-    const addLanguageSelect = document.getElementById('add-language-select');
-    const addLanguageBtn = document.getElementById('add-language-btn');
-    const languageOtherInput = document.getElementById('language-other-input');
-    const selectedLanguagesContainer = document.getElementById('selected-languages-container');
-    const languagesHiddenInput = document.getElementById('languages');
-    
-    if (!addLanguageSelect || !addLanguageBtn || !selectedLanguagesContainer || !languagesHiddenInput) return;
-    
-    let selectedLanguages = [];
-    
-    // Load existing languages
-    try {
-      const existingLanguages = languagesHiddenInput.value ? JSON.parse(languagesHiddenInput.value) : [];
-      selectedLanguages = Array.isArray(existingLanguages) ? existingLanguages : [];
-      updateLanguagesDisplay();
-    } catch (e) {
-      console.warn('Failed to parse existing languages:', e);
-    }
-    
-    function updateLanguagesDisplay() {
-      // Clear container
-      selectedLanguagesContainer.innerHTML = '';
-      
-      // Show tags for selected languages
-      selectedLanguages.forEach(lang => {
-        const tag = document.createElement('span');
-        tag.className = 'language-tag';
-        tag.setAttribute('data-language', lang);
-        tag.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: #f0f0f0; border-radius: 4px; font-size: 0.9rem;';
-        
-        const text = document.createTextNode(lang);
-        tag.appendChild(text);
-        
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'remove-language';
-        removeBtn.setAttribute('data-language', lang);
-        removeBtn.textContent = '×';
-        removeBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 1.2rem; line-height: 1; color: #666;';
-        
-        removeBtn.addEventListener('click', () => {
-          selectedLanguages = selectedLanguages.filter(l => l !== lang);
-          updateLanguagesDisplay();
-          updateLanguagesHiddenInput();
-        });
-        
-        tag.appendChild(removeBtn);
-        selectedLanguagesContainer.appendChild(tag);
-      });
-      
-      // Update dropdown to disable selected options
-      Array.from(addLanguageSelect.options).forEach(option => {
-        if (option.value && option.value !== 'Other' && selectedLanguages.includes(option.value)) {
-          option.disabled = true;
-        } else if (option.value && option.value !== 'Other') {
-          option.disabled = false;
-        }
-      });
-      
-      updateLanguagesHiddenInput();
-    }
-    
-    function updateLanguagesHiddenInput() {
-      languagesHiddenInput.value = JSON.stringify(selectedLanguages);
-    }
-    
-    // Handle "Other" option
-    let isOtherSelected = false;
-    
-    addLanguageSelect.addEventListener('change', () => {
-      if (addLanguageSelect.value === 'Other') {
-        languageOtherInput.style.display = 'block';
-        addLanguageBtn.textContent = 'Add';
-        isOtherSelected = true;
-      } else {
-        languageOtherInput.style.display = 'none';
-        languageOtherInput.value = '';
-        addLanguageBtn.textContent = 'Add';
-        isOtherSelected = false;
-      }
-    });
-    
-    // Handle add button
-    addLanguageBtn.addEventListener('click', () => {
-      if (isOtherSelected && addLanguageSelect.value === 'Other') {
-        const customLang = languageOtherInput.value.trim();
-        if (customLang && !selectedLanguages.includes(customLang)) {
-          selectedLanguages.push(customLang);
-          languageOtherInput.value = '';
-          addLanguageSelect.value = '';
-          languageOtherInput.style.display = 'none';
-          isOtherSelected = false;
-          updateLanguagesDisplay();
-        }
-      } else if (addLanguageSelect.value && !selectedLanguages.includes(addLanguageSelect.value)) {
-        selectedLanguages.push(addLanguageSelect.value);
-        addLanguageSelect.value = '';
-        updateLanguagesDisplay();
-      }
-    });
-    
-    // Allow Enter key in "Other" input
-    if (languageOtherInput) {
-      languageOtherInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          addLanguageBtn.click();
-        }
-      });
-    }
-  }
-
-  // Handle previous representation section with multiple entries
-  function setupPreviousRepresentation() {
-    const container = document.getElementById('previous-representations-container');
-    const addBtn = document.getElementById('add-previous-rep-btn');
-    const hiddenInput = document.getElementById('previous_representations');
-    
-    if (!container || !addBtn || !hiddenInput) return;
-    
-    let repIndex = container.querySelectorAll('.previous-representation-entry').length;
-    
-    function updateHiddenInput() {
-      const entries = [];
-      container.querySelectorAll('.previous-representation-entry').forEach((entry, index) => {
-        const hasManager = entry.querySelector(`[name*="previous_rep_${index}_has_manager"]`)?.checked || false;
-        const hasAgency = entry.querySelector(`[name*="previous_rep_${index}_has_agency"]`)?.checked || false;
-        const rep = {
-          has_manager: hasManager,
-          has_agency: hasAgency
-        };
-        if (hasManager) {
-          rep.manager_name = entry.querySelector(`[name*="previous_rep_${index}_manager_name"]`)?.value || '';
-          rep.manager_contact = entry.querySelector(`[name*="previous_rep_${index}_manager_contact"]`)?.value || '';
-        }
-        if (hasAgency) {
-          rep.agency_name = entry.querySelector(`[name*="previous_rep_${index}_agency_name"]`)?.value || '';
-          rep.agent_name = entry.querySelector(`[name*="previous_rep_${index}_agent_name"]`)?.value || '';
-          rep.agency_contact = entry.querySelector(`[name*="previous_rep_${index}_agency_contact"]`)?.value || '';
-        }
-        rep.reason_leaving = entry.querySelector(`[name*="previous_rep_${index}_reason_leaving"]`)?.value || '';
-        entries.push(rep);
-      });
-      hiddenInput.value = JSON.stringify(entries);
-    }
-    
-    function setupEntryListeners(entry, index) {
-      const nameAttr = entry.querySelector('[name*="has_manager"]')?.getAttribute('name') || '';
-      const baseMatch = nameAttr.match(/previous_rep_(\d+)_/);
-      const actualIndex = baseMatch ? baseMatch[1] : index;
-      
-      const hasManagerCheckbox = entry.querySelector(`[name*="previous_rep_${actualIndex}_has_manager"]`);
-      const hasAgencyCheckbox = entry.querySelector(`[name*="previous_rep_${actualIndex}_has_agency"]`);
-      const managerFields = entry.querySelector(`#manager-fields-${actualIndex}`);
-      const agencyFields = entry.querySelector(`#agency-fields-${actualIndex}`);
-      
-      if (hasManagerCheckbox && managerFields) {
-        hasManagerCheckbox.addEventListener('change', () => {
-          managerFields.style.display = hasManagerCheckbox.checked ? 'flex' : 'none';
-          updateHiddenInput();
-        });
-      }
-      
-      if (hasAgencyCheckbox && agencyFields) {
-        hasAgencyCheckbox.addEventListener('change', () => {
-          agencyFields.style.display = hasAgencyCheckbox.checked ? 'flex' : 'none';
-          updateHiddenInput();
-        });
-      }
-      
-      entry.querySelectorAll('input, textarea').forEach(input => {
-        input.addEventListener('input', updateHiddenInput);
-        input.addEventListener('change', updateHiddenInput);
-      });
-    }
-    
-    // Setup existing entries
-    container.querySelectorAll('.previous-representation-entry').forEach((entry, index) => {
-      setupEntryListeners(entry, index);
-      const removeBtn = entry.querySelector('.remove-rep-entry');
-      if (removeBtn && container.querySelectorAll('.previous-representation-entry').length > 1) {
-        removeBtn.addEventListener('click', () => {
-          entry.remove();
-          updateHiddenInput();
-          // Re-index remaining entries
-          container.querySelectorAll('.previous-representation-entry').forEach((e, idx) => {
-            e.setAttribute('data-index', idx);
-            const oldIndex = e.getAttribute('data-index') || idx;
-            e.querySelectorAll('[name]').forEach(input => {
-              const name = input.getAttribute('name');
-              if (name) {
-                const newName = name.replace(/previous_rep_\d+_/, `previous_rep_${idx}_`);
-                input.setAttribute('name', newName);
-                if (input.id) {
-                  const newId = input.id.replace(/-\d+/, `-${idx}`).replace(/manager-fields-\d+|agency-fields-\d+/, (m) => m.replace(/\d+/, idx));
-                  input.setAttribute('id', newId);
-                }
-              }
-            });
-            setupEntryListeners(e, idx);
-          });
-        });
-      }
-    });
-    
-    addBtn.addEventListener('click', () => {
-      const newEntry = document.createElement('div');
-      newEntry.className = 'previous-representation-entry';
-      newEntry.setAttribute('data-index', repIndex);
-      newEntry.style.cssText = 'margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 4px;';
-      
-      newEntry.innerHTML = `
-        <button type="button" class="remove-rep-entry" data-index="${repIndex}" style="float: right; background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Remove</button>
-        <div class="form-grid">
-          <div class="form-field">
-            <label>
-              <input type="checkbox" name="previous_rep_${repIndex}_has_manager" value="true">
-              <span>Had Manager</span>
-            </label>
-          </div>
-          <div class="form-field">
-            <label>
-              <input type="checkbox" name="previous_rep_${repIndex}_has_agency" value="true">
-              <span>Had Agency</span>
-            </label>
-          </div>
-        </div>
-        <div class="form-grid" id="manager-fields-${repIndex}" style="display: none;">
-          <div class="form-field">
-            <label>Manager Name</label>
-            <input type="text" name="previous_rep_${repIndex}_manager_name" placeholder="Manager name">
-          </div>
-          <div class="form-field">
-            <label>Manager Contact</label>
-            <input type="text" name="previous_rep_${repIndex}_manager_contact" placeholder="Email or phone">
-          </div>
-        </div>
-        <div class="form-grid" id="agency-fields-${repIndex}" style="display: none;">
-          <div class="form-field">
-            <label>Agency Name</label>
-            <input type="text" name="previous_rep_${repIndex}_agency_name" placeholder="Agency name">
-          </div>
-          <div class="form-field">
-            <label>Agent Name</label>
-            <input type="text" name="previous_rep_${repIndex}_agent_name" placeholder="Agent name">
-          </div>
-          <div class="form-field">
-            <label>Agency/Agent Contact</label>
-            <input type="text" name="previous_rep_${repIndex}_agency_contact" placeholder="Email or phone">
-          </div>
-        </div>
-        <div class="form-field" style="margin-top: 0.75rem;">
-          <label>Reason for Leaving</label>
-          <textarea name="previous_rep_${repIndex}_reason_leaving" rows="2" placeholder="Reason for leaving..."></textarea>
-        </div>
-      `;
-      
-      container.appendChild(newEntry);
-      setupEntryListeners(newEntry, repIndex);
-      
-      const removeBtn = newEntry.querySelector('.remove-rep-entry');
-      if (removeBtn) {
-        removeBtn.addEventListener('click', () => {
-          newEntry.remove();
-          updateHiddenInput();
-          // Re-index remaining entries
-          container.querySelectorAll('.previous-representation-entry').forEach((e, idx) => {
-            e.setAttribute('data-index', idx);
-            e.querySelectorAll('[name]').forEach(input => {
-              const name = input.getAttribute('name');
-              if (name) {
-                const newName = name.replace(/previous_rep_\d+_/, `previous_rep_${idx}_`);
-                input.setAttribute('name', newName);
-                if (input.id) {
-                  const newId = input.id.replace(/-\d+/, `-${idx}`).replace(/manager-fields-\d+|agency-fields-\d+/, (m) => m.replace(/\d+/, idx));
-                  input.setAttribute('id', newId);
-                }
-              }
-            });
-            setupEntryListeners(e, idx);
-          });
-        });
-      }
-      
-      repIndex++;
-      updateHiddenInput();
-    });
-    
-    // Initial update
-    updateHiddenInput();
-  }
-
-  // Handle "Other" option conditional logic for dropdowns
-  function setupOtherOptionConditionals() {
-    // Shoe size
-    const shoeSizeSelect = document.getElementById('shoe_size');
-    const shoeSizeOtherInput = document.getElementById('shoe_size_other');
-    if (shoeSizeSelect && shoeSizeOtherInput) {
-      function toggleShoeSizeOther() {
-        shoeSizeOtherInput.style.display = shoeSizeSelect.value === 'Other' ? 'block' : 'none';
-        if (shoeSizeSelect.value !== 'Other') {
-          shoeSizeOtherInput.value = '';
-        }
-      }
-      toggleShoeSizeOther();
-      shoeSizeSelect.addEventListener('change', toggleShoeSizeOther);
-    }
-    
-    // Eye color
-    const eyeColorSelect = document.getElementById('eye_color');
-    const eyeColorOtherInput = document.getElementById('eye_color_other');
-    if (eyeColorSelect && eyeColorOtherInput) {
-      function toggleEyeColorOther() {
-        eyeColorOtherInput.style.display = eyeColorSelect.value === 'Other' ? 'block' : 'none';
-        if (eyeColorSelect.value !== 'Other') {
-          eyeColorOtherInput.value = '';
-        }
-      }
-      toggleEyeColorOther();
-      eyeColorSelect.addEventListener('change', toggleEyeColorOther);
-    }
-    
-    // Hair color
-    const hairColorSelect = document.getElementById('hair_color');
-    const hairColorOtherInput = document.getElementById('hair_color_other');
-    if (hairColorSelect && hairColorOtherInput) {
-      function toggleHairColorOther() {
-        hairColorOtherInput.style.display = hairColorSelect.value === 'Other' ? 'block' : 'none';
-        if (hairColorSelect.value !== 'Other') {
-          hairColorOtherInput.value = '';
-        }
-      }
-      toggleHairColorOther();
-      hairColorSelect.addEventListener('change', toggleHairColorOther);
-    }
-    
-    // Skin tone
-    const skinToneSelect = document.getElementById('skin_tone');
-    const skinToneOtherInput = document.getElementById('skin_tone_other');
-    if (skinToneSelect && skinToneOtherInput) {
-      function toggleSkinToneOther() {
-        skinToneOtherInput.style.display = skinToneSelect.value === 'Other' ? 'block' : 'none';
-        if (skinToneSelect.value !== 'Other') {
-          skinToneOtherInput.value = '';
-        }
-      }
-      toggleSkinToneOther();
-      skinToneSelect.addEventListener('change', toggleSkinToneOther);
-    }
-    
-    // Work status
-    const workStatusSelect = document.getElementById('work_status');
-    const workStatusOtherInput = document.getElementById('work_status_other');
-    if (workStatusSelect && workStatusOtherInput) {
-      function toggleWorkStatusOther() {
-        workStatusOtherInput.style.display = workStatusSelect.value === 'Other' ? 'block' : 'none';
-        if (workStatusSelect.value !== 'Other') {
-          workStatusOtherInput.value = '';
-        }
-      }
-      toggleWorkStatusOther();
-      workStatusSelect.addEventListener('change', toggleWorkStatusOther);
-    }
-  }
-
-  // Handle experience details textboxes
-  function setupExperienceDetails() {
-    const experienceCheckboxes = document.querySelectorAll('[name="specialties"][data-experience]');
-    const detailsContainer = document.getElementById('experience-details-container');
-    const detailsHiddenInput = document.getElementById('experience_details');
-    
-    if (!detailsContainer || !detailsHiddenInput) return;
-    
-    const experienceDetails = {};
-    
-    // Load existing details from hidden input
-    try {
-      const existingDetails = detailsHiddenInput.value ? JSON.parse(detailsHiddenInput.value) : {};
-      Object.assign(experienceDetails, existingDetails);
-    } catch (e) {
-      console.warn('Failed to parse existing experience details:', e);
-    }
-    
-    function updateExperienceDetails() {
-      // Clear container
-      detailsContainer.innerHTML = '';
-      
-      // Show textbox for each checked experience
-      experienceCheckboxes.forEach(checkbox => {
-        if (checkbox.checked && checkbox.value !== 'Other') {
-          const experienceKey = checkbox.value.toLowerCase().replace(/\s+/g, '-');
-          const detailsValue = experienceDetails[experienceKey] || '';
-          
-          const wrapper = document.createElement('div');
-          wrapper.className = 'form-field';
-          wrapper.style.marginTop = '0.75rem';
-          
-          const label = document.createElement('label');
-          label.textContent = `${checkbox.value} Details`;
-          label.setAttribute('for', `experience_${experienceKey}_details`);
-          label.style.fontSize = '0.9rem';
-          label.style.fontWeight = '500';
-          label.style.display = 'block';
-          label.style.marginBottom = '0.25rem';
-          
-          const textarea = document.createElement('textarea');
-          textarea.id = `experience_${experienceKey}_details`;
-          textarea.name = `experience_${experienceKey}_details`;
-          textarea.rows = 3;
-          textarea.placeholder = `Tell us about your ${checkbox.value} experience...`;
-          textarea.value = detailsValue;
-          textarea.style.width = '100%';
-          textarea.style.padding = '0.5rem';
-          textarea.style.border = '1px solid #ddd';
-          textarea.style.borderRadius = '4px';
-          textarea.style.fontSize = '0.9rem';
-          
-          // Update hidden input when textarea changes
-          textarea.addEventListener('input', () => {
-            if (textarea.value.trim()) {
-              experienceDetails[experienceKey] = textarea.value.trim();
-            } else {
-              delete experienceDetails[experienceKey];
-            }
-            detailsHiddenInput.value = JSON.stringify(experienceDetails);
-          });
-          
-          // Handle initial load
-          if (detailsValue) {
-            experienceDetails[experienceKey] = detailsValue;
-            detailsHiddenInput.value = JSON.stringify(experienceDetails);
-          }
-          
-          wrapper.appendChild(label);
-          wrapper.appendChild(textarea);
-          detailsContainer.appendChild(wrapper);
-        } else if (checkbox.checked && checkbox.value === 'Other') {
-          // Handle "Other" experience
-          const detailsValue = experienceDetails['other'] || '';
-          
-          const wrapper = document.createElement('div');
-          wrapper.className = 'form-field';
-          wrapper.style.marginTop = '0.75rem';
-          
-          const label = document.createElement('label');
-          label.textContent = 'Other Experience Details';
-          label.setAttribute('for', 'experience_other_details');
-          label.style.fontSize = '0.9rem';
-          label.style.fontWeight = '500';
-          label.style.display = 'block';
-          label.style.marginBottom = '0.25rem';
-          
-          const textarea = document.createElement('textarea');
-          textarea.id = 'experience_other_details';
-          textarea.name = 'experience_other_details';
-          textarea.rows = 3;
-          textarea.placeholder = 'Tell us about your other experience...';
-          textarea.value = detailsValue;
-          textarea.style.width = '100%';
-          textarea.style.padding = '0.5rem';
-          textarea.style.border = '1px solid #ddd';
-          textarea.style.borderRadius = '4px';
-          textarea.style.fontSize = '0.9rem';
-          
-          textarea.addEventListener('input', () => {
-            if (textarea.value.trim()) {
-              experienceDetails['other'] = textarea.value.trim();
-            } else {
-              delete experienceDetails['other'];
-            }
-            detailsHiddenInput.value = JSON.stringify(experienceDetails);
-          });
-          
-          if (detailsValue) {
-            experienceDetails['other'] = detailsValue;
-            detailsHiddenInput.value = JSON.stringify(experienceDetails);
-          }
-          
-          wrapper.appendChild(label);
-          wrapper.appendChild(textarea);
-          detailsContainer.appendChild(wrapper);
-        } else {
-          // Remove from details when unchecked
-          const experienceKey = checkbox.value.toLowerCase().replace(/\s+/g, '-');
-          delete experienceDetails[experienceKey];
-          detailsHiddenInput.value = JSON.stringify(experienceDetails);
-        }
-      });
-    }
-    
-    // Update on checkbox change
-    experienceCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', updateExperienceDetails);
-    });
-    
-    // Initial update
-    updateExperienceDetails();
-  }
-
-  // Initialize on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    } else {
       initImagePlaceholders();
-      setupDressSizeConditional();
-      setupWeightConversion();
-      initTalentAccordion();
-      setupOtherOptionConditionals();
-      setupExperienceDetails();
-      setupLanguageDropdown();
-      setupPreviousRepresentation();
-    });
-  } else {
-    initImagePlaceholders();
-    setupDressSizeConditional();
-    setupWeightConversion();
-    setupOtherOptionConditionals();
-    setupExperienceDetails();
-  }
+    }
 
   // Copy to Clipboard Handler
   document.addEventListener('click', function (e) {
@@ -1159,10 +487,39 @@
     }, 5000);
   });
 
-  // Form Validation Enhancement
+  // Form Validation Enhancement with Real-time Validation & Error Scrolling
   const forms = document.querySelectorAll('form.form-stacked');
   forms.forEach(form => {
+    // Real-time validation on blur
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+      input.addEventListener('blur', function() {
+        validateField(input);
+      });
+    });
+
     form.addEventListener('submit', function (e) {
+      // Validate all fields before submit
+      let hasErrors = false;
+      const firstErrorField = [];
+
+      inputs.forEach(input => {
+        if (!validateField(input)) {
+          hasErrors = true;
+          if (firstErrorField.length === 0) {
+            firstErrorField.push(input);
+          }
+        }
+      });
+
+      // Scroll to first error if validation fails
+      if (hasErrors && firstErrorField[0]) {
+        e.preventDefault();
+        firstErrorField[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField[0].focus();
+        return false;
+      }
+
       // Add loading state to submit button
       const submitBtn = form.querySelector('button[type="submit"]');
       if (submitBtn) {
@@ -1180,6 +537,78 @@
       }
     });
   });
+
+  // Field validation helper
+  function validateField(field) {
+    const formField = field.closest('.form-field');
+    if (!formField) return true;
+
+    // Remove existing error state
+    formField.classList.remove('has-error');
+    const existingError = formField.querySelector('.form-field__error');
+    if (existingError) {
+      existingError.remove();
+    }
+
+    // Basic validation
+    let isValid = true;
+    const value = field.value.trim();
+
+    // Required field check
+    if (field.hasAttribute('required') && !value) {
+      isValid = false;
+      showFieldError(field, 'This field is required');
+    }
+
+    // Email validation
+    if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      isValid = false;
+      showFieldError(field, 'Please enter a valid email address');
+    }
+
+    // Phone validation (basic)
+    if (field.type === 'tel' && value && !/^[\d\s\-\+\(\)]+$/.test(value)) {
+      isValid = false;
+      showFieldError(field, 'Please enter a valid phone number');
+    }
+
+    // URL validation
+    if (field.type === 'url' && value && !/^https?:\/\/.+/.test(value)) {
+      isValid = false;
+      showFieldError(field, 'Please enter a valid URL starting with http:// or https://');
+    }
+
+    // Update ARIA attributes
+    field.setAttribute('aria-invalid', !isValid);
+    if (!isValid) {
+      const errorId = field.id + '-error';
+      field.setAttribute('aria-describedby', errorId);
+    } else {
+      field.removeAttribute('aria-describedby');
+    }
+
+    return isValid;
+  }
+
+  // Show field error
+  function showFieldError(field, message) {
+    const formField = field.closest('.form-field');
+    if (!formField) return;
+
+    formField.classList.add('has-error');
+    field.setAttribute('aria-invalid', 'true');
+
+    const errorId = field.id + '-error';
+    const errorEl = document.createElement('p');
+    errorEl.className = 'form-field__error';
+    errorEl.id = errorId;
+    errorEl.setAttribute('role', 'alert');
+    errorEl.textContent = message;
+    field.setAttribute('aria-describedby', errorId);
+
+    // Insert after the field
+    field.parentNode.insertBefore(errorEl, field.nextSibling);
+  }
 
   // Agency Talent Claim Handler
   document.addEventListener('submit', function (e) {
@@ -1362,24 +791,7 @@
         return;
       }
 
-      // Hide any previous errors
-      const errorDisplay = document.getElementById('upload-error');
-      if (errorDisplay) {
-        errorDisplay.style.display = 'none';
-        errorDisplay.textContent = '';
-      }
-
       // Show loading state
-      const progressBar = document.getElementById('upload-progress');
-      const progressFill = document.getElementById('upload-progress-fill');
-      const progressText = document.getElementById('upload-progress-text');
-      
-      if (progressBar) {
-        progressBar.style.display = 'block';
-        if (progressFill) progressFill.style.width = '0%';
-        if (progressText) progressText.textContent = `Uploading 0 of ${selectedFiles.length} images...`;
-      }
-
       if (uploadButton) {
         uploadButton.disabled = true;
         uploadButton.textContent = 'Uploading...';
@@ -1407,17 +819,12 @@
           throw new Error(data.error || 'Upload failed');
         }
 
-        // Hide progress bar
-        if (progressBar) {
-          progressBar.style.display = 'none';
-        }
-
         // Success - add images to grid dynamically
         if (data.images && data.images.length > 0) {
           addImagesToGrid(data.images, data.heroImagePath);
           updateImageCount(data.totalImages);
           updateHeroImage(data.heroImagePath);
-          showSuccessMessage(data.message || `Successfully uploaded ${data.images.length} image${data.images.length > 1 ? 's' : ''}.`);
+          showSuccessMessage(data.message);
         }
 
         // Clear file input and preview
@@ -1433,20 +840,8 @@
           uploadButton.style.cursor = 'pointer';
         }
       } catch (error) {
-        console.error('[Image Upload] Error:', error);
-        
-        // Hide progress bar
-        if (progressBar) {
-          progressBar.style.display = 'none';
-        }
-
-        // Show error message
-        if (errorDisplay) {
-          errorDisplay.style.display = 'block';
-          errorDisplay.textContent = error.message || 'Failed to upload images. Please try again.';
-        } else {
-          alert(error.message || 'Failed to upload images. Please try again.');
-        }
+        console.error('Upload error:', error);
+        alert(error.message || 'Failed to upload images. Please try again.');
 
         // Reset button
         if (uploadButton) {
@@ -1461,38 +856,21 @@
 
   // Helper function to add images to grid dynamically
   function addImagesToGrid(images, heroImagePath) {
-    // First try to find existing grid by ID or data attribute
-    // Look in Social & Portfolio accordion section (where Portfolio Imagery now lives)
-    let mediaGrid = document.querySelector('#media-grid') || 
-                    document.querySelector('[data-section="social-portfolio"] [data-media-grid]') ||
-                    document.querySelector('#portfolio-imagery [data-media-grid]');
+    // Try to find existing media grid first
+    let mediaGrid = document.querySelector('[data-media-grid]') || document.getElementById('media-grid');
     
     // If grid doesn't exist, create it
     if (!mediaGrid) {
-      // Find the Social & Portfolio accordion section
-      const socialPortfolioSection = document.querySelector('[data-section="social-portfolio"]');
-      if (socialPortfolioSection) {
-        const accordionBody = socialPortfolioSection.querySelector('.talent-accordion__body');
-        if (accordionBody) {
-          // Find the Portfolio Imagery div within the accordion
-          let portfolioImageryDiv = accordionBody.querySelector('div[style*="margin-top: 3rem"]');
-          if (!portfolioImageryDiv) {
-            // Create the Portfolio Imagery container if it doesn't exist
-            portfolioImageryDiv = document.createElement('div');
-            portfolioImageryDiv.style.cssText = 'margin-top: 3rem; padding-top: 3rem; border-top: 1px solid var(--border-color);';
-            const heading = document.createElement('h4');
-            heading.style.cssText = 'margin-bottom: 0.5rem; font-size: 1.125rem; font-weight: 600;';
-            heading.textContent = 'Portfolio Imagery';
-            const description = document.createElement('p');
-            description.style.cssText = 'margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;';
-            description.textContent = 'Upload 6-12 high-quality images. The first image becomes your hero shot.';
-            portfolioImageryDiv.appendChild(heading);
-            portfolioImageryDiv.appendChild(description);
-            accordionBody.appendChild(portfolioImageryDiv);
-          }
-          
+      // Find the portfolio imagery panel body specifically (use ID or data-section)
+      const portfolioPanel = document.getElementById('portfolio-imagery') || 
+                            document.querySelector('[data-section="portfolio-imagery"]') ||
+                            document.querySelector('.dash-panel[id="portfolio-imagery"]');
+      
+      if (portfolioPanel) {
+        const panelBody = portfolioPanel.querySelector('.dash-panel__body');
+        if (panelBody) {
           // Remove empty state if it exists
-          const emptyState = portfolioImageryDiv.querySelector('.empty-state');
+          const emptyState = panelBody.querySelector('.empty-state');
           if (emptyState) {
             emptyState.remove();
           }
@@ -1500,40 +878,20 @@
           // Create new grid
           mediaGrid = document.createElement('div');
           mediaGrid.className = 'media-grid';
-          mediaGrid.id = 'media-grid';
           mediaGrid.setAttribute('data-media-grid', '');
-          portfolioImageryDiv.appendChild(mediaGrid);
+          mediaGrid.id = 'media-grid';
+          panelBody.appendChild(mediaGrid);
         } else {
-          console.error('[Image Upload] Social & Portfolio accordion body not found');
+          console.error('Portfolio panel body not found in', portfolioPanel);
           return;
         }
       } else {
-        // Fallback: try old portfolio-imagery section
-        const portfolioPanel = document.getElementById('portfolio-imagery');
-        if (portfolioPanel) {
-          const panelBody = portfolioPanel.querySelector('.dash-panel__body');
-          if (panelBody) {
-            const emptyState = panelBody.querySelector('.empty-state');
-            if (emptyState) {
-              emptyState.remove();
-            }
-            mediaGrid = document.createElement('div');
-            mediaGrid.className = 'media-grid';
-            mediaGrid.id = 'media-grid';
-            mediaGrid.setAttribute('data-media-grid', '');
-            panelBody.appendChild(mediaGrid);
-          } else {
-            console.error('[Image Upload] Portfolio panel body not found');
-            return;
-          }
-        } else {
-          console.error('[Image Upload] Portfolio imagery section not found');
-          return;
-        }
+        console.error('Portfolio panel not found. Looking for #portfolio-imagery or [data-section="portfolio-imagery"]');
+        return;
       }
     } else {
       // Remove empty state if it exists (it might be a sibling)
-      const emptyState = mediaGrid.parentElement.querySelector('.empty-state');
+      const emptyState = mediaGrid.parentElement?.querySelector('.empty-state');
       if (emptyState) {
         emptyState.remove();
       }
@@ -1694,50 +1052,38 @@
 
     // Update hero image in hero section
     const heroImageContainer = document.querySelector('.dash-hero__image');
-    if (!heroImageContainer) {
-      console.warn('[Image Upload] Hero image container not found');
-      return;
-    }
+    if (heroImageContainer) {
+      // Remove placeholder if it exists
+      const placeholder = heroImageContainer.querySelector('.dash-hero__image-placeholder');
+      if (placeholder) {
+        placeholder.remove();
+      }
 
-    // Remove placeholder if it exists
-    const placeholder = heroImageContainer.querySelector('.dash-hero__image-placeholder');
-    if (placeholder && placeholder.textContent.includes('Upload images')) {
-      placeholder.remove();
-    }
+      // Get or create hero image element
+      let heroImage = heroImageContainer.querySelector('img');
+      if (!heroImage) {
+        heroImage = document.createElement('img');
+        heroImage.alt = 'Profile hero image';
+        heroImage.onload = function() {
+          this.classList.add('is-loaded');
+        };
+        heroImage.onerror = function() {
+          this.classList.add('is-loaded');
+        };
+        heroImageContainer.appendChild(heroImage);
+      }
 
-    // Get or create hero image element
-    let heroImage = heroImageContainer.querySelector('img');
-    if (!heroImage) {
-      heroImage = document.createElement('img');
-      heroImage.alt = 'Profile hero image';
-      heroImage.onload = function() {
-        this.classList.add('is-loaded');
-        // Remove placeholder shimmer if it exists
-        const placeholderShimmer = heroImageContainer.querySelector('.dash-hero__placeholder-shimmer');
-        if (placeholderShimmer) {
-          placeholderShimmer.remove();
-        }
-      };
-      heroImage.onerror = function() {
-        this.classList.add('is-loaded');
-        console.error('[Image Upload] Failed to load hero image:', normalizedHeroPath);
-      };
-      heroImageContainer.appendChild(heroImage);
-    }
-
-    // Update image source (this will trigger onload if already cached)
-    if (heroImage.src !== normalizedHeroPath && heroImage.src !== window.location.origin + normalizedHeroPath) {
+      // Update image source
       heroImage.src = normalizedHeroPath;
-    }
-    
-    // Add loading placeholder if image hasn't loaded yet
-    if (!heroImage.complete || heroImage.naturalHeight === 0) {
-      let placeholderDiv = heroImageContainer.querySelector('.dash-hero__image-placeholder');
-      if (!placeholderDiv) {
-        placeholderDiv = document.createElement('div');
+      
+      // Add loading placeholder if image hasn't loaded yet
+      if (!heroImage.complete) {
+        const placeholderDiv = document.createElement('div');
         placeholderDiv.className = 'dash-hero__image-placeholder';
         placeholderDiv.innerHTML = '<div class="dash-hero__placeholder-shimmer"></div>';
-        heroImageContainer.insertBefore(placeholderDiv, heroImage);
+        if (!heroImageContainer.querySelector('.dash-hero__image-placeholder')) {
+          heroImageContainer.insertBefore(placeholderDiv, heroImage);
+        }
       }
     }
 
@@ -2122,13 +1468,6 @@
 
 // Load Analytics
 async function loadAnalytics() {
-  // Check if we're on agency dashboard - if so, skip (agency-dashboard.js handles it)
-  const agencyDashboard = document.getElementById('agency-dashboard');
-  if (agencyDashboard) {
-    // Agency dashboard has its own analytics loader
-    return;
-  }
-
   // Find analytics section in main content area
   const analyticsSection = document.getElementById('analytics');
   if (!analyticsSection) {
@@ -2303,10 +1642,10 @@ async function loadSidebarAnalytics() {
   const errorEl = sidebarAnalytics.querySelector('.analytics-error');
 
   try {
-    const response = await fetch('/dashboard/talent/analytics', {
+    const response = await fetch('/api/analytics/talent', {
       credentials: 'same-origin'
     });
-
+    
     if (!response.ok) {
       // If it's a 404, the backend should return empty analytics now, but handle it gracefully
       if (response.status === 404) {
@@ -2407,7 +1746,7 @@ async function loadActivityFeed() {
   const errorEl = activityPanel.querySelector('.activity-error');
 
   try {
-    const response = await fetch('/dashboard/talent/activity', {
+    const response = await fetch('/api/activity/talent', {
       credentials: 'same-origin'
     });
 

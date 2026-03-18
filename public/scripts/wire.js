@@ -1470,63 +1470,14 @@
             applyForm.action = '/apply';
           }
           
-          // Auto-fill name and email from Google profile
-          if (isStep1) {
-            // Parse display name (usually "First Last")
-            const nameParts = displayName.trim().split(/\s+/);
-            const firstNameInput = applyForm.querySelector('#first_name');
-            const lastNameInput = applyForm.querySelector('#last_name');
-            
-            if (nameParts.length >= 1 && firstNameInput && !firstNameInput.value) {
-              firstNameInput.value = nameParts[0];
-            }
-            if (nameParts.length >= 2 && lastNameInput && !lastNameInput.value) {
-              lastNameInput.value = nameParts.slice(1).join(' ');
-            }
-          }
-          
-          // Auto-fill email field if it exists
+          // Auto-fill email field if it exists (name is now handled server-side)
           const emailInput = applyForm.querySelector('#email');
           if (emailInput && email) {
             emailInput.value = email;
           }
           
-          // Check user role after sign-in
-          try {
-            const roleCheckResponse = await fetch('/api/user/role', {
-              method: 'GET',
-              credentials: 'include'
-            });
-            
-            if (roleCheckResponse.ok) {
-              const roleData = await roleCheckResponse.json();
-              const userRole = roleData.role;
-              
-              // If user has no role, redirect to role selection
-              if (!userRole || userRole === null) {
-                console.log('[Apply Form] User has no role, redirecting to role selection...');
-                window.location.href = '/onboarding/select-role';
-                return;
-              }
-              
-              // If user is AGENCY, redirect to agency dashboard
-              if (userRole === 'AGENCY') {
-                console.log('[Apply Form] User is AGENCY, redirecting to agency dashboard...');
-                window.location.href = '/dashboard/agency';
-                return;
-              }
-              
-              // If user is TALENT, continue with form
-              if (userRole === 'TALENT') {
-                console.log('[Apply Form] User is TALENT, continuing with application form');
-                updateAuthenticatedUI(email);
-              }
-            }
-          } catch (roleError) {
-            console.error('[Apply Form] Error checking user role:', roleError);
-            // Continue anyway - might be a network issue
-            updateAuthenticatedUI(email);
-          }
+          // Update UI to show authenticated state
+          updateAuthenticatedUI(email);
           
           // Reset button
           googleBtn.disabled = false;
@@ -1549,154 +1500,6 @@
       });
     }
 
-    // Instagram Sign-In handlers
-    function handleInstagramSignIn(buttonId, isStep1) {
-      const instagramBtn = document.getElementById(buttonId);
-      if (!instagramBtn) return;
-
-      instagramBtn.addEventListener('click', async function() {
-        if (!window.FirebaseAuth || typeof window.FirebaseAuth.signInWithInstagram !== 'function') {
-          console.error('[Apply Form] Firebase Auth not initialized');
-          alert('Authentication system not ready. Please refresh the page and try again.');
-          return;
-        }
-
-        // Store original button text
-        const originalText = instagramBtn.innerHTML;
-
-        try {
-          // Show loading state
-          instagramBtn.disabled = true;
-          instagramBtn.innerHTML = '<span>' + (instagramBtn.dataset.loadingText || 'Signing in…') + '</span>';
-
-          // Sign in with Instagram
-          const userCredential = await window.FirebaseAuth.signInWithInstagram();
-          
-          // Get user info from Instagram
-          const user = userCredential.user;
-          const email = user.email;
-          const displayName = user.displayName || '';
-          
-          // Get ID token
-          const idToken = await user.getIdToken();
-          
-          // Store Firebase token in hidden input field
-          const firebaseTokenInput = applyForm.querySelector('#firebase_token');
-          if (!firebaseTokenInput) {
-            console.error('[Apply Form] ❌ Firebase token input field not found!');
-            alert('Error: Firebase token input field not found. Please refresh the page and try again.');
-            return;
-          }
-          
-          // Store token in both value and data attribute for redundancy
-          firebaseTokenInput.value = idToken;
-          firebaseTokenInput.setAttribute('data-token', idToken);
-          firebaseTokenInput.setAttribute('data-stored-at', Date.now().toString());
-          
-          // Verify token was stored
-          if (!firebaseTokenInput.value || firebaseTokenInput.value !== idToken) {
-            console.error('[Apply Form] ❌ Failed to store Firebase token in input field!');
-            alert('Error: Failed to store authentication token. Please refresh the page and try again.');
-            return;
-          }
-          
-          console.log('[Apply Form] ✅ Firebase token stored in form:', {
-            hasToken: !!idToken,
-            tokenLength: idToken.length,
-            tokenPreview: idToken.substring(0, 30) + '...',
-            inputValue: firebaseTokenInput.value ? 'set' : 'not set',
-            inputValueLength: firebaseTokenInput.value ? firebaseTokenInput.value.length : 0,
-            inputName: firebaseTokenInput.name,
-            inputId: firebaseTokenInput.id,
-            formAction: applyForm.action,
-            formMethod: applyForm.method
-          });
-          
-          // Double-check the form action is correct
-          if (applyForm.action !== '/apply' && !applyForm.action.includes('/apply')) {
-            console.warn('[Apply Form] ⚠️ Form action is not /apply:', applyForm.action);
-            applyForm.action = '/apply';
-          }
-          
-          // Auto-fill name and email from Instagram profile
-          if (isStep1) {
-            // Parse display name (usually "First Last")
-            const nameParts = displayName.trim().split(/\s+/);
-            const firstNameInput = applyForm.querySelector('#first_name');
-            const lastNameInput = applyForm.querySelector('#last_name');
-            
-            if (nameParts.length >= 1 && firstNameInput && !firstNameInput.value) {
-              firstNameInput.value = nameParts[0];
-            }
-            if (nameParts.length >= 2 && lastNameInput && !lastNameInput.value) {
-              lastNameInput.value = nameParts.slice(1).join(' ');
-            }
-          }
-          
-          // Auto-fill email field if it exists
-          const emailInput = applyForm.querySelector('#email');
-          if (emailInput && email) {
-            emailInput.value = email;
-          }
-          
-          // Check user role after sign-in
-          try {
-            const roleCheckResponse = await fetch('/api/user/role', {
-              method: 'GET',
-              credentials: 'include'
-            });
-            
-            if (roleCheckResponse.ok) {
-              const roleData = await roleCheckResponse.json();
-              const userRole = roleData.role;
-              
-              // If user has no role, redirect to role selection
-              if (!userRole || userRole === null) {
-                console.log('[Apply Form] User has no role, redirecting to role selection...');
-                window.location.href = '/onboarding/select-role';
-                return;
-              }
-              
-              // If user is AGENCY, redirect to agency dashboard
-              if (userRole === 'AGENCY') {
-                console.log('[Apply Form] User is AGENCY, redirecting to agency dashboard...');
-                window.location.href = '/dashboard/agency';
-                return;
-              }
-              
-              // If user is TALENT, continue with form
-              if (userRole === 'TALENT') {
-                console.log('[Apply Form] User is TALENT, continuing with application form');
-                updateAuthenticatedUI(email);
-              }
-            }
-          } catch (roleError) {
-            console.error('[Apply Form] Error checking user role:', roleError);
-            // Continue anyway - might be a network issue
-            updateAuthenticatedUI(email);
-          }
-          
-          // Reset button
-          instagramBtn.disabled = false;
-          instagramBtn.innerHTML = originalText;
-          
-          console.log('[Apply Form] Instagram Sign-In successful:', email);
-        } catch (error) {
-          console.error('[Apply Form] Instagram Sign-In error:', error);
-          
-          // Reset button
-          instagramBtn.disabled = false;
-          instagramBtn.innerHTML = originalText;
-          
-          // Only show error if not user cancellation
-          if (error.code !== 'auth/popup-closed-by-user') {
-            const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Instagram Sign-In failed. Please try again.';
-            alert(errorMessage);
-          }
-        }
-      });
-    }
-
     // Function to update UI when authenticated
     function updateAuthenticatedUI(email) {
       // Hide Google Sign-In buttons
@@ -1710,17 +1513,6 @@
       }
       if (googleContainerStep4) {
         googleContainerStep4.style.display = 'none';
-      }
-      
-      // Hide Instagram Sign-In buttons
-      const instagramBtnStep1 = document.getElementById('instagram-signin-step1');
-      const instagramBtnStep4 = document.getElementById('instagram-signin-step4');
-      
-      if (instagramBtnStep1) {
-        instagramBtnStep1.style.display = 'none';
-      }
-      if (instagramBtnStep4) {
-        instagramBtnStep4.style.display = 'none';
       }
       
       // Hide email/password fields
@@ -1755,11 +1547,7 @@
 
     // Initialize Google Sign-In handlers
     handleGoogleSignIn('google-signin-step1', true); // Step 1 handler
-    
-    // Initialize Instagram Sign-In handlers
-    handleInstagramSignIn('instagram-signin-step1', true); // Step 1 handler
     handleGoogleSignIn('google-signin-step4', false); // Step 4 handler
-    handleInstagramSignIn('instagram-signin-step4', false); // Step 4 handler
     
     // Check if already authenticated on page load
     const firebaseTokenInput = applyForm.querySelector('#firebase_token');

@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Complete Your Profile' %> - Pholio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gold: #C9A55A;
+      --primary-gold-hover: #b08d45;
+      --text-dark: #0f172a;
+      --text-slate: #64748b;
+      --border-light: #e2e8f0;
+      /* Subtle, premium background */
+      --bg-color: #faf9f7; 
+      --radius-lg: 16px;
+      --radius-md: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Animated Luxury Background */
+    /* Animated Luxury Background - Breathing/Alive */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      /* Subtle radiant background */
+      background: radial-gradient(circle at center, #faf9f7 0%, #f4f2ed 100%);
+      background-size: 120% 120%;
+      animation: breatheBg 20s ease-in-out infinite;
+    }
+
+    @keyframes breatheBg {
+      0%, 100% { background-position: 50% 50%; transform: scale(1); }
+      50% { background-position: 50% 60%; transform: scale(1.01); } /* Subtle breathing scale */
+    }
+
+    @keyframes shimmerText {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
+    @keyframes floatUpOvershoot {
+      0% { opacity: 0; transform: translateY(40px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulseStar {
+      0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 5px rgba(201,165,90,0.5)); }
+      50% { opacity: 0.8; transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(201,165,90,0.8)); }
+    }
+
+    .onboarding-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      padding-top: 60px;
+      padding-bottom: 4rem;
+      position: relative;
+    }
+    
+    /* Optional: Gold Particles Overlay could go here as ::before on wrapper */
+    .onboarding-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(rgba(201, 165, 90, 0.15) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Removed .onboarding-card constraints for full-screen feel */
+    .onboarding-card {
+      width: 100%;
+      max-width: 900px; /* Wider container for immersive feel */
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* Slim Fixed Progress Bar */
+    .progress-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px; /* Slim bar */
+      background: #e2e8f0;
+      display: flex;
+      padding: 0;
+      border: none;
+      z-index: 1000;
+    }
+
+    .progress-step {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      position: relative;
+    }
+
+    .progress-step::before {
+      display: none; /* Remove old connecting lines */
+    }
+
+    /* Active/Completed State fills the bar */
+    /* Active/Completed State fills the bar with Gradient Pulse */
+    .progress-step.completed,
+    .progress-step.active {
+      background: linear-gradient(90deg, #C9A55A, #e8d085, #C9A55A);
+      background-size: 200% 100%;
+      animation: gradientFlow 3s ease infinite;
+      box-shadow: 0 2px 10px rgba(201, 165, 90, 0.3);
+    }
+
+    /* Hide dots and labels for the slim immersive look, or minimalize them */
+    .progress-dot, .progress-label {
+      display: none;
+    }
+
+    /* Step Content */
+    .onboarding-body {
+      padding: 3rem 3.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .onboarding-body {
+        padding: 2rem 1.5rem;
+      }
+      .progress-indicator {
+        padding: 1.5rem 1rem;
+      }
+      .progress-label {
+        display: none; /* Hide labels on very small screens if crowded */
+      }
+    }
+
+    .onboarding-step {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .onboarding-step.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Typography Updates */
+    .step-header {
+      margin-bottom: 5rem;
+      text-align: center;
+      padding: 0 1rem;
+    }
+
+    .step-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 8rem; /* Cinematic Heading */
+      font-weight: 700;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      
+      /* Metallic Gold Shimmer Gradient */
+      background: linear-gradient(90deg, #C9A55A 20%, #ffd700 40%, #b08d45 60%, #C9A55A 80%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      
+      /* Animation: Shimmer + Overshoot Entrance */
+      animation: shimmerText 8s linear infinite, floatUpOvershoot 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      
+      /* Luxurious Glow */
+      text-shadow: 0 0 40px rgba(201, 165, 90, 0.25);
+    }
+
+    /* Star Animation Class */
+    .star-pulse {
+      display: inline-block;
+      animation: pulseStar 3s ease-in-out infinite;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    .step-header p {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.75rem;
+      color: #64748b;
+      line-height: 1.5;
+      font-weight: 400;
+      max-width: 700px;
+      margin: 0 auto;
+      animation: floatUp 1.2s ease-out 0.2s forwards;
+      opacity: 0;
+    }
+
+    @media (max-width: 768px) {
+      .step-header h2 {
+        font-size: 4rem; /* Scale down but keep big */
+      }
+      .step-header p {
+        font-size: 1.25rem;
+      }
+    }
+
+    /* Floating Labels & Huge Inputs */
+    .form-group {
+      position: relative;
+      margin-bottom: 3rem; /* More breathing room */
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 1rem 0.5rem;
+      font-size: 2.5rem; /* Massive input */
+      color: var(--text-dark);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(226, 232, 240, 0.6);
+      border-radius: 0;
+      font-family: 'Playfair Display', serif;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-gold);
+      box-shadow: 0 20px 40px -10px rgba(201, 165, 90, 0.2);
+      transform: scale(1.04); /* Active scale lift */
+    }
+
+    /* Floating label style - needs input:placeholder-shown in HTML */
+    .form-input:focus ~ .form-label,
+    .form-input:not(:placeholder-shown) ~ .form-label {
+      top: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.85rem;
+      color: var(--primary-gold);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .form-label {
+      position: absolute;
+      left: 50%;
+      top: 1rem;
+      transform: translateX(-50%);
+      font-size: 2.5rem; /* Match input size */
+      color: #94a3b8;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      font-weight: 400;
+      font-family: 'Playfair Display', serif;
+      opacity: 0.7;
+    }
+
+    /* Single Question Setup */
+    .identity-question {
+      display: none; /* Hidden by default */
+      text-align: center;
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+    .identity-question.active {
+      display: block;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+
+    .form-input:hover {
+      border-color: #cbd5e1;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-gold);
+      box-shadow: 0 0 0 4px rgba(201, 165, 90, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #cbd5e1;
+    }
+
+    /* File Upload Area */
+    .photo-upload-area {
+      border: 2px dashed var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #faf9f7;
+    }
+
+    .photo-upload-area:hover, .photo-upload-area.dragover {
+      border-color: var(--primary-gold);
+      background: rgba(201, 165, 90, 0.03);
+    }
+
+    .photo-upload-icon {
+      width: 48px;
+      height: 48px;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+      transition: color 0.2s ease;
+    }
+
+    .photo-upload-area:hover .photo-upload-icon {
+      color: var(--primary-gold);
+    }
+
+    .photo-upload-text {
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.25rem;
+    }
+
+    .photo-upload-hint {
+      color: var(--text-slate);
+      font-size: 0.9rem;
+    }
+
+    /* Buttons */
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 3rem;
+      gap: 1rem;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.875rem 1.75rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    .button-primary {
+      background: var(--primary-gold);
+      color: white;
+      min-width: 140px;
+    }
+
+    .button-primary:hover {
+      background: var(--primary-gold-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 165, 90, 0.2);
+    }
+
+    .button-secondary {
+      background: transparent;
+      color: var(--text-slate);
+    }
+
+    .button-secondary:hover {
+      color: var(--text-dark);
+      background: #f1f5f9;
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Error States */
+    .error-container {
+      background: #fef2f2;
+      border: 1px solid #fee2e2;
+      color: #ef4444;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .field-error {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      font-weight: 500;
+    }
+    
+    .form-input.highlight-error {
+      border-color: #ef4444;
+      background-color: #fffafa;
+    }
+    
+    .form-input.highlight-prediction {
+      border-color: var(--primary-gold);
+      background-color: rgba(201, 165, 90, 0.05);
+    }
+
+
+    .photo-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .photo-preview {
+      position: relative;
+      aspect-ratio: 3/4;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Prediction Display */
+    .prediction-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(201, 165, 90, 0.9);
+      background: rgba(201, 165, 90, 0.1);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .prediction-note {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+    }
+
+    /* Market Fit List */
+    .market-fit-list {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+
+    .market-fit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+
+    .market-fit-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .market-fit-name {
+      font-weight: 500;
+      color: #0f172a;
+    }
+
+    .market-fit-score {
+      font-weight: 600;
+      color: rgba(201, 165, 90, 0.9);
+    }
+
+    /* Studio+ Upsell */
+    .studio-upsell {
+      background: linear-gradient(135deg, rgba(201, 165, 90, 0.08) 0%, rgba(201, 165, 90, 0.04) 100%);
+      border: 1px solid rgba(201, 165, 90, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .studio-upsell-badge {
+      display: inline-block;
+      padding: 0.375rem 0.875rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(201, 165, 90, 0.9);
+      background: rgba(201, 165, 90, 0.15);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .studio-upsell h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+
+    .studio-upsell p {
+      font-size: 1rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+
+    .studio-upsell-price {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+
+    .studio-upsell-price-period {
+      font-size: 1rem;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .studio-upsell-features {
+      list-style: none;
+      text-align: left;
+      margin: 1.5rem 0;
+      padding: 0;
+    }
+
+    .studio-upsell-features li {
+      padding: 0.5rem 0;
+      color: #334155;
+      font-size: 0.9375rem;
+    }
+
+    .studio-upsell-features li::before {
+      content: '✓';
+      color: rgba(201, 165, 90, 0.9);
+      font-weight: 600;
+      margin-right: 0.75rem;
+    }
+
+    /* Buttons */
+    .onboarding-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .btn {
+      padding: 1.25rem 3.5rem; /* Massive button */
+      font-size: 1.25rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px; /* Pill shape for luxury */
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+    .btn-primary {
+      /* Rich Gold Gradient */
+      background: linear-gradient(135deg, #C9A55A 0%, #d4b060 50%, #b08d45 100%);
+      color: white;
+      box-shadow: 0 10px 30px rgba(201, 165, 90, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      transition: 0.5s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-6px) scale(1.05); /* Strong lift */
+      box-shadow: 0 25px 50px rgba(201, 165, 90, 0.5); /* Deep luxury shadow */
+      background: linear-gradient(135deg, #dcb968 0%, #c49f4d 100%); /* Brighter gold on hover */
+    }
+    
+    .btn-primary:hover::after {
+      left: 100%;
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    /* Error Message */
+    .error-message {
+      padding: 1rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #991b1b;
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Loading State */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .onboarding-body {
+        padding: 2rem 1.5rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .progress-indicator {
+        padding: 1rem;
+      }
+
+      .progress-label {
+        font-size: 0.625rem;
+      }
+    }
+    
+    .input-error {
+      border-color: #ef4444;
+      background-color: #fef2f2;
+    }
+    
+    .field-error {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="onboarding-wrapper">
+    <div class="onboarding-card">
+      <div class="progress-indicator">
+        <div class="progress-step <%= currentStage === 'identity' || currentStage === 'upload' || currentStage === 'confirm' || currentStage === 'goals' || currentStage === 'reveal' || currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'identity' ? 'active' : '' %>" data-step="identity">
+          <div class="progress-dot">1</div>
+          <div class="progress-label">Identity</div>
+        </div>
+        <div class="progress-step <%= currentStage === 'upload' || currentStage === 'confirm' || currentStage === 'goals' || currentStage === 'reveal' || currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'upload' ? 'active' : '' %>" data-step="upload">
+          <div class="progress-dot">2</div>
+          <div class="progress-label">Upload</div>
+        </div>
+        <div class="progress-step <%= currentStage === 'confirm' || currentStage === 'goals' || currentStage === 'reveal' || currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'confirm' ? 'active' : '' %>" data-step="confirm">
+          <div class="progress-dot">3</div>
+          <div class="progress-label">Confirm</div>
+        </div>
+        <div class="progress-step <%= currentStage === 'goals' || currentStage === 'reveal' || currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'goals' ? 'active' : '' %>" data-step="goals">
+          <div class="progress-dot">4</div>
+          <div class="progress-label">Goals</div>
+        </div>
+        <div class="progress-step <%= currentStage === 'reveal' || currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'reveal' ? 'active' : '' %>" data-step="reveal">
+          <div class="progress-dot">5</div>
+          <div class="progress-label">Reveal</div>
+        </div>
+        <div class="progress-step <%= currentStage === 'done' ? 'completed' : '' %> <%= currentStage === 'done' ? 'active' : '' %>" data-step="done">
+          <div class="progress-dot">6</div>
+          <div class="progress-label">Complete</div>
+        </div>
+      </div>
+
+      <!-- Error Container -->
+      <div id="error-container">
+        <% if (typeof errors !== 'undefined' && errors) { %>
+          <div class="error-message">
+            Validation failed. Please check the fields below.
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Step Content -->
+      <div class="onboarding-body">
+        <!-- Step 1: Identity -->
+        <div class="onboarding-step <%= currentStage === 'identity' ? 'active' : '' %>" data-step="identity">
+          <div class="step-header">
+            <h2>Hey <%= typeof profile !== 'undefined' && profile.first_name ? profile.first_name : 'there' %>, let's get you spotlight-ready <span class="star-pulse">✨</span></h2>
+            <p>We'll start with the basics to begin your journey.</p>
+          </div>
+
+          <form id="identity-form" method="POST" action="/onboarding/identity">
+            <!-- Question 1: First Name -->
+            <div class="identity-question active" id="question-first-name">
+              <div class="form-group" style="max-width: 400px; margin: 0 auto 3rem;">
+                <input 
+                  type="text" 
+                  id="first_name" 
+                  name="first_name" 
+                  class="form-input" 
+                  value="<%= typeof profile !== 'undefined' && profile.first_name ? profile.first_name : '' %>"
+                  placeholder=" " 
+                  required
+                  onkeypress="if(event.key === 'Enter') { event.preventDefault(); nextQuestion('last-name'); }"
+                >
+                <label class="form-label" for="first_name">First Name</label>
+              </div>
+              <div style="text-align: center;">
+                <button type="button" class="btn btn-primary" onclick="nextQuestion('last-name')">Next</button>
+              </div>
+            </div>
+
+            <!-- Question 2: Last Name -->
+            <div class="identity-question" id="question-last-name">
+              <div class="form-group" style="max-width: 400px; margin: 0 auto 3rem;">
+                <input 
+                  type="text" 
+                  id="last_name" 
+                  name="last_name" 
+                  class="form-input" 
+                  value="<%= typeof profile !== 'undefined' && profile.last_name ? profile.last_name : '' %>"
+                  placeholder=" " 
+                  required
+                  onkeypress="if(event.key === 'Enter') { event.preventDefault(); nextQuestion('city'); }"
+                >
+                <label class="form-label" for="last_name">Last Name</label>
+              </div>
+              <div style="text-align: center;">
+                <button type="button" class="btn btn-secondary" onclick="prevQuestion('first-name')" style="margin-right: 1rem;">Back</button>
+                <button type="button" class="btn btn-primary" onclick="nextQuestion('city')">Next</button>
+              </div>
+            </div>
+
+            <!-- Question 3: City -->
+            <div class="identity-question" id="question-city">
+              <div class="form-group" style="max-width: 400px; margin: 0 auto 3rem;">
+                <input 
+                  type="text" 
+                  id="city" 
+                  name="city" 
+                  class="form-input" 
+                  value="<%= typeof profile !== 'undefined' && profile.city && profile.city !== 'Not specified' ? profile.city : '' %>"
+                  placeholder=" " 
+                  required
+                  onkeypress="if(event.key === 'Enter') { event.preventDefault(); nextQuestion('gender'); }"
+                >
+                <label class="form-label" for="city">City</label>
+              </div>
+              <div style="text-align: center;">
+                <button type="button" class="btn btn-secondary" onclick="prevQuestion('last-name')" style="margin-right: 1rem;">Back</button>
+                <button type="button" class="btn btn-primary" onclick="nextQuestion('gender')">Next</button>
+              </div>
+            </div>
+
+            <!-- Question 4: Gender (Final) -->
+             <div class="identity-question" id="question-gender">
+               <div class="form-group" style="max-width: 400px; margin: 0 auto 3rem;">
+                 <label class="form-label" style="position: relative; left: 0; transform: none; display: block; text-align: center; margin-bottom: 2rem; font-size: 2rem; top: 0;">Gender <span class="optional">(Optional)</span></label>
+                 <select id="gender" name="gender" class="form-input" style="text-align-last:center;">
+                   <option value="">Select...</option>
+                   <option value="Male" <%= typeof profile !== 'undefined' && profile.gender === 'Male' ? 'selected' : '' %>>Male</option>
+                   <option value="Female" <%= typeof profile !== 'undefined' && profile.gender === 'Female' ? 'selected' : '' %>>Female</option>
+                   <option value="Non-binary" <%= typeof profile !== 'undefined' && profile.gender === 'Non-binary' ? 'selected' : '' %>>Non-binary</option>
+                   <option value="Other" <%= typeof profile !== 'undefined' && profile.gender === 'Other' ? 'selected' : '' %>>Other</option>
+                   <option value="Prefer not to say" <%= typeof profile !== 'undefined' && profile.gender === 'Prefer not to say' ? 'selected' : '' %>>Prefer not to say</option>
+                 </select>
+               </div>
+               <div style="text-align: center;">
+                 <button type="button" class="btn btn-secondary" onclick="prevQuestion('city')" style="margin-right: 1rem;">Back</button>
+                 <button type="submit" class="btn btn-primary">Complete Identity</button>
+               </div>
+             </div>
+          </form>
+
+          <script>
+            function nextQuestion(nextId) {
+              const current = document.querySelector('.identity-question.active');
+              const next = document.getElementById('question-' + nextId);
+              
+              // Simple validation
+              const input = current.querySelector('input');
+              if (input && !input.value.trim()) {
+                input.focus();
+                // Add shake animation class here if desired
+                return; 
+              }
+
+              if (current && next) {
+                current.classList.remove('active');
+                next.classList.add('active');
+                const nextInput = next.querySelector('input, select');
+                if (nextInput) nextInput.focus();
+              }
+            }
+
+            function prevQuestion(prevId) {
+              const current = document.querySelector('.identity-question.active');
+              const prev = document.getElementById('question-' + prevId);
+              if (current && prev) {
+                current.classList.remove('active');
+                prev.classList.add('active');
+              }
+            }
+          </script>
+        </div>
+
+        <!-- Step 2: Upload -->
+        <div class="onboarding-step <%= currentStage === 'upload' ? 'active' : '' %>" data-step="upload">
+          <div class="step-header">
+            <h2>Upload your photos</h2>
+            <p>At least one clear, front-facing photo is required</p>
+          </div>
+
+          <form id="upload-form" method="POST" action="/onboarding/upload" enctype="multipart/form-data">
+            <div class="photo-upload-area" id="photo-upload-area">
+              <div class="photo-upload-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div class="photo-upload-text">Drop photos here or click to browse</div>
+              <div class="photo-upload-hint">Supports JPG, PNG, WebP (max 12 photos)</div>
+            </div>
+
+            <input type="file" id="photo-input" name="photos" accept="image/*" multiple style="display: none;">
+
+            <% 
+              // Combine photos from both new (profile_photos) and old (images) tables
+              const newPhotos = typeof photos !== 'undefined' ? photos : [];
+              const oldPhotos = typeof legacyImages !== 'undefined' ? legacyImages : [];
+              const allPhotos = [...newPhotos, ...oldPhotos];
+              
+              // Helper to get photo URL
+              function getPhotoUrl(photo) {
+                if (photo.storage_key) {
+                  // New format: storage_key is like "uploads/filename.webp"
+                  return '/' + photo.storage_key;
+                } else if (photo.path) {
+                  // Old format: path is like "/uploads/filename.webp" or "uploads/filename.webp"
+                  return photo.path.startsWith('/') ? photo.path : '/' + photo.path;
+                } else if (photo.publicUrl) {
+                  return photo.publicUrl;
+                }
+                return '';
+              }
+            %>
+            <% if (allPhotos.length > 0) { %>
+              <div class="photo-preview-grid" id="photo-preview-grid">
+                <% allPhotos.forEach((photo, index) => { %>
+                  <% const photoUrl = getPhotoUrl(photo); %>
+                  <% if (photoUrl) { %>
+                    <div class="photo-preview">
+                      <img src="<%= photoUrl %>" alt="Photo <%= index + 1 %>">
+                    </div>
+                  <% } %>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <div class="onboarding-actions">
+              <button type="button" class="btn btn-secondary" onclick="window.location.href='/onboarding'">Back</button>
+              <button type="submit" class="btn btn-primary" id="upload-submit" <%= allPhotos.length === 0 ? 'disabled' : '' %>>Continue</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Confirm (Predictions) -->
+        <div class="onboarding-step <%= currentStage === 'confirm' ? 'active' : '' %>" data-step="confirm">
+          <div class="step-header">
+            <h2>Confirm your details</h2>
+            <p>Prefilled — adjust if needed</p>
+          </div>
+
+          <form id="confirm-form" method="POST" action="/onboarding/confirm">
+            <% 
+            // PREDICTION DATA LOGIC
+            // 1. If submittedData exists (validation error case), use that for "current values"
+            // 2. Else if aiAnalysis exists, use its predictions
+            // 3. Else fallback to profile values
+            
+            const submitted = typeof submittedData !== 'undefined' ? submittedData : null;
+            const validationErrors = (typeof errors !== 'undefined' && errors) ? errors : {};
+            
+            // Helper to get value: submitted > prediction > profile
+            const getValue = (field) => {
+              if (submitted && submitted[field] !== undefined) return submitted[field];
+              
+              // Handle predictions/profile fallback
+              if (typeof aiAnalysis !== 'undefined' && aiAnalysis) {
+                if (field === 'height_cm') return aiAnalysis.predicted_height_cm || (typeof profile !== 'undefined' ? profile.height_cm : null);
+                if (field === 'weight_kg') return aiAnalysis.predicted_weight_kg || (typeof profile !== 'undefined' ? profile.weight_kg : null);
+                
+                // For measurements, need to parse JSON if string
+                const measurements = aiAnalysis.predicted_measurements_json 
+                  ? (typeof aiAnalysis.predicted_measurements_json === 'string' ? JSON.parse(aiAnalysis.predicted_measurements_json) : aiAnalysis.predicted_measurements_json) 
+                  : {};
+                  
+                if (field === 'bust') return measurements.bust || (typeof profile !== 'undefined' ? profile.bust : null);
+                if (field === 'waist') return measurements.waist || (typeof profile !== 'undefined' ? profile.waist : null);
+                if (field === 'hips') return measurements.hips || (typeof profile !== 'undefined' ? profile.hips : null);
+              }
+              
+              // Fallback to profile only
+              return typeof profile !== 'undefined' ? profile[field] : null;
+            };
+
+            const data = {
+              height_cm: getValue('height_cm'),
+              weight_kg: getValue('weight_kg'), // Note: this might be kg, but form might want lbs input handling
+              bust: getValue('bust'),
+              waist: getValue('waist'),
+              hips: getValue('hips')
+              // ... add others if needed
+            };
+            %>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="height_cm">Height (cm)</label>
+                <span class="prediction-badge">Prediction</span>
+                <input 
+                  type="number" 
+                  id="height_cm" 
+                  name="height_cm" 
+                  class="form-input <%= validationErrors.height_cm ? 'input-error' : '' %>" 
+                  value="<%= data.height_cm || '' %>"
+                  min="100"
+                  max="250"
+                >
+                <% if (validationErrors.height_cm) { %>
+                  <div class="field-error"><%= validationErrors.height_cm %></div>
+                <% } else { %>
+                  <div class="prediction-note">Edit if wrong</div>
+                <% } %>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="weight_lbs">Weight (lbs)</label>
+                <% if (data.weight_kg) { %>
+                  <span class="prediction-badge">Prediction</span>
+                <% } %>
+                <input 
+                  type="number" 
+                  id="weight_lbs" 
+                  name="weight_lbs" 
+                  class="form-input <%= validationErrors.weight_lbs ? 'input-error' : '' %>" 
+                  value="<%= submitted ? (submitted.weight_lbs || '') : (data.weight_kg ? Math.round(data.weight_kg * 2.20462) : '') %>"
+                  min="80"
+                  max="300"
+                >
+                <% if (validationErrors.weight_lbs) { %>
+                  <div class="field-error"><%= validationErrors.weight_lbs %></div>
+                <% } else if (data.weight_kg) { %>
+                  <div class="prediction-note">Edit if wrong</div>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="bust">Bust (inches)</label>
+                <% if (data.bust) { %>
+                  <span class="prediction-badge">Prediction</span>
+                <% } %>
+                <input 
+                  type="number" 
+                  id="bust" 
+                  name="bust" 
+                  class="form-input <%= validationErrors.bust ? 'input-error' : '' %>" 
+                  value="<%= data.bust || '' %>"
+                  step="0.5"
+                  min="20"
+                  max="50"
+                >
+                <% if (validationErrors.bust) { %>
+                  <div class="field-error"><%= validationErrors.bust %></div>
+                <% } else if (data.bust) { %>
+                  <div class="prediction-note">Edit if wrong</div>
+                <% } %>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="waist">Waist (inches)</label>
+                <% if (data.waist) { %>
+                  <span class="prediction-badge">Prediction</span>
+                <% } %>
+                <input 
+                  type="number" 
+                  id="waist" 
+                  name="waist" 
+                  class="form-input <%= validationErrors.waist ? 'input-error' : '' %>" 
+                  value="<%= data.waist || '' %>"
+                  step="0.5"
+                  min="20"
+                  max="50"
+                >
+                <% if (validationErrors.waist) { %>
+                  <div class="field-error"><%= validationErrors.waist %></div>
+                <% } else if (data.waist) { %>
+                  <div class="prediction-note">Edit if wrong</div>
+                <% } %>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="hips">Hips (inches)</label>
+                <% if (data.hips) { %>
+                  <span class="prediction-badge">Prediction</span>
+                <% } %>
+                <input 
+                  type="number" 
+                  id="hips" 
+                  name="hips" 
+                  class="form-input <%= validationErrors.hips ? 'input-error' : '' %>" 
+                  value="<%= data.hips || '' %>"
+                  step="0.5"
+                  min="25"
+                  max="60"
+                >
+                <% if (validationErrors.hips) { %>
+                  <div class="field-error"><%= validationErrors.hips %></div>
+                <% } else if (data.hips) { %>
+                  <div class="prediction-note">Edit if wrong</div>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="onboarding-actions">
+              <button type="button" class="btn btn-secondary" onclick="window.location.href='/onboarding'">Back</button>
+              <button type="submit" class="btn btn-primary">Continue</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 4: Goals -->
+        <div class="onboarding-step <%= currentStage === 'goals' ? 'active' : '' %>" data-step="goals">
+          <div class="step-header">
+            <h2>Your Goals</h2>
+            <p>Help us personalize your experience</p>
+          </div>
+
+          <form id="goals-form" method="POST" action="/onboarding/goals">
+            <div class="form-group">
+              <label class="form-label">What are you looking for? <span class="optional">(Select all that apply)</span></label>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                <label style="display: flex; align-items: center; padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" class="goal-option">
+                  <input type="checkbox" name="representation" value="true" style="margin-right: 1rem; width: 1.2rem; height: 1.2rem; accent-color: var(--primary-gold);">
+                  <div>
+                    <div style="font-weight: 500; color: var(--text-dark);">Get signed by an agency</div>
+                    <div style="font-size: 0.85rem; color: var(--text-slate);">I want representation for modeling/acting</div>
+                  </div>
+                </label>
+
+                <label style="display: flex; align-items: center; padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" class="goal-option">
+                  <input type="checkbox" name="freelance" value="true" style="margin-right: 1rem; width: 1.2rem; height: 1.2rem; accent-color: var(--primary-gold);">
+                  <div>
+                    <div style="font-weight: 500; color: var(--text-dark);">Find freelance work</div>
+                    <div style="font-size: 0.85rem; color: var(--text-slate);">I want to book direct jobs</div>
+                  </div>
+                </label>
+
+                <label style="display: flex; align-items: center; padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" class="goal-option">
+                  <input type="checkbox" name="portfolio" value="true" style="margin-right: 1rem; width: 1.2rem; height: 1.2rem; accent-color: var(--primary-gold);">
+                  <div>
+                    <div style="font-weight: 500; color: var(--text-dark);">Build my portfolio</div>
+                    <div style="font-size: 0.85rem; color: var(--text-slate);">I need professional materials (Comp Cards, etc.)</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="onboarding-actions">
+              <button type="button" class="btn btn-secondary" onclick="window.location.href='/onboarding'">Back</button>
+              <button type="submit" class="btn btn-primary">Continue</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 5: Reveal (Market Fit + Studio+ Upsell) -->
+        <div class="onboarding-step <%= currentStage === 'reveal' ? 'active' : '' %>" data-step="reveal">
+          <div class="step-header">
+            <h2>Your market fit</h2>
+            <p>Based on your profile and photos</p>
+          </div>
+
+          <% const marketFit = typeof aiAnalysis !== 'undefined' && aiAnalysis && aiAnalysis.market_fit_json ? (typeof aiAnalysis.market_fit_json === 'string' ? JSON.parse(aiAnalysis.market_fit_json) : aiAnalysis.market_fit_json) : []; %>
+          <% if (Array.isArray(marketFit) && marketFit.length > 0) { %>
+            <ul class="market-fit-list">
+              <% marketFit.slice(0, 5).forEach((market) => { %>
+                <li class="market-fit-item">
+                  <span class="market-fit-name"><%= market.name || market %></span>
+                  <span class="market-fit-score"><%= typeof market.score === 'number' ? Math.round(market.score * 100) + '%' : '' %></span>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <p style="color: #64748b; text-align: center; padding: 2rem 0;">Analysis in progress...</p>
+          <% } %>
+
+          <% if (!isPro) { %>
+            <div class="studio-upsell">
+              <div class="studio-upsell-badge">Studio+</div>
+              <h3>Unlock global discoverability</h3>
+              <p>Get discovered by agencies worldwide and access premium features</p>
+              <div class="studio-upsell-price">
+                $9.99<span class="studio-upsell-price-period">/month</span>
+              </div>
+              <ul class="studio-upsell-features">
+                <li>Global agency discoverability</li>
+                <li>Advanced analytics</li>
+                <li>Unlimited comp card views</li>
+                <li>Portfolio site included</li>
+                <li>14-day free trial</li>
+              </ul>
+              <a href="/pro/upgrade" class="btn btn-primary btn-full" style="text-decoration: none; display: inline-block;">Upgrade to Studio+</a>
+            </div>
+          <% } %>
+
+          <div class="onboarding-actions">
+            <div></div>
+            <form method="POST" action="/onboarding/complete" style="display: inline;">
+              <button type="submit" class="btn btn-primary">Continue to dashboard</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Step 5: Done (Redirect happens server-side) -->
+        <div class="onboarding-step <%= currentStage === 'done' ? 'active' : '' %>" data-step="done">
+          <div class="step-header">
+            <h2>Profile complete!</h2>
+            <p>Redirecting to your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Photo upload handling
+    const photoUploadArea = document.getElementById('photo-upload-area');
+    const photoInput = document.getElementById('photo-input');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadSubmit = document.getElementById('upload-submit');
+
+    if (photoUploadArea && photoInput) {
+      // Click to upload
+      photoUploadArea.addEventListener('click', () => {
+        photoInput.click();
+      });
+
+      // Drag and drop
+      photoUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        photoUploadArea.classList.add('drag-over');
+      });
+
+      photoUploadArea.addEventListener('dragleave', () => {
+        photoUploadArea.classList.remove('drag-over');
+      });
+
+      photoUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        photoUploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          photoInput.files = files;
+          handlePhotoSelection(files);
+        }
+      });
+
+      photoInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handlePhotoSelection(e.target.files);
+        }
+      });
+    }
+
+    function handlePhotoSelection(files) {
+      // Enable submit button if files selected
+      if (uploadSubmit && files.length > 0) {
+        uploadSubmit.disabled = false;
+        // Show file count in upload area
+        if (photoUploadArea) {
+          const count = files.length;
+          const textElement = photoUploadArea.querySelector('.photo-upload-text');
+          if (textElement) {
+            textElement.textContent = count === 1 ? '1 photo selected' : `${count} photos selected`;
+          }
+        }
+      }
+    }
+
+    // Form submission handlers
+    const identityForm = document.getElementById('identity-form');
+    if (identityForm) {
+      identityForm.addEventListener('submit', (e) => {
+        // Validation happens on server
+      });
+    }
+
+    // Error display
+    function showError(message) {
+      const errorContainer = document.getElementById('error-container');
+      if (errorContainer) {
+        errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+        errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // Auto-redirect on done stage
+    <% if (currentStage === 'done') { %>
+      setTimeout(() => {
+        window.location.href = '/dashboard/talent';
+      }, 2000);
+    <% } %>
+  </script>
+</body>
+</html>

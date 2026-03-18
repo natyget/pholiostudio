@@ -1,1143 +1,175 @@
-<%- include('../partials/forms', { errors, values }) %>
-<% const _errors=(typeof errors==='object' && errors) ? errors : {}; const _values=(typeof values==='object' && values) ? values : {}; const valueFor=(name, fallback='')=> {
-  if (Object.prototype.hasOwnProperty.call(_values, name) && _values[name] != null) {
-    return _values[name];
-  }
-  return fallback;
-};
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">Sign in to Pholio</h1>
+        
+        <% if (errors && errors.firebase) { %>
+            <div class="alert alert-error">
+                <%= errors.firebase[0] %>
+            </div>
+        <% } %>
 
-const fieldError = (name) => {
-  const v = _errors[name];
-  if (!v) return '';
-  return Array.isArray(v) ? v[0] : v;
-};
-%>
-<section class="auth-page">
-  <div class="auth-page__visual">
-    <div class="auth-page__visual-content">
-      <span class="auth-page__visual-badge">Sign In</span>
-      <h1 class="auth-page__visual-headline">
-        <span class="auth-page__visual-headline-fashion">Welcome back.</span>
-        <span class="auth-page__visual-headline-ai">Your editorial studio.</span>
-      </h1>
-      <p class="auth-page__visual-tagline">Access your dashboard, refresh your comp card, and keep your book in sync with every update.</p>
-      <div class="auth-page__visual-accent"></div>
-    </div>
-  </div>
-  
-  <div class="auth-page__form">
-    <div class="auth-page__form-container">
-      <div class="auth-page__form-header">
-        <h2 class="auth-page__form-title">Sign in</h2>
-        <p class="auth-page__form-subtitle">Enter your credentials to continue</p>
-      </div>
-      
-      <div class="auth-card" role="form">
-        <form method="post" action="/login" class="form" data-async>
-          <input type="hidden" name="next" value="<%= valueFor('next', '') %>">
-          
-          <div class="form-field <%= fieldError('email') ? 'has-error' : '' %>">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" autocomplete="email" value="<%= valueFor('email', '') %>">
-            <% if (fieldError('email')) { %>
-              <p class="field-error" role="alert"><%= fieldError('email') %></p>
-            <% } %>
-          </div>
-          
-          <div class="form-field <%= fieldError('password') ? 'has-error' : '' %>">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password">
-            <% if (fieldError('password')) { %>
-              <p class="field-error" role="alert"><%= fieldError('password') %></p>
-            <% } %>
-          </div>
-          
-          <input type="hidden" name="firebase_token" id="firebase_token">
-          <button type="submit" class="button button-primary button-block" data-loading-text="Signing in…">Sign in</button>
+        <div class="auth-section">
+            <button id="google-signin-btn" class="btn btn-google">
+                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" fill-rule="evenodd"></path>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.032-3.716H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853" fill-rule="evenodd"></path>
+                    <path d="M3.968 10.705A5.366 5.366 0 0 1 3.682 9c0-.593.102-1.17.286-1.705V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.448 2.797 1.237 3.935l2.73-2.23z" fill="#FBBC05" fill-rule="evenodd"></path>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962l2.731 2.23C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335" fill-rule="evenodd"></path>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+
+        <div class="divider">
+            <span>or sign in with email</span>
+        </div>
+
+        <form action="/login" method="POST" id="login-form">
+            <input type="hidden" name="next" value="<%= values.next || '' %>">
+            <input type="hidden" name="firebase_token" id="firebase-token">
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<%= values.email || '' %>" required autocomplete="email">
+                <% if (errors && errors.email) { %>
+                    <div class="field-error"><%= errors.email[0] %></div>
+                <% } %>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+                <% if (errors && errors.password) { %>
+                    <div class="field-error"><%= errors.password[0] %></div>
+                <% } %>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="email-submit-btn">Sign In</button>
+            </div>
         </form>
         
-        <div class="auth-divider">
-          <span>or</span>
-        </div>
-        
-        <button type="button" id="google-signin-btn" class="button button-google button-block" data-loading-text="Signing in…">
-          <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px; vertical-align: middle;">
-            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-            <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
-            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
-          </svg>
-          Sign in with Google
-        </button>
-        
-        <button type="button" id="instagram-signin-btn" class="button button-instagram button-block" data-loading-text="Signing in…">
-          <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px; vertical-align: middle;" fill="currentColor">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-          </svg>
-          Sign in with Instagram
-        </button>
-        
-        <p class="auth-switch">Need an account? <a href="/apply">Start Creating</a>.</p>
-      </div>
+        <p class="auth-footer">
+            Don't have an account? <a href="/signup">Sign up</a>
+        </p>
     </div>
-  </div>
-</section>
+</div>
 
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-  const loginForm = document.querySelector('form[action="/login"]');
-  const googleSignInBtn = document.getElementById('google-signin-btn');
-  const instagramSignInBtn = document.getElementById('instagram-signin-btn');
-  if (!loginForm) return;
-
-  // Check for OAuth errors in URL parameters (from Google redirect)
-  const urlParams = new URLSearchParams(window.location.search);
-  const errorParam = urlParams.get('error');
-  const errorDescription = urlParams.get('error_description');
-  
-  if (errorParam) {
-    console.error('[Login] OAuth error detected in URL:', errorParam, errorDescription);
+<style>
+    .auth-container { display: flex; align-items: center; justify-content: center; min-height: 80vh; padding: 1rem; }
+    .auth-card { background: #111; padding: 2.5rem; border-radius: 12px; width: 100%; max-width: 400px; border: 1px solid #333; }
+    .auth-title { text-align: center; margin-bottom: 2rem; font-weight: 600; font-size: 1.5rem; }
     
-    // Show error message based on error type
-    if (errorParam === 'access_denied') {
-      showError('Sign-in was cancelled. Please try again.');
-    } else if (errorParam.includes('rate') || errorParam.includes('quota') || 
-               errorDescription?.toLowerCase().includes('too many') ||
-               errorDescription?.toLowerCase().includes('rate limit')) {
-      showError('Too many sign-in attempts. Please wait 5-10 minutes and try again.');
-    } else if (errorDescription) {
-      showError(`Sign-in error: ${errorDescription}`);
-    } else {
-      showError('Sign-in failed. Please try again.');
-    }
+    .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.75rem; border-radius: 6px; font-weight: 500; cursor: pointer; border: none; font-size: 0.95rem; transition: all 0.2s; }
+    .btn-google { background: #fff; color: #333; gap: 0.75rem; border: 1px solid #ccc; }
+    .btn-google:hover { background: #f1f1f1; }
+    .btn-primary { background: #fff; color: #000; margin-top: 1rem; font-weight: 600; }
+    .btn-primary:hover { opacity: 0.9; }
     
-    // Clean up URL to remove error parameters
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
+    .divider { display: flex; align-items: center; margin: 1.5rem 0; color: #666; font-size: 0.85rem; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #333; }
+    .divider span { padding: 0 0.75rem; }
+    
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: #aaa; }
+    input { width: 100%; padding: 0.75rem; background: #222; border: 1px solid #333; color: #fff; border-radius: 6px; box-sizing: border-box; }
+    input:focus { outline: none; border-color: #666; }
+    
+    .alert-error { background: rgba(220, 38, 38, 0.1); color: #ef4444; padding: 0.75rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; border: 1px solid rgba(220, 38, 38, 0.2); }
+    .field-error { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; }
+    
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #888; }
+    .auth-footer a { color: #fff; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+</style>
 
-  // Track if we're processing any login to avoid duplicate processing
-  let isProcessingLogin = false;
-  let authStateListenerUnsubscribe = null;
-  let hasRedirectResult = false; // Track if we detected an OAuth redirect
-  let redirectResultCheckComplete = false; // Track when redirect result check is complete
-  let pendingAuthStateUser = null; // Store user if auth state changes before redirect check completes
-
-  // Set up onAuthStateChanged listener FIRST (it may fire immediately)
-  // But we'll delay processing until we've checked for redirect result
-  let unsubscribe = null;
-  try {
-    if (window.FirebaseAuth && typeof window.FirebaseAuth.onAuthStateChanged === 'function') {
-      console.log('[Login] Setting up onAuthStateChanged listener...');
-      
-      unsubscribe = await window.FirebaseAuth.onAuthStateChanged(async (user) => {
-        console.log('[Login] onAuthStateChanged fired:', user ? `User authenticated: ${user.uid}` : 'User signed out');
-        
-        // If redirect result check hasn't completed yet, store the user and wait
-        // BUT only if user is authenticated (we want to check if they came from redirect)
-        if (!redirectResultCheckComplete && user) {
-          console.log('[Login] Redirect result check not complete yet, storing user for later processing...');
-          pendingAuthStateUser = user;
-          return; // Wait for redirect check to complete
-        }
-        
-        // If redirect check is complete, process the auth state change
-        if (redirectResultCheckComplete) {
-          await processAuthStateChange(user);
-        }
-        // If user signed out before redirect check completes, process immediately
-        else if (!user) {
-          await processAuthStateChange(user);
-        }
-      });
-      
-      authStateListenerUnsubscribe = unsubscribe;
-      console.log('[Login] ✅ onAuthStateChanged listener set up');
-    }
-  } catch (authStateError) {
-    console.error('[Login] Error setting up onAuthStateChanged:', authStateError);
-  }
-
-  // Function to process auth state changes (called after redirect check completes)
-  async function processAuthStateChange(user) {
-    // Only process login if:
-    // 1. User is authenticated
-    // 2. We're not already processing a login
-    // 3. We detected a redirect result (meaning they just came back from OAuth)
-    if (user && !isProcessingLogin && hasRedirectResult) {
-      isProcessingLogin = true;
-      console.log('[Login] ✅ User authenticated via OAuth redirect, processing login...');
-          
-          try {
-            // Show loading state and user feedback
-            showInfoMessage('Processing authentication...');
-            
-        if (googleSignInBtn) {
-          googleSignInBtn.disabled = true;
-              googleSignInBtn.innerHTML = '<span>Processing…</span>';
-            }
-            if (instagramSignInBtn) {
-              instagramSignInBtn.disabled = true;
-              instagramSignInBtn.innerHTML = '<span>Processing…</span>';
-            }
-            
-          // Get ID token
-            const idToken = await user.getIdToken();
-            const email = user.email;
-          
-            console.log('[Login] Got Firebase token from auth state:', {
-            hasToken: !!idToken,
-            tokenLength: idToken ? idToken.length : 0,
-            email: email
-          });
-          
-          if (!idToken) {
-            throw new Error('Failed to get authentication token');
-          }
-            
-            // Update message
-            showInfoMessage('Signing you in...');
-          
-          // Populate email field
-          const emailInput = loginForm.querySelector('#email');
-          if (emailInput && email) {
-            emailInput.value = email;
-          }
-          
-            // Populate password field with dummy value (not used for OAuth Sign-In)
-          const passwordInput = loginForm.querySelector('#password');
-          if (passwordInput) {
-            // Determine provider from user's providerData
-            // Handle cases where providerData might be empty or malformed
-            let providerId = 'google.com'; // Default fallback
-            if (user.providerData && Array.isArray(user.providerData) && user.providerData.length > 0) {
-              const firstProvider = user.providerData[0];
-              if (firstProvider && firstProvider.providerId) {
-                providerId = firstProvider.providerId;
-              }
-            }
-            
-            if (providerId.includes('instagram')) {
-              passwordInput.value = 'instagram-sign-in';
-            } else {
-            passwordInput.value = 'google-sign-in';
-            }
-          }
-          
-          // Submit to backend - handleLogin will handle the response and redirect
-            console.log('[Login] 🔵 Calling handleLogin with auth state token...');
-            await handleLogin(idToken);
-          } catch (authError) {
-            console.error('[Login] ❌ Error processing authenticated user:', authError);
-          resetButtons();
-          showError('Failed to complete sign-in. Please try again.');
-            isProcessingLogin = false;
-          }
-    } else if (user && !hasRedirectResult) {
-      // User is authenticated but NOT returning from OAuth redirect
-      // This means they're already logged in and just visiting the login page
-      // We still need to ensure the session exists by calling handleLogin
-      if (redirectResultCheckComplete && !isProcessingLogin) {
-        isProcessingLogin = true;
-        console.log('[Login] User already authenticated (not from redirect), ensuring session exists...');
-        
-        try {
-          // Show loading state
-          showInfoMessage('Verifying your session...');
-          
-          // Get ID token to verify/create session
-          const idToken = await user.getIdToken();
-          if (!idToken) {
-            throw new Error('Failed to get authentication token');
-          }
-          
-          // Call handleLogin to ensure session exists (it will redirect to dashboard)
-          console.log('[Login] Calling handleLogin to ensure session exists...');
-          await handleLogin(idToken);
-        } catch (sessionError) {
-          console.error('[Login] Error ensuring session:', sessionError);
-          resetButtons();
-          showError('Failed to verify session. Please try signing in again.');
-          isProcessingLogin = false;
-        }
-      }
-    } else if (!user) {
-      // User signed out - reset processing flag
-      isProcessingLogin = false;
-      hasRedirectResult = false;
-    }
-  }
-
-  // Check for redirect result AFTER setting up listener
-  // This ensures we can process any pending auth state changes
-  try {
-    if (window.FirebaseAuth && typeof window.FirebaseAuth.getRedirectResult === 'function') {
-      console.log('[Login] Checking for redirect result...');
-      const redirectResult = await window.FirebaseAuth.getRedirectResult();
-      
-      console.log('[Login] Redirect result:', {
-        hasResult: !!redirectResult,
-        hasUser: !!(redirectResult && redirectResult.user),
-        providerId: redirectResult?.providerId,
-        operationType: redirectResult?.operationType
-      });
-      
-      if (redirectResult && redirectResult.user) {
-        hasRedirectResult = true;
-        console.log('[Login] ✅ Redirect result detected (provider:', redirectResult.providerId, ') - user returning from OAuth');
-        
-        // Also check if user is currently authenticated (might have been set by onAuthStateChanged)
-        const currentUser = await window.FirebaseAuth.getCurrentUser();
-        if (currentUser && currentUser.uid === redirectResult.user.uid) {
-          console.log('[Login] User is authenticated, will process login...');
-          // Process immediately since we have both redirect result and authenticated user
-          if (!isProcessingLogin) {
-            await processAuthStateChange(currentUser);
-          }
-        }
-      } else {
-        // Check if there was an error in the redirect
-        // Errors might be in the URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorParam = urlParams.get('error');
-        const errorDescription = urlParams.get('error_description');
-        
-        if (errorParam) {
-          console.error('[Login] OAuth error detected in URL:', errorParam, errorDescription);
-          
-          // Handle specific OAuth errors
-          if (errorParam === 'access_denied') {
-            showError('Sign-in was cancelled. Please try again.');
-          } else if (errorParam.includes('rate') || errorParam.includes('quota') || errorDescription?.toLowerCase().includes('too many')) {
-            showError('Too many sign-in attempts. Please wait a few minutes and try again.');
-          } else if (errorDescription) {
-            showError(`Sign-in error: ${errorDescription}`);
-          } else {
-            showError('Sign-in failed. Please try again.');
-          }
-          
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } else {
-          console.log('[Login] No redirect result - user visiting page normally');
-          
-          // Even if no redirect result, check if user is authenticated
-          // This handles cases where redirect result was consumed but user is still authenticated
-          const currentUser = await window.FirebaseAuth.getCurrentUser();
-          if (currentUser && redirectResultCheckComplete) {
-            console.log('[Login] No redirect result but user is authenticated - might be returning from OAuth');
-            // Check if this looks like an OAuth return (has providerData)
-            if (currentUser.providerData && currentUser.providerData.length > 0) {
-              const providerId = currentUser.providerData[0].providerId;
-              if (providerId === 'google.com' || providerId.includes('instagram')) {
-                console.log('[Login] User has OAuth provider data, treating as OAuth redirect');
-                hasRedirectResult = true;
-                if (!isProcessingLogin) {
-                  await processAuthStateChange(currentUser);
+<script type="module">
+    // Wait for FirebaseAuth to be available from layout
+    const waitForAuth = () => {
+        return new Promise((resolve) => {
+            if (window.FirebaseAuth) return resolve(window.FirebaseAuth);
+            const interval = setInterval(() => {
+                if (window.FirebaseAuth) {
+                    clearInterval(interval);
+                    resolve(window.FirebaseAuth);
                 }
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (redirectError) {
-    console.error('[Login] Error checking redirect result:', redirectError);
-    
-    // Check if it's a rate limiting error
-    if (redirectError.code === 'auth/too-many-requests' || 
-        redirectError.message?.toLowerCase().includes('too many requests') ||
-        redirectError.message?.toLowerCase().includes('quota')) {
-      showError('Too many sign-in attempts. Please wait a few minutes and try again.');
-    } else if (redirectError.code === 'auth/unauthorized-domain') {
-      showError('This domain is not authorized for Google Sign-In. Please contact support.');
-    } else {
-      // Don't show error for normal cases (user just visiting page)
-      console.log('[Login] Error checking redirect result (non-critical):', redirectError.message);
-    }
-  } finally {
-    // Mark redirect check as complete
-    redirectResultCheckComplete = true;
-    console.log('[Login] Redirect result check complete, hasRedirectResult:', hasRedirectResult);
-    
-    // If we stored a user while waiting, process it now
-    if (pendingAuthStateUser) {
-      if (hasRedirectResult) {
-        // User came from OAuth redirect - process login
-        console.log('[Login] Processing pending auth state user from redirect...');
-        await processAuthStateChange(pendingAuthStateUser);
-      } else {
-        // User is authenticated but NOT from redirect - they're already logged in
-        // Process to trigger redirect to dashboard
-        console.log('[Login] Pending user is authenticated but not from redirect - processing to redirect to dashboard');
-        await processAuthStateChange(pendingAuthStateUser);
-      }
-      pendingAuthStateUser = null;
-    }
-  }
-
-  // Function to handle login submission (used by both email/password and OAuth)
-  async function handleLogin(idToken) {
-    // Validate Firebase token is present
-    if (!idToken || typeof idToken !== 'string' || idToken.trim() === '') {
-      console.error('[Login] ❌ Firebase token is missing or invalid!');
-      showError('Authentication failed. Please try signing in again.');
-      return Promise.reject(new Error('Invalid token'));
-    }
-    
-    // Submit as JSON to ensure Firebase token is properly sent
-    const emailInput = loginForm.querySelector('#email');
-    const passwordInput = loginForm.querySelector('#password');
-    const nextInput = loginForm.querySelector('input[name="next"]');
-    const firebaseTokenInput = loginForm.querySelector('#firebase_token');
-    
-    // Also store token in hidden input field for redundancy
-    if (firebaseTokenInput) {
-      firebaseTokenInput.value = idToken;
-    }
-    
-    const payload = {
-      firebase_token: idToken,
-      email: emailInput?.value || '',
-      password: passwordInput?.value || '',
-      next: nextInput?.value || ''
-    };
-    
-    console.log('[Login] Submitting login request:', {
-      hasToken: !!idToken,
-      tokenLength: idToken ? idToken.length : 0,
-      tokenPreview: idToken ? `${idToken.substring(0, 30)}...` : 'MISSING',
-      hasEmail: !!payload.email,
-      hasPassword: !!payload.password,
-      hasNext: !!payload.next,
-      action: loginForm.action,
-      contentType: 'application/json'
-    });
-    
-    // Submit via POST as JSON
-    console.log('[Login] 🔵 Sending fetch request to:', loginForm.action);
-    
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
-    return fetch(loginForm.action, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      credentials: 'same-origin', // Include cookies for session
-      signal: controller.signal
-    })
-    .then(async response => {
-      console.log('[Login] 📥 Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        redirected: response.redirected,
-        url: response.url,
-        location: response.headers.get('location'),
-        contentType: response.headers.get('content-type')
-      });
-      
-      // Always expect JSON response from backend
-      const contentType = response.headers.get('content-type') || '';
-      
-      // Clear timeout on successful response
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        // Success response - should be JSON with redirect URL
-        if (contentType.includes('application/json')) {
-          try {
-            const data = await response.json();
-            console.log('[Login] Success response:', data);
-            
-            // Handle different response formats
-            let redirectUrl = null;
-            
-            if (data.success && data.redirect) {
-              redirectUrl = data.redirect;
-            } else if (data.redirect) {
-              // Some responses might just have redirect without success flag
-              redirectUrl = data.redirect;
-            } else if (data.url) {
-              // Fallback to url field
-              redirectUrl = data.url;
-            }
-            
-            if (redirectUrl) {
-              console.log('[Login] ✅ Redirecting to:', redirectUrl);
-              // Show success message
-              showInfoMessage('Sign-in successful! Redirecting...');
-              // Reset button state before redirect
-              resetButtons();
-              // Small delay to ensure session is set, then redirect
-              setTimeout(() => {
-                console.log('[Login] 🚀 Executing redirect to:', redirectUrl);
-                window.location.href = redirectUrl;
-              }, 150);
-            } else {
-              console.error('[Login] ❌ No redirect URL in response:', data);
-              // Try to determine redirect based on user role if available
-              const defaultRedirect = '/dashboard/talent';
-              console.warn('[Login] Using default redirect:', defaultRedirect);
-              resetButtons();
-              setTimeout(() => {
-                console.log('[Login] 🚀 Executing default redirect to:', defaultRedirect);
-                window.location.href = defaultRedirect;
-              }, 150);
-            }
-          } catch (e) {
-            console.error('[Login] ❌ Error parsing JSON response:', e);
-            // Even if JSON parsing fails, try to redirect to default dashboard
-            console.warn('[Login] Attempting default redirect after JSON parse error');
-            resetButtons();
-            setTimeout(() => {
-              console.log('[Login] 🚀 Executing fallback redirect');
-              window.location.href = '/dashboard/talent';
-            }, 150);
-          }
-        } else {
-          // Not JSON - might be HTML redirect or other format
-          console.warn('[Login] Non-JSON response received');
-          const locationHeader = response.headers.get('location');
-          const redirectUrl = locationHeader || '/dashboard/talent';
-          console.log('[Login] Attempting redirect to:', redirectUrl);
-          resetButtons();
-          setTimeout(() => {
-            console.log('[Login] 🚀 Executing non-JSON redirect');
-            window.location.href = redirectUrl;
-          }, 150);
-        }
-      } else {
-        // Error response - parse JSON error
-        if (contentType.includes('application/json')) {
-          try {
-            const errorData = await response.json();
-            console.error('[Login] Error response (JSON):', errorData);
-            
-            resetButtons();
-            
-            if (errorData.errors) {
-              // Show validation errors
-              const errorMessages = Object.values(errorData.errors).flat();
-              showError(errorMessages.join(', '));
-            } else if (errorData.error) {
-              showError(errorData.error);
-            } else {
-              showError('Authentication failed. Please try again.');
-            }
-          } catch (e) {
-            console.error('[Login] Error parsing JSON error response:', e);
-            showError('An error occurred. Please try again.');
-            resetButtons();
-          }
-        } else {
-          // HTML error response - show generic error
-          console.error('[Login] HTML error response received');
-          showError('Authentication failed. Please check your credentials and try again.');
-          resetButtons();
-        }
-      }
-    })
-    .catch(error => {
-      // Clear timeout if error occurs
-      clearTimeout(timeoutId);
-      
-      console.error('[Login] ❌ Network or submission error:', error);
-      console.error('[Login] Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-      
-      resetButtons();
-      
-      // Provide more specific error messages
-      if (error.name === 'AbortError') {
-        showError('Request timed out. Please check your connection and try again.');
-      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        showError('Network error. Please check your internet connection and try again.');
-      } else {
-        showError('An error occurred during sign-in. Please try again. If the problem persists, contact support.');
-      }
-      
-      // Reset processing flag on error
-      isProcessingLogin = false;
-      
-      return Promise.reject(error);
-    });
-  }
-
-  // Function to show error
-  function showError(message) {
-    let errorDisplay = loginForm.querySelector('.auth-error');
-    if (!errorDisplay) {
-      errorDisplay = document.createElement('div');
-      errorDisplay.className = 'auth-error field-error';
-      errorDisplay.style.cssText = 'margin-bottom: 1rem; padding: 0.75rem; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c33;';
-      loginForm.insertBefore(errorDisplay, loginForm.firstChild);
-    }
-    errorDisplay.textContent = message;
-    errorDisplay.style.display = 'block';
-    
-    // Hide info message if shown
-    const infoDisplay = loginForm.querySelector('.auth-info');
-    if (infoDisplay) {
-      infoDisplay.style.display = 'none';
-    }
-  }
-  
-  // Function to show info message
-  function showInfoMessage(message) {
-    let infoDisplay = loginForm.querySelector('.auth-info');
-    if (!infoDisplay) {
-      infoDisplay = document.createElement('div');
-      infoDisplay.className = 'auth-info';
-      infoDisplay.style.cssText = 'margin-bottom: 1rem; padding: 0.75rem; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; color: #1565c0;';
-      loginForm.insertBefore(infoDisplay, loginForm.firstChild);
-    }
-    infoDisplay.textContent = message;
-    infoDisplay.style.display = 'block';
-    
-    // Hide error message if shown
-    const errorDisplay = loginForm.querySelector('.auth-error');
-    if (errorDisplay) {
-      errorDisplay.style.display = 'none';
-    }
-  }
-
-  // Function to reset button states
-  function resetButtons() {
-    const submitButton = loginForm.querySelector('button[type="submit"]');
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = submitButton.dataset.originalText || 'Sign in';
-    }
-    if (googleSignInBtn) {
-      googleSignInBtn.disabled = false;
-      // Restore original button HTML with SVG icon
-      const originalHTML = googleSignInBtn.dataset.originalText || 
-        '<svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px; vertical-align: middle;"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Sign in with Google';
-      googleSignInBtn.innerHTML = originalHTML;
-    }
-    if (instagramSignInBtn) {
-      instagramSignInBtn.disabled = false;
-      const originalHTML = instagramSignInBtn.dataset.originalText || 
-        '<svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px; vertical-align: middle;" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>Sign in with Instagram';
-      instagramSignInBtn.innerHTML = originalHTML;
-    }
-  }
-
-  // Email/Password login
-  loginForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const email = loginForm.querySelector('#email').value.trim();
-    const password = loginForm.querySelector('#password').value;
-    const submitButton = loginForm.querySelector('button[type="submit"]');
-    const originalText = submitButton.textContent;
-
-    // Validate email/password for traditional login
-    if (!email || !password) {
-      alert('Please enter your email and password.');
-      return;
-    }
-
-    // Check if Firebase Auth is available
-    if (!window.FirebaseAuth || typeof window.FirebaseAuth.signIn !== 'function') {
-      console.error('[Login] Firebase Auth not initialized');
-      console.error('[Login] Firebase Auth available:', !!window.FirebaseAuth);
-      
-      // Provide more helpful error message
-      let errorMsg = 'Authentication system not ready. ';
-      if (!window.firebaseAuth) {
-        errorMsg += 'Firebase is initializing. Please wait a moment and try again.';
-      } else {
-        errorMsg += 'Please refresh the page and try again.';
-      }
-      
-      alert(errorMsg);
-      return;
-    }
-
-    try {
-      // Store original button text if not already stored
-      if (!submitButton.dataset.originalText) {
-        submitButton.dataset.originalText = submitButton.textContent;
-      }
-      
-      // Show loading state
-      submitButton.disabled = true;
-      submitButton.textContent = submitButton.dataset.loadingText || 'Signing in…';
-
-      // Sign in with Firebase
-      const userCredential = await window.FirebaseAuth.signIn(email, password);
-      
-      // Get ID token
-      const idToken = await userCredential.user.getIdToken();
-      
-      console.log('[Login] Email/password sign-in successful, got Firebase token:', {
-        hasToken: !!idToken,
-        tokenLength: idToken ? idToken.length : 0
-      });
-      
-      // Set flag to prevent onAuthStateChanged from processing this login
-      // (email/password login handles itself directly)
-      isProcessingLogin = true;
-      
-      // Submit form to backend
-      // Note: onAuthStateChanged will also fire, but isProcessingLogin flag prevents duplicate
-      await handleLogin(idToken);
-    } catch (error) {
-      console.error('[Login] Authentication error:', error);
-      
-      // Reset button state
-      submitButton.disabled = false;
-      submitButton.textContent = submitButton.dataset.originalText || originalText;
-
-      // Show error message
-      const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Authentication failed. Please try again.';
-      showError(errorMessage);
-    }
-  });
-
-  // Google Sign-In
-  if (googleSignInBtn) {
-    googleSignInBtn.addEventListener('click', async function() {
-      // Check if Firebase Auth is available
-      if (!window.FirebaseAuth) {
-        console.error('[Login] ❌ window.FirebaseAuth is not defined');
-        showError('Authentication system not ready. Please refresh the page and try again.');
-        return;
-      }
-      
-      if (typeof window.FirebaseAuth.signInWithGoogle !== 'function') {
-        console.error('[Login] ❌ signInWithGoogle function not available');
-        console.error('[Login] Available methods:', Object.keys(window.FirebaseAuth));
-        showError('Authentication system not ready. Please refresh the page and try again.');
-        return;
-      }
-      
-      // Check if Firebase auth instance is ready
-      let auth = null;
-      try {
-        auth = await window.FirebaseAuth.getAuth();
-        if (!auth) {
-          console.error('[Login] ❌ Firebase auth instance not available');
-          showError('Firebase authentication is not initialized. Please refresh the page.');
-          return;
-        }
-        console.log('[Login] ✅ Firebase auth instance ready');
-      } catch (authError) {
-        console.error('[Login] ❌ Error getting Firebase auth instance:', authError);
-        showError('Firebase authentication is not ready. Please refresh the page and try again.');
-        return;
-      }
-      
-      // Check Firebase configuration and initialization errors
-      if (window.firebaseConfigError) {
-        console.error('[Login] ❌ Firebase configuration error:', window.firebaseConfigError);
-        showError('Firebase is not properly configured. Please contact support or refresh the page.');
-        return;
-      }
-      
-      if (!window.firebaseApp) {
-        console.error('[Login] ❌ Firebase app not initialized');
-        showError('Firebase is not initialized. Please refresh the page.');
-        return;
-      }
-      
-      const config = window.firebaseApp.options;
-      if (!config || !config.apiKey || !config.authDomain || !config.projectId) {
-        console.error('[Login] ❌ Firebase configuration is incomplete:', {
-          hasApiKey: !!config?.apiKey,
-          hasAuthDomain: !!config?.authDomain,
-          hasProjectId: !!config?.projectId
+            }, 100);
         });
-        showError('Firebase is not properly configured. Please contact support.');
-        return;
-      }
+    };
 
-      // Check if popups might be blocked (heuristic check)
-      try {
-        const testPopup = window.open('', '_blank', 'width=1,height=1');
-        if (!testPopup || testPopup.closed || typeof testPopup.closed === 'undefined') {
-          console.warn('[Login] ⚠️ Popups may be blocked by browser');
-          // Don't show error yet - let Firebase handle it and show better error
-        } else {
-          testPopup.close();
-        }
-      } catch (e) {
-        // Popup check failed - continue anyway
-        console.warn('[Login] Could not test popup availability');
-      }
-
-      // Store original button HTML at the start (before any modifications)
-      if (!googleSignInBtn.dataset.originalText) {
-        googleSignInBtn.dataset.originalText = googleSignInBtn.innerHTML;
-      }
-      const originalText = googleSignInBtn.dataset.originalText;
-
-      try {
-        // Show loading state with clear message
-        googleSignInBtn.disabled = true;
-        googleSignInBtn.innerHTML = '<span>Redirecting to Google…</span>';
+    document.addEventListener('DOMContentLoaded', async () => {
+        const Auth = await waitForAuth();
+        const googleBtn = document.getElementById('google-signin-btn');
+        const emailForm = document.getElementById('login-form');
+        const emailSubmitBtn = document.getElementById('email-submit-btn');
         
-        // Show user feedback message
-        showInfoMessage('Redirecting to Google for authentication...');
-
-        // Sign in with Google
-        // Use redirect flow by default for better reliability (popups are often blocked/closed)
-        console.log('[Login] 🔵 Starting Google Sign-In (redirect flow for reliability)...');
-        await window.FirebaseAuth.signInWithGoogle(true); // true = use redirect
-        // Redirect will happen, so we won't return here
-        // The result will be handled by getRedirectResult on page load (see DOMContentLoaded handler above)
-        return;
-      } catch (error) {
-        console.error('[Login] Google Sign-In error caught:', error);
-        console.error('[Login] Error code:', error.code);
-        console.error('[Login] Error message:', error.message);
-        
-        // Reset button state first
-        resetButtons();
-
-        // Handle different error types
-        if (error.code === 'auth/popup-closed-by-user') {
-          // Popup closed - but user might have successfully authenticated
-          // Firebase sometimes closes the popup automatically after successful auth
-          console.log('[Login] Popup closed, checking if user is authenticated...');
-          
-          // Show loading state while checking
-          googleSignInBtn.disabled = true;
-          googleSignInBtn.innerHTML = '<span>Checking authentication...</span>';
-          
-          // Check multiple times with increasing delays (Firebase auth state can take time to update)
-          let authDetected = false;
-          const checkAuthState = async (attempt = 1, maxAttempts = 6) => {
-            try {
-              const currentUser = await window.FirebaseAuth.getCurrentUser();
-              console.log(`[Login] Auth check attempt ${attempt}/${maxAttempts}:`, currentUser ? 'User found' : 'No user');
-              
-              if (currentUser) {
-                authDetected = true;
-                console.log('[Login] ✅ User is authenticated, proceeding with login...');
-                
-                const idToken = await currentUser.getIdToken();
-                const email = currentUser.email;
-                
-                // Populate form fields
-                const emailInput = loginForm.querySelector('#email');
-                if (emailInput && email) {
-                  emailInput.value = email;
+        // Handle Google Sign In
+        if (googleBtn) {
+            googleBtn.addEventListener('click', async () => {
+                try {
+                    // Disable button logic
+                    googleBtn.style.opacity = '0.7';
+                    googleBtn.disabled = true;
+                    
+                    const result = await Auth.signInWithGoogle();
+                    if (result && result.user) {
+                        const token = await result.user.getIdToken();
+                        document.getElementById('firebase-token').value = token;
+                        // Clear email/password fields to ensure token mechanism is used
+                        document.getElementById('email').value = '';
+                        document.getElementById('password').value = '';
+                        emailForm.submit();
+                    }
+                } catch (error) {
+                    console.error('Google Sign In Error:', error);
+                    alert('Sign in failed: ' + (window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message));
+                    googleBtn.style.opacity = '1';
+                    googleBtn.disabled = false;
                 }
-                const passwordInput = loginForm.querySelector('#password');
-                if (passwordInput) {
-                  passwordInput.value = 'google-sign-in';
-                }
-                
-                // Show loading state
-                googleSignInBtn.disabled = true;
-                googleSignInBtn.innerHTML = '<span>Signing in…</span>';
-                
-                // Submit to backend
-                handleLogin(idToken);
-                return true; // Auth detected
-              }
-              
-              // If not found and more attempts left, wait and try again
-              if (attempt < maxAttempts) {
-                const delay = attempt * 300; // Increasing delay: 300ms, 600ms, 900ms, etc.
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return await checkAuthState(attempt + 1, maxAttempts);
-              }
-              
-              return false; // No auth detected after all attempts
-            } catch (checkError) {
-              console.error(`[Login] Error checking auth state (attempt ${attempt}):`, checkError);
-              if (attempt < maxAttempts) {
-                const delay = attempt * 300;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return await checkAuthState(attempt + 1, maxAttempts);
-              }
-              return false;
-            }
-          };
-          
-          // Also set up onAuthStateChanged listener as backup
-          let listenerTriggered = false;
-          let unsubscribeFn = null;
-          
-          try {
-            // onAuthStateChanged might return a promise, so await it
-            const unsubscribeResult = await window.FirebaseAuth.onAuthStateChanged(async (user) => {
-              if (user && !listenerTriggered && !authDetected) {
-                listenerTriggered = true;
-                authDetected = true;
-                
-                // Unsubscribe if function exists
-                if (unsubscribeFn && typeof unsubscribeFn === 'function') {
-                  unsubscribeFn();
-                }
-                
-                console.log('[Login] ✅ User authenticated via onAuthStateChanged, proceeding...');
-                
-                const idToken = await user.getIdToken();
-                const email = user.email;
-                
-                // Populate form fields
-                const emailInput = loginForm.querySelector('#email');
-                if (emailInput && email) {
-                  emailInput.value = email;
-                }
-                const passwordInput = loginForm.querySelector('#password');
-                if (passwordInput) {
-                  passwordInput.value = 'google-sign-in';
-                }
-                
-                // Show loading state
-                googleSignInBtn.disabled = true;
-                googleSignInBtn.innerHTML = '<span>Signing in…</span>';
-                
-                // Submit to backend
-                handleLogin(idToken);
-              }
             });
-            
-            // Store unsubscribe function (might be returned directly or as promise result)
-            unsubscribeFn = unsubscribeResult;
-          } catch (listenerError) {
-            console.warn('[Login] Could not set up onAuthStateChanged listener:', listenerError);
-          }
-          
-          // Start checking auth state
-          const authFound = await checkAuthState();
-          
-          // Clean up listener if auth not found
-          if (!authFound && !authDetected) {
-            setTimeout(() => {
-              if (!authDetected) {
-                if (unsubscribeFn && typeof unsubscribeFn === 'function') {
-                  unsubscribeFn();
-                }
-                resetButtons();
-                console.log('[Login] No authentication detected after popup closure - user likely closed popup before completing sign-in');
-              }
-            }, 2000);
-          }
-        } else if (error.code === 'auth/popup-blocked') {
-          // Popup was blocked by browser - try redirect flow
-          console.error('[Login] Popup blocked by browser, attempting redirect flow');
-          try {
-            // Try redirect flow as fallback
-            await window.FirebaseAuth.signInWithGoogle(true); // true = use redirect
-            // If redirect succeeds, we'll be redirected away, so no need to show error
-            console.log('[Login] Redirect flow initiated, user will be redirected');
-            return; // Exit early, redirect will happen
-          } catch (redirectError) {
-            console.error('[Login] Redirect flow also failed:', redirectError);
-            showError('Popup was blocked and redirect failed. Please allow popups for this site or check your browser settings. You can also try refreshing the page.');
-          }
-        } else if (error.code === 'auth/unauthorized-domain') {
-          // Domain not authorized in Firebase
-          console.error('[Login] Unauthorized domain error');
-          showError('This domain is not authorized for Google Sign-In. Please contact support or try from an authorized domain.');
-        } else if (error.code === 'auth/network-request-failed') {
-          // Network error
-          console.error('[Login] Network error during Google Sign-In');
-          showError('Network error. Please check your internet connection and try again.');
-        } else if (error.code === 'auth/too-many-requests') {
-          // Rate limiting error
-          console.error('[Login] Too many requests error');
-          showError('Too many sign-in attempts. Please wait a few minutes and try again.');
-        } else if (error.code === 'auth/quota-exceeded') {
-          // Quota exceeded
-          console.error('[Login] Quota exceeded error');
-          showError('Service temporarily unavailable due to high demand. Please try again in a few minutes.');
-        } else if (error.message && error.message.includes('Too many requests')) {
-          // Catch "Too many requests" in error message (may not have code)
-          console.error('[Login] Too many requests detected in error message');
-          showError('Too many sign-in attempts. Please wait a few minutes and try again.');
-        } else if (error.code === 'auth/operation-not-allowed') {
-          // Google provider not enabled
-          console.error('[Login] Google Sign-In not enabled');
-          showError('Google Sign-In is not enabled. Please contact support.');
-        } else if (error.code === 'auth/invalid-credential') {
-          // Invalid credentials
-          console.error('[Login] Invalid credential error');
-          showError('Authentication failed. Please try again.');
-        } else {
-          // Other errors - show user-friendly error message
-          const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Google Sign-In failed. Please try again.';
-          console.error('[Login] Unexpected Google Sign-In error:', error.code, errorMessage);
-          
-          // Provide more specific error messages based on error code
-          let userFriendlyMessage = errorMessage;
-          if (error.code && error.code.startsWith('auth/')) {
-            userFriendlyMessage = 'Authentication error occurred. Please try again or contact support if the problem persists.';
-          }
-          
-          showError(userFriendlyMessage);
         }
-      }
+        
+        // Handle Email/Password Sign In (Client -> Firebase -> Server)
+        if (emailForm) {
+            emailForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                if (!document.getElementById('firebase-token').value) {
+                    // If no token yet (normal email flow), authenticate with Firebase first
+                    try {
+                        emailSubmitBtn.style.opacity = '0.7';
+                        emailSubmitBtn.disabled = true;
+                        emailSubmitBtn.textContent = 'Signing in...';
+                        
+                        const credential = await Auth.signIn(email, password);
+                        const token = await credential.user.getIdToken();
+                        
+                        document.getElementById('firebase-token').value = token;
+                        // Now submit form with token
+                        emailForm.submit();
+                    } catch (error) {
+                        console.error('Email Sign In Error:', error);
+                        // Make visible alert instead of blocking alert
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'alert alert-error';
+                        errorDiv.textContent = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message;
+                        
+                        const existingAlert = document.querySelector('.alert-error');
+                        if (existingAlert) existingAlert.remove();
+                        
+                        document.querySelector('.auth-card').insertBefore(errorDiv, document.querySelector('.auth-section'));
+                        
+                        emailSubmitBtn.style.opacity = '1';
+                        emailSubmitBtn.disabled = false;
+                        emailSubmitBtn.textContent = 'Sign In';
+                    }
+                } else {
+                    // Token already present, just submit
+                    emailForm.submit();
+                }
+            });
+        }
     });
-  }
-
-  // Instagram Sign-In
-  if (instagramSignInBtn) {
-    instagramSignInBtn.addEventListener('click', async function() {
-      // Check if Firebase Auth is available
-      if (!window.FirebaseAuth) {
-        console.error('[Login] ❌ window.FirebaseAuth is not defined');
-        showError('Authentication system not ready. Please refresh the page and try again.');
-        return;
-      }
-      
-      if (typeof window.FirebaseAuth.signInWithInstagram !== 'function') {
-        console.error('[Login] ❌ signInWithInstagram function not available');
-        console.error('[Login] Available methods:', Object.keys(window.FirebaseAuth));
-        showError('Authentication system not ready. Please refresh the page and try again.');
-        return;
-      }
-      
-      // Check if Firebase auth instance is ready
-      try {
-        const auth = await window.FirebaseAuth.getAuth();
-        if (!auth) {
-          console.error('[Login] ❌ Firebase auth instance not available');
-          showError('Firebase authentication is not initialized. Please refresh the page.');
-          return;
-        }
-        console.log('[Login] ✅ Firebase auth instance ready');
-      } catch (authError) {
-        console.error('[Login] ❌ Error getting Firebase auth instance:', authError);
-        showError('Firebase authentication is not ready. Please refresh the page and try again.');
-        return;
-      }
-
-      // Store original button HTML at the start (before any modifications)
-      if (!instagramSignInBtn.dataset.originalText) {
-        instagramSignInBtn.dataset.originalText = instagramSignInBtn.innerHTML;
-      }
-      const originalText = instagramSignInBtn.dataset.originalText;
-
-      try {
-        // Show loading state
-        instagramSignInBtn.disabled = true;
-        instagramSignInBtn.innerHTML = '<span>' + (instagramSignInBtn.dataset.loadingText || 'Signing in…') + '</span>';
-
-        // Sign in with Instagram
-        // Use redirect flow by default for better reliability (popups are often blocked/closed)
-        console.log('[Login] 🔵 Starting Instagram Sign-In (redirect flow for reliability)...');
-        await window.FirebaseAuth.signInWithInstagram(true); // true = use redirect
-        // Redirect will happen, so we won't return here
-        // The result will be handled by getRedirectResult on page load (see DOMContentLoaded handler above)
-        return;
-      } catch (error) {
-        // Reset button state first
-        resetButtons();
-
-        // Handle different error types
-        if (error.code === 'auth/popup-closed-by-user') {
-          console.log('[Login] Popup closed, checking if user is authenticated...');
-          
-          // Show loading state while checking
-          instagramSignInBtn.disabled = true;
-          instagramSignInBtn.innerHTML = '<span>Checking authentication...</span>';
-          
-          // Check auth state similar to Google
-          let authDetected = false;
-          const checkAuthState = async (attempt = 1, maxAttempts = 6) => {
-            try {
-              const currentUser = await window.FirebaseAuth.getCurrentUser();
-              console.log(`[Login] Auth check attempt ${attempt}/${maxAttempts}:`, currentUser ? 'User found' : 'No user');
-              
-              if (currentUser) {
-                authDetected = true;
-                console.log('[Login] ✅ User is authenticated, proceeding with login...');
-                
-                const idToken = await currentUser.getIdToken();
-                const email = currentUser.email;
-                
-                // Populate form fields
-                const emailInput = loginForm.querySelector('#email');
-                if (emailInput && email) {
-                  emailInput.value = email;
-                }
-                const passwordInput = loginForm.querySelector('#password');
-                if (passwordInput) {
-                  passwordInput.value = 'instagram-sign-in';
-                }
-                
-                // Show loading state
-                instagramSignInBtn.disabled = true;
-                instagramSignInBtn.innerHTML = '<span>Signing in…</span>';
-                
-                // Submit to backend
-                handleLogin(idToken);
-                return true;
-              }
-              
-              if (attempt < maxAttempts) {
-                const delay = attempt * 300;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return await checkAuthState(attempt + 1, maxAttempts);
-              }
-              
-              return false;
-            } catch (checkError) {
-              console.error(`[Login] Error checking auth state (attempt ${attempt}):`, checkError);
-              if (attempt < maxAttempts) {
-                const delay = attempt * 300;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return await checkAuthState(attempt + 1, maxAttempts);
-              }
-              return false;
-            }
-          };
-          
-          const authFound = await checkAuthState();
-          
-          if (!authFound && !authDetected) {
-            setTimeout(() => {
-              if (!authDetected) {
-                resetButtons();
-                console.log('[Login] No authentication detected after popup closure');
-              }
-            }, 2000);
-          }
-        } else if (error.code === 'auth/popup-blocked') {
-          console.error('[Login] Popup blocked by browser, attempting redirect flow');
-          try {
-            await window.FirebaseAuth.signInWithInstagram(true);
-            console.log('[Login] Redirect flow initiated, user will be redirected');
-            return;
-          } catch (redirectError) {
-            console.error('[Login] Redirect flow also failed:', redirectError);
-            showError('Popup was blocked and redirect failed. Please allow popups for this site or check your browser settings.');
-          }
-        } else if (error.code === 'auth/unauthorized-domain') {
-          console.error('[Login] Unauthorized domain error');
-          showError('This domain is not authorized for Instagram Sign-In. Please contact support.');
-        } else if (error.code === 'auth/network-request-failed') {
-          console.error('[Login] Network error during Instagram Sign-In');
-          showError('Network error. Please check your internet connection and try again.');
-        } else {
-          const errorMessage = window.getFirebaseErrorMessage ? window.getFirebaseErrorMessage(error) : error.message || 'Instagram Sign-In failed. Please try again.';
-          console.error('[Login] Unexpected Instagram Sign-In error:', errorMessage);
-          showError(errorMessage);
-        }
-      }
-    });
-  }
-
-  // Cleanup: Unsubscribe from auth state listener when page unloads
-  window.addEventListener('beforeunload', function() {
-    if (authStateListenerUnsubscribe && typeof authStateListenerUnsubscribe === 'function') {
-      console.log('[Login] Cleaning up auth state listener');
-      authStateListenerUnsubscribe();
-    }
-  });
-});
 </script>

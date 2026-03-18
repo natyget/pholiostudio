@@ -9,24 +9,50 @@ const config = require('./config');
 const knex = require('./db/knex');
 const { attachLocals } = require('./middleware/context');
 const { initializeFirebaseAdmin } = require('./lib/firebase-admin');
+const { errorHandler } = require('./middleware/error-handler');
+const cookieParser = require('cookie-parser');
 
 // +++ 1. ADD THIS LINE +++
 const ejsLayouts = require('express-ejs-layouts');
 
 const authRoutes = require('./routes/auth');
-const applyRoutes = require('./routes/apply');
-const dashboardRoutes = require('./routes/dashboard');
-const portfolioRoutes = require('./routes/portfolio');
+const onboardingRoutes = require('./routes/onboarding'); // Phase 2: Onboarding API
+const dashboardTalentRoutes = require('./routes/talent/index');
 const pdfRoutes = require('./routes/pdf');
-const uploadRoutes = require('./routes/upload');
 const agencyRoutes = require('./routes/agency');
 const agencyApiRoutes = require('./routes/api/agency');
+const agencyOverviewRoutes = require('./routes/api/agency-overview')
 const proRoutes = require('./routes/pro');
-const partnersRoutes = require('./routes/partners');
 const stripeRoutes = require('./routes/stripe');
-const onboardingRoutes = require('./routes/onboarding');
+const chatRoutes = require('./routes/chat');
+const scoutRoutes = require('./routes/scout');
+const apiRoutes = require('./routes/api');
+const publicRoutes = require('./routes/api/public');
+
 
 const app = express();
+
+const cors = require('cors');
+
+// Determine allowed origins based on environment
+const allowedOrigins = [
+  'http://localhost:5173',  // Vite dev server (React SPA)
+  'http://localhost:3001',  // Next.js dev server (Landing page)
+  'http://localhost:3002',  // Next.js dev fallback
+];
+
+// Add production origins if in production
+if (process.env.NODE_ENV === 'production') {
+  allowedOrigins.push(
+    'https://www.pholio.studio',      // Marketing site (Next.js)
+    'https://app.pholio.studio'       // App site (this server)
+  );
+}
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 // Handle unhandled promise rejections gracefully (especially for session and database errors)
 // This prevents crashes from connection errors in serverless environments
@@ -223,6 +249,7 @@ app.use(helmet({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 // Stripe webhook route must be registered BEFORE express.json() middleware
 // because it needs raw body for signature verification
@@ -293,7 +320,9 @@ const sessionMiddleware = session({
     httpOnly: true,
     sameSite: 'lax',
     secure: config.nodeEnv === 'production',
-    maxAge: 1000 * 60 * 60 * 24 * 7
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+    // Allow cookies across subdomains (www.pholio.studio and app.pholio.studio)
+    domain: config.nodeEnv === 'production' ? '.pholio.studio' : undefined
   },
   // Custom error handler for session store operations
   // This prevents session store errors from crashing the app
@@ -352,9 +381,8 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: rateLimitKeyGenerator
-  // Note: We don't disable validation because express-rate-limit v7 requires req.ip
-  // Our middleware above ensures req.ip is always set before this runs
+  keyGenerator: rateLimitKeyGenerator,
+  validate: { ipAddress: false }
 });
 
 const uploadLimiter = rateLimit({
@@ -362,192 +390,16 @@ const uploadLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: rateLimitKeyGenerator
-  // Note: We don't disable validation because express-rate-limit v7 requires req.ip
-  // Our middleware above ensures req.ip is always set before this runs
+  keyGenerator: rateLimitKeyGenerator,
+  validate: { ipAddress: false }
 });
 
 app.use(['/login', '/signup'], authLimiter);
 app.use('/upload', uploadLimiter);
 
-// Route handlers - must come BEFORE static middleware to prevent static HTML files from overriding routes
-app.get('/', async (req, res, next) => {
-  try {
-    // Load Elara Keats data for homepage demo (main featured talent)
-    // Use fallback data if database query fails
-    let elaraProfile = null;
-    let elaraImages = [];
 
-    try {
-      elaraProfile = await knex('profiles').where({ slug: 'elara-k' }).first();
-      if (elaraProfile) {
-        elaraImages = await knex('images').where({ profile_id: elaraProfile.id }).orderBy('sort', 'asc');
-      }
-    } catch (dbError) {
-      console.error('[Homepage] Database error loading Elara profile:', dbError.message);
-      // Continue with fallback data below
-    }
 
-    // Load additional talent profiles for floating cards (limit to 4)
-    // Use database-agnostic random ordering
-    let floatingTalents = [];
-    let floatingTalentsWithImages = [];
 
-    try {
-      if (config.dbClient === 'pg') {
-        floatingTalents = await knex('profiles')
-          .whereNot({ slug: 'elara-k' })
-          .whereNotNull('hero_image_path')
-          .limit(4)
-          .orderByRaw('RANDOM()');
-      } else {
-        // SQLite: use a simple approach - get all and shuffle in JS, or just order by id
-        floatingTalents = await knex('profiles')
-          .whereNot({ slug: 'elara-k' })
-          .whereNotNull('hero_image_path')
-          .limit(10)
-          .orderBy('created_at', 'desc');
-        // Shuffle and take first 4
-        floatingTalents = floatingTalents.sort(() => Math.random() - 0.5).slice(0, 4);
-      }
-
-      // For each floating talent, get their first image
-      floatingTalentsWithImages = await Promise.all(
-        floatingTalents.map(async (talent) => {
-          try {
-            const images = await knex('images')
-              .where({ profile_id: talent.id })
-              .orderBy('sort', 'asc')
-              .limit(1);
-            return {
-              ...talent,
-              hero_image: images.length > 0 ? images[0].path : talent.hero_image_path
-            };
-          } catch (imgError) {
-            console.warn(`[Homepage] Error loading images for talent ${talent.id}:`, imgError.message);
-            return {
-              ...talent,
-              hero_image: talent.hero_image_path
-            };
-          }
-        })
-      );
-    } catch (err) {
-      console.warn('[Homepage] Error loading floating talents:', err.message);
-      // Will use fallback data below
-      floatingTalentsWithImages = [];
-    }
-
-    // Set in res.locals so layout can access it
-    res.locals.isHomepage = true;
-    res.locals.currentPage = 'home';
-
-    // Ensure elaraProfile has all required fields for transformation hero
-    const elaraProfileForHero = elaraProfile || {
-      first_name: 'Elara',
-      last_name: 'Keats',
-      city: 'Los Angeles, CA',
-      slug: 'elara-k',
-      bio_raw: 'hi!!!\n\ni saw on insta you guys are looking for new faces?? im elara keats and im a model based in LA (but i can travel anywhere, i have a passport!!) im really looking to get into more editorial and runway work.\n\na bit about me:\n\nim 5\'11"\nmy measurements are 32-25-35\nmy shoe is a 9\ni have brown hair/green eyes.\n\nMy insta is @elara.k -- i post most of my new work there. im a super hard worker and everyone says im professional, i have a background in some smaller campaigns. i was with [Agency Name] last year but left, it wasnt a good fit.\n\nI put my best photos (some are digitals my friend took, some are from real shoots but they are not edited yet) in this google drive. hope you can see them?\n\nhere is the link:\n\nhttps://www.google.com/search?q=https://drive.google.com/drive/folders/1aBcD-THIS-IS-A-MESSY-LINK-xyz\n\nI also have a portfolio on a wix site i made, i think this is the link:\n\nhttps://www.google.com/search?q=elara-portfolio.wixsite.com/mysite\n\nLet me know what you think! Thx so much!! 🙏 I\'m free for a meeting basically any time next week.\n\n-Elara K.',
-      bio_curated: 'Elara Keats is an emerging model based in Los Angeles with a strong foundation in editorial and runway work. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns. With brown hair and green eyes, Elara\'s versatile look has made her a sought-after talent for diverse creative projects. Her professional approach and extensive experience in smaller campaigns demonstrate her commitment to excellence. Elara is available for travel and actively seeking opportunities in editorial and runway work, bringing dedication and professionalism to every project.',
-      hero_image_path: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=2000&q=80',
-      height_cm: 180,
-      measurements: '32-25-35'
-    };
-
-    res.render('public/home', {
-      title: 'Pholio — AI-Curated Portfolios for Talent & Agencies',
-      layout: 'layout',
-      currentPage: 'home',
-      elaraProfile: elaraProfileForHero,
-      elaraImages: elaraImages.length > 0 ? elaraImages : [],
-      floatingTalents: floatingTalentsWithImages.length > 0 ? floatingTalentsWithImages : [
-        {
-          first_name: 'Aiko',
-          last_name: 'Ren',
-          city: 'Tokyo / New York',
-          hero_image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
-          slug: 'aiko-ren'
-        },
-        {
-          first_name: 'Bianca',
-          last_name: 'Cole',
-          city: 'Los Angeles',
-          hero_image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
-          slug: 'bianca-cole'
-        },
-        {
-          first_name: 'Cruz',
-          last_name: 'Vega',
-          city: 'Mexico City',
-          hero_image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
-          slug: 'cruz-vega'
-        },
-        {
-          first_name: 'Daphne',
-          last_name: 'Noor',
-          city: 'Amsterdam',
-          hero_image: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=80',
-          slug: 'daphne-noor'
-        }
-      ],
-      isHomepage: true // Keep this for the view template
-    });
-  } catch (error) {
-    console.error('[Homepage Route] Error:', error);
-    return next(error);
-  }
-});
-
-// Render static pages using EJS with universal header
-['features', 'pricing', 'press', 'legal'].forEach((page) => {
-  app.get(`/${page}`, (req, res) => {
-    res.locals.currentPage = page;
-    const pageTitle = page.charAt(0).toUpperCase() + page.slice(1);
-    res.render(`public/${page}`, {
-      title: pageTitle + ' — Pholio',
-      layout: 'layout',
-      currentPage: page
-    });
-  });
-});
-
-// Pro page with PDF themes data
-app.get('/pro', async (req, res) => {
-  try {
-    const { getAllThemes, getFreeThemes, getProThemes } = require('./lib/themes');
-    const allThemes = getAllThemes();
-    const freeThemes = getFreeThemes();
-    const proThemes = getProThemes();
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-
-    res.locals.currentPage = 'pro';
-    res.render('public/pro-preview', {
-      title: 'Studio+ — Pholio',
-      layout: 'layout',
-      currentPage: 'pro',
-      allThemes,
-      freeThemes,
-      proThemes,
-      baseUrl,
-      demoSlug: 'elara-k'
-    });
-  } catch (error) {
-    console.error('[Pro Route] Error:', error);
-    // Fallback to basic pro page if theme loading fails
-    res.locals.currentPage = 'pro';
-    res.render('public/pro-preview', {
-      title: 'Studio+ — Pholio',
-      layout: 'layout',
-      currentPage: 'pro',
-      allThemes: {},
-      freeThemes: [],
-      proThemes: [],
-      baseUrl: `${req.protocol}://${req.get('host')}`,
-      demoSlug: 'elara-k'
-    });
-  }
-});
 
 // Migration endpoint (protected by secret token)
 // Call this once after deployment to set up database tables
@@ -634,19 +486,48 @@ app.get('/api/migrate/status', async (req, res) => {
   }
 });
 
+// Authentication routes (early for session establishment)
 app.use('/', authRoutes);
-app.use('/', applyRoutes);
-app.use('/', dashboardRoutes);
-app.use('/', portfolioRoutes);
+
+// High-frequency API routes (chat/scout - used in onboarding flow)
+// These are moved higher to reduce middleware processing overhead
+app.use('/', chatRoutes);
+app.use('/', scoutRoutes);
+
+// API Routes
+app.use('/api', apiRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/', agencyApiRoutes); // Agency API routes (includes /api/agency/* endpoints)
+app.use('/', agencyOverviewRoutes)
+
+
+// Application/onboarding routes
+app.use('/', onboardingRoutes); // Phase 2: Onboarding API Routes
+
+// Onboarding redirect middleware (applied to dashboard routes)
+const { requireOnboardingComplete } = require('./middleware/onboarding-redirect');
+const { requireProfileUnlocked } = require('./middleware/require-profile-unlocked');
+
+// Dashboard routes (protected by onboarding middleware)
+app.use('/', requireOnboardingComplete, dashboardTalentRoutes);
+// Agency dashboard routes now handled by agencyRoutes below
+
+// Public portfolio routes
+
+
+// PDF generation routes (public viewing routes don't need unlock check)
+// Locking is handled per-route for customization endpoints that already have requireRole('TALENT')
 app.use('/', pdfRoutes);
-app.use('/', uploadRoutes);
+
+// File upload routes
+
+
+// Agency and Pro routes
 app.use('/', agencyRoutes);
-app.use('/', agencyApiRoutes);
 app.use('/', proRoutes);
-app.use('/', partnersRoutes);
+
+// Payment routes (Stripe)
 app.use('/stripe', stripeRoutes);
-app.use('/onboarding', onboardingRoutes);
-app.use('/api/user', require('./routes/api/user'));
 
 // Static file serving - AFTER routes so routes take precedence over static HTML files
 // Disable caching for CSS/JS in development
@@ -667,8 +548,10 @@ app.use(express.static(path.join(__dirname, '..', 'public'), staticOptions));
 // Only serve uploads directory if not in serverless environment
 // In serverless, uploads should be served via CDN or cloud storage
 // Netlify will serve static files from the public directory automatically
-if (!config.isServerless) {
-  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+if (!config.isServerless && (config.nodeEnv !== 'production' || process.env.SERVE_UPLOADS === 'true')) {
+  // Use config.uploadsDir to match where files are actually stored
+  // This ensures consistency between where files are saved and where they're served
+  app.use('/uploads', express.static(config.uploadsDir));
 } else {
   // In serverless, files in /tmp are temporary and not accessible via HTTP
   // For production, configure cloud storage (S3, Netlify Blob, etc.)
@@ -681,104 +564,56 @@ if (!config.isServerless) {
   });
 }
 
-app.use((req, res) => {
-  if (req.accepts('html')) {
-    // Tell 404 page to use the old 'layout' file, not the dashboard
-    return res.status(404).render('errors/404', {
-      title: 'Not found',
-      layout: 'layout' // Use simple layout for error
-    });
+// Serve React SPA only for specific app routes (not all routes)
+// This allows the app to be served from a subdomain (app.pholio.studio)
+// while marketing pages are served from a separate domain (www.pholio.studio)
+app.get([
+  '/dashboard',
+  '/dashboard{/*path}',
+  '/onboarding',
+  '/onboarding{/*path}',
+  '/reveal'
+], (req, res) => {
+  // Development: Redirect to Vite dev server
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'staging') {
+    return res.redirect('http://localhost:5173' + req.originalUrl);
   }
+
+  // Production: Serve React app
+  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard-app', 'index.html'));
+});
+
+// Root route handler - Fixes 404 on localhost:3000
+app.get('/', (req, res) => {
+  // If request accepts HTML (browser), redirect to landing page
+  if (req.accepts('html')) {
+    if (process.env.NODE_ENV !== 'production') {
+      return res.redirect('http://localhost:3001'); // Redirect to Next.js Landing Page
+    }
+    // In production, we might want to redirect to the main site or dashboard
+    return res.redirect('https://www.pholio.studio');
+  }
+  
+  // API clients get a status message
+  return res.json({ 
+    status: 'online', 
+    service: 'Pholio API',
+    version: '1.0.0' 
+  });
+});
+
+// Catch-all for unknown routes → 404
+app.use((req, res) => {
+  // For HTML requests, return 404 page
+  if (req.accepts('html')) {
+    return res.status(404).send('404 Not Found');
+  }
+  // For API/JSON requests, return JSON error
   return res.status(404).json({ error: 'Not found' });
 });
 
-app.use((err, req, res, next) => {
-  // Log detailed error information
-  console.error('[Error Handler]', {
-    message: err.message,
-    stack: err.stack,
-    code: err.code,
-    name: err.name,
-    url: req.url,
-    method: req.method
-  });
-
-  if (res.headersSent) {
-    return next(err);
-  }
-
-  // Check if it's a missing tables error (needs migrations)
-  const isMissingTablesError = err.code === '42P01' ||
-    (err.message && (
-      err.message.includes('relation') && err.message.includes('does not exist') ||
-      err.message.includes('table') && err.message.includes('does not exist')
-    ));
-
-  // Check if it's a database connection error
-  const isDatabaseError = err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' ||
-    err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET' ||
-    err.code === '42P01' || // PostgreSQL: relation does not exist
-    err.code === '42P07' || // PostgreSQL: relation already exists
-    err.code === '3D000' || // PostgreSQL: database does not exist
-    err.code === '28P01' || // PostgreSQL: authentication failed
-    (err.message && (
-      err.message.includes('DATABASE_URL') ||
-      err.message.includes('database') ||
-      err.message.includes('connect') ||
-      err.message.includes('connection') ||
-      err.message.includes('Cannot find module \'pg\'') ||
-      err.message.includes('Knex: run') ||
-      (err.message.includes('relation') && err.message.includes('does not exist'))
-    ));
-
-  // In production, show generic error; in development, show more details
-  // BUT: Always show database connection errors with helpful messages
-  const isDevelopment = config.nodeEnv !== 'production';
-  const showErrorDetails = isDevelopment || isDatabaseError;
-
-  const errorDetails = showErrorDetails ? {
-    message: err.message,
-    code: err.code,
-    name: err.name,
-    stack: isDevelopment ? err.stack : undefined,
-    migrationRequired: isMissingTablesError
-  } : null;
-
-  if (req.accepts('html')) {
-    // Tell 500 page to use the old 'layout' file
-    let title = 'Server error';
-    if (isMissingTablesError) {
-      title = 'Database Setup Required';
-    } else if (isDatabaseError) {
-      title = 'Database Connection Error';
-    }
-
-    return res.status(500).render('errors/500', {
-      title: title,
-      layout: 'layout', // Use simple layout for error
-      error: errorDetails,
-      isDevelopment: showErrorDetails,
-      isDatabaseError: isDatabaseError
-    });
-  }
-
-  // JSON error response
-  if (isMissingTablesError) {
-    return res.status(500).json({
-      error: 'Database setup required',
-      message: 'Database tables do not exist. Please run migrations to set up the database.',
-      code: err.code,
-      migrationRequired: true,
-      instructions: 'Call POST /api/migrate to run database migrations.'
-    });
-  }
-
-  return res.status(500).json({
-    error: isDatabaseError ? 'Database connection error' : 'Server error',
-    message: showErrorDetails ? err.message : undefined,
-    code: showErrorDetails ? err.code : undefined
-  });
-});
+// Use centralized error handler
+app.use(errorHandler);
 
 module.exports = app;
 

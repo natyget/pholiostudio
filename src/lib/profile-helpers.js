@@ -143,6 +143,23 @@ function convertLbsToKg(lbs) {
   return Math.round((lbs / 2.20462) * 10) / 10; // Round to 1 decimal place
 }
 
+/**
+ * Convert cm to feet and inches string
+ * @param {number} cm - Height in cm
+ * @returns {string} Height string (e.g. 5' 10")
+ */
+function toFeetInches(cm) {
+  if (!cm || isNaN(cm)) return '';
+  const realFeet = (cm * 0.393700) / 12;
+  const feet = Math.floor(realFeet);
+  const inches = Math.round((realFeet - feet) * 12);
+  // Handle edge case where rounding inches bumps to next foot (e.g. 5' 12" -> 6' 0")
+  if (inches === 12) {
+    return `${feet + 1}' 0"`;
+  }
+  return `${feet}' ${inches}"`;
+}
+
 module.exports = {
   calculateAge,
   parseSocialMediaHandle,
@@ -150,6 +167,7 @@ module.exports = {
   formatLanguages,
   formatAvailability,
   convertKgToLbs,
-  convertLbsToKg
+  convertLbsToKg,
+  toFeetInches
 };
 

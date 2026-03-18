@@ -19,6 +19,11 @@ async function loadProfile(slug) {
     const profile = await knex('profiles').where({ slug }).first();
     if (!profile) return null;
     const images = await knex('images').where({ profile_id: profile.id }).orderBy('sort');
+    
+    // Derive hero_image_path for backward compatibility in PDF views
+    const primary = images.find(img => img.is_primary) || images[0];
+    profile.hero_image_path = primary ? (primary.public_url || primary.path) : null;
+    
     return { profile, images };
   } catch (error) {
     // Log database errors for debugging
@@ -208,7 +213,8 @@ async function renderCompCard(slug, theme = null) {
           
           // Verify page has content and is visible
           const pageInfo = await page.evaluate(() => {
-            const compCard = document.querySelector('.comp-card');
+            // Support both the new 2-page template (.comp-card-page) and the legacy template (.comp-card)
+            const compCard = document.querySelector('.comp-card-page') || document.querySelector('.comp-card');
             const body = document.body;
             const computedStyle = compCard ? window.getComputedStyle(compCard) : null;
             
@@ -290,15 +296,15 @@ async function renderCompCard(slug, theme = null) {
       try {
         buffer = await page.pdf({
           width: '5.5in',
-          height: '8.5in',
-          margin: { top: '0.2in', bottom: '0.2in', left: '0.2in', right: '0.2in' },
+          // No fixed height — let CSS @page { size: 5.5in 8.5in } and
+          // break-after: page handle multi-page pagination naturally.
+          margin: { top: '0', bottom: '0', left: '0', right: '0' },
           printBackground: true,
           timeout: 30000, // 30 second timeout
-          // Optimize for smaller file size
-          preferCSSPageSize: false,
-          // Disable tagged PDF to reduce size (helps with file size)
+          // Let CSS @page rule control page size
+          preferCSSPageSize: true,
+          // Disable tagged PDF to reduce size
           tagged: false,
-          // Note: Puppeteer automatically compresses images in PDFs
         });
         
         console.log('[renderCompCard] PDF generated, size:', buffer.length, 'bytes (', (buffer.length / 1024 / 1024).toFixed(2), 'MB)');

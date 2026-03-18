@@ -1,0 +1,19 @@
+[2026-02-05T22:34:10.242Z] Measurements Request: {"height_cm":171,"weight_kg":70,"bust_cm":97,"waist_cm":75,"hips_cm":100}
+Profile ID: 674976c1-c1ea-46d3-bece-0188ed103d59
+[2026-02-05T22:34:10.247Z] Measurements Error: Converting circular structure to JSON
+    --> starting at object with constructor 'Timeout'
+    |     property '_idlePrev' -> object with constructor 'TimersList'
+    --- property '_idleNext' closes the circle
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Timeout'
+    |     property '_idlePrev' -> object with constructor 'TimersList'
+    --- property '_idleNext' closes the circle
+    at JSON.stringify (<anonymous>)
+    at /Users/lenquanhone/Pholio_NEW copy/src/routes/casting.js:708:70
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-02-05T22:36:18.967Z] Measurements Request: {"height_cm":171,"weight_kg":70,"bust_cm":97,"waist_cm":75,"hips_cm":100}
+Profile ID: 674976c1-c1ea-46d3-bece-0188ed103d59
+[2026-02-06T18:55:35.785Z] Measurements Request: {"height_cm":183,"weight_kg":70,"bust_cm":97,"waist_cm":75,"hips_cm":100}
+Profile ID: 7cedaaea-5c66-4195-a8de-6d8cbd1ba48a
+[2026-02-11T18:02:04.789Z] Measurements Request: {"height_cm":175,"weight_kg":72.53592909435642,"bust_cm":96.16000000000003,"waist_cm":66,"hips_cm":91}
+Profile ID: f075712f-3eee-4288-9f6f-3189564847ec

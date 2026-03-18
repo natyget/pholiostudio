@@ -1,0 +1,210 @@
+<%
+  // Safe defaults
+  const safeProfiles = (typeof profiles !== 'undefined' && profiles) ? profiles : [];
+  const safeFilters = (typeof filters !== 'undefined') ? filters : {};
+  const safeStats = (typeof stats !== 'undefined') ? stats : {
+    total: 0,
+    pending: 0,
+    accepted: 0,
+    declined: 0,
+    archived: 0,
+    newToday: 0,
+    newThisWeek: 0
+  };
+  const safeBoards = (typeof boards !== 'undefined' && boards) ? boards : [];
+  const safePipelineCounts = (typeof pipelineCounts !== 'undefined') ? pipelineCounts : {
+    all: 0,
+    new: 0,
+    pending: 0,
+    'under-review': 0,
+    accepted: 0,
+    declined: 0,
+    archived: 0
+  };
+  const safePagination = (typeof pagination !== 'undefined' && pagination) ? pagination : {
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  };
+  const currentPage = (typeof page !== 'undefined') ? page : 'overview';
+  const currentUser = (typeof user !== 'undefined' && user) ? user : {};
+
+  // Helper to normalize image paths
+  function normalizeImagePath(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/')) return path;
+    return '/' + path;
+  }
+%>
+
+<!-- Agency Dashboard -->
+<div class="agency-dashboard" data-page="<%= currentPage %>">
+
+  <!-- Sidebar Navigation -->
+  <%- include('../partials/agency/sidebar', {
+    currentUser: currentUser,
+    safeStats: safeStats,
+    currentPage: currentPage,
+    brandColor: '#C9A55A',
+    page: currentPage
+  }) %>
+
+  <!-- Main Content Area -->
+  <div class="agency-dashboard__content">
+
+    <% if (currentPage === 'applicants') { %>
+      <!-- Agency Header for Applicants Page -->
+      <%- include('../partials/agency/header', {
+        currentUser: currentUser,
+        safeStats: safeStats,
+        currentPage: currentPage
+      }) %>
+    <% } else if (currentPage === 'discover') { %>
+      <!-- Agency Header for Discover Page -->
+      <%- include('../partials/agency/header', {
+        currentUser: currentUser,
+        safeStats: safeStats,
+        currentPage: currentPage,
+        view: 'scout'
+      }) %>
+    <% } %>
+
+    <% if (currentPage === 'overview') { %>
+      <!-- Overview Page -->
+      <%- include('../partials/agency/overview', {
+        currentUser: currentUser,
+        safeStats: safeStats,
+        safeBoards: safeBoards,
+        safeProfiles: safeProfiles
+      }) %>
+
+    <% } else if (currentPage === 'applicants') { %>
+      <!-- Applicants Page -->
+
+      <!-- Applicants Header with Filters -->
+      <%- include('../partials/agency/filters', {
+        safeFilters: safeFilters,
+        safeBoards: safeBoards,
+        safePipelineCounts: safePipelineCounts
+      }) %>
+
+      <!-- Applicants List/Grid -->
+      <% if (safeProfiles && safeProfiles.length > 0) { %>
+        <%- include('../partials/agency/list', {
+          safeProfiles: safeProfiles,
+          safeFilters: safeFilters
+        }) %>
+
+        <!-- Pagination -->
+        <% if (safePagination.totalPages > 1) { %>
+          <%- include('../partials/agency/pagination', {
+            safePagination: safePagination,
+            safeFilters: safeFilters
+          }) %>
+        <% } %>
+      <% } else { %>
+        <div class="agency-empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <h3>No applicants yet</h3>
+          <p>When talent applies to your agency, they'll appear here.</p>
+          <a href="/dashboard/agency/discover" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            Discover Talent
+          </a>
+        </div>
+      <% } %>
+
+    <% } else if (currentPage === 'discover') { %>
+      <!-- Discover Page -->
+
+      <!-- Discover Header with Filters -->
+      <%- include('../partials/agency/discover-header', {
+        safeFilters: safeFilters
+      }) %>
+
+      <!-- Discover Grid -->
+      <% if (safeProfiles && safeProfiles.length > 0) { %>
+        <%- include('../partials/agency/scout-list', {
+          safeProfiles: safeProfiles
+        }) %>
+      <% } else { %>
+        <div class="agency-empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <h3>No discoverable talent found</h3>
+          <p>Try adjusting your filters to see more talent.</p>
+        </div>
+      <% } %>
+
+    <% } else if (currentPage === 'boards') { %>
+      <!-- Boards Page -->
+      <%- include('../partials/agency/boards-page', {
+        safeBoards: safeBoards,
+        currentUser: currentUser
+      }) %>
+
+    <% } else if (currentPage === 'analytics') { %>
+      <!-- Analytics Page -->
+      <%- include('../partials/agency/analytics', {
+        safeStats: safeStats,
+        currentUser: currentUser
+      }) %>
+
+    <% } %>
+
+  </div>
+
+  <!-- Modals and Drawers -->
+  <%- include('../partials/agency/talent-preview-modal') %>
+  <%- include('../partials/agency/application-detail-drawer') %>
+  <%- include('../partials/agency/applicants-filter-drawer', {
+    safeFilters: safeFilters,
+    safeBoards: safeBoards
+  }) %>
+  <%- include('../partials/agency/board-editor-modal', {
+    safeBoards: safeBoards
+  }) %>
+  <%- include('../partials/agency/command-palette') %>
+
+</div>
+
+<!-- Load Agency Dashboard Scripts -->
+<script src="/scripts/dashboard/core.js"></script>
+<% if (currentPage === 'overview') { %>
+  <script src="/scripts/dashboard/overview.js"></script>
+<% } else if (currentPage === 'applicants') { %>
+  <script src="/scripts/dashboard/applicants.js"></script>
+<% } else if (currentPage === 'discover') { %>
+  <script src="/scripts/dashboard/discover.js"></script>
+<% } else if (currentPage === 'boards') { %>
+  <script src="/scripts/dashboard/boards.js"></script>
+<% } else if (currentPage === 'analytics') { %>
+  <script src="/scripts/dashboard/analytics.js"></script>
+<% } %>
+
+<!-- Load Agency-specific Scripts -->
+<script src="/scripts/agency-dashboard-static.js"></script>
+<script src="/scripts/agency-command-center.js"></script>
+
+<!-- Link Agency Stylesheets -->
+<link rel="stylesheet" href="/styles/agency-dashboard.css">
+<link rel="stylesheet" href="/styles/agency-dashboard-static.css">
+<link rel="stylesheet" href="/styles/agency-dashboard-mobile.css">
+<link rel="stylesheet" href="/styles/agency-command-center.css">
+<% if (currentPage === 'discover') { %>
+  <link rel="stylesheet" href="/styles/agency-dashboard-discover.css">
+<% } %>

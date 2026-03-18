@@ -1,0 +1,1269 @@
+<%
+// DO NOT AUTO-FORMAT THIS BLOCK
+
+  // Base data objects
+  var elara = (typeof elaraProfile !== 'undefined' && elaraProfile) ? elaraProfile : {};
+  var floatingTalentsData = (typeof floatingTalents !== 'undefined' && floatingTalents) ? floatingTalents : [];
+
+  // Image path normalization helper
+  function normalizeImagePath(path) {
+    if (!path) {
+      return 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=2000&q=90';
+    }
+    if (path.indexOf('http://') === 0 || path.indexOf('https://') === 0) {
+      return path;
+    }
+    if (path.indexOf('/') === 0) {
+      return path;
+    }
+    return '/' + path;
+  }
+
+  // Get hero image for elara
+  // Use the same image as the dashboard showcase talent section
+  var elaraHero = (elara && elara.hero_image_path) || null;
+  if (!elaraHero && typeof elaraImages !== 'undefined' && Array.isArray(elaraImages) && elaraImages.length > 0) {
+    elaraHero = elaraImages[0].path;
+  }
+  if (!elaraHero) {
+    // Use the exact same image URL as dashboard showcase talent section
+    elaraHero = 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80';
+  }
+
+  // Get gallery images for elara
+  var galleryImages = [];
+  if (typeof elaraImages !== 'undefined' && Array.isArray(elaraImages)) {
+    galleryImages = elaraImages.slice(1, 5);
+  }
+  if (!galleryImages || galleryImages.length === 0) {
+    galleryImages = [
+      { path: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80' },
+      { path: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80' },
+      { path: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=80' },
+      { path: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=900&q=80' }
+    ];
+  }
+
+  // Build talent data for transformation hero with realistic placeholders
+  var heroTalent = {
+    first_name: elara.first_name || 'Elara',
+    last_name: elara.last_name || 'Keats',
+    city: elara.city || 'Los Angeles, CA',
+    slug: elara.slug || 'elara-k',
+    hero_image: normalizeImagePath(elaraHero),
+    height_cm: elara.height_cm || 180,
+    measurements: elara.measurements || '32-25-35',
+    bio_raw: elara.bio_raw || 'hey! so i\'m elara, 23 years old, from LA. i do modeling - mostly fashion and some commercial stuff. love working with photographers and trying new creative projects. i\'m 5\'11, measurements are like 32-24-34 i think? available for bookings, feel free to reach out! instagram: @elarakeats',
+    bio_curated: elara.bio_curated || 'Elara Keats embodies the modern editorial aesthetic, seamlessly blending high-fashion sophistication with commercial versatility. Her striking presence and commanding frame—standing at 5\'11"—have graced campaigns for luxury brands and editorial spreads in leading fashion publications. Based in Los Angeles, she brings an effortless elegance to every project, whether on set for a Vogue editorial or in front of the camera for a commercial campaign. With a natural ability to adapt to diverse creative visions, Elara consistently delivers performances that capture the essence of contemporary style.',
+    gallery_images: galleryImages.slice(0, 4)
+  };
+
+  // Format height helper
+  function formatHeight(heightCm) {
+    if (!heightCm) return null;
+    var feet = Math.floor(heightCm / 30.48);
+    var inches = Math.round((heightCm % 30.48) / 2.54);
+    return feet + "'" + inches + '"';
+  }
+
+  function formatHeightWithCm(heightCm) {
+    if (!heightCm) return "5' 11\" / 180cm";
+    var feet = Math.floor(heightCm / 30.48);
+    var inches = Math.round((heightCm % 30.48) / 2.54);
+    return feet + "' " + inches + '" / ' + heightCm + 'cm';
+  }
+
+  // Placeholder talent data for featured section (always show 8 items)
+  var placeholderTalents = [
+    {
+      first_name: 'Aiko',
+      last_name: 'Ren',
+      city: 'Tokyo / New York',
+      hero_image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
+      slug: 'aiko-ren'
+    },
+    {
+      first_name: 'Bianca',
+      last_name: 'Cole',
+      city: 'Los Angeles',
+      hero_image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
+      slug: 'bianca-cole'
+    },
+    {
+      first_name: 'Cruz',
+      last_name: 'Vega',
+      city: 'Mexico City',
+      hero_image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80',
+      slug: 'cruz-vega'
+    },
+    {
+      first_name: 'Daphne',
+      last_name: 'Noor',
+      city: 'Amsterdam',
+      hero_image: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=80',
+      slug: 'daphne-noor'
+    },
+    {
+      first_name: 'Elena',
+      last_name: 'Volkov',
+      city: 'Paris',
+      hero_image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80',
+      slug: 'elena-volkov'
+    },
+    {
+      first_name: 'Finn',
+      last_name: 'Murphy',
+      city: 'London',
+      hero_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=80',
+      slug: 'finn-murphy'
+    },
+    {
+      first_name: 'Gia',
+      last_name: 'Santos',
+      city: 'São Paulo',
+      hero_image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=900&q=80',
+      slug: 'gia-santos'
+    },
+    {
+      first_name: 'Hugo',
+      last_name: 'Andersson',
+      city: 'Stockholm',
+      hero_image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80',
+      slug: 'hugo-andersson'
+    }
+  ];
+
+  // Merge real talents with placeholders, always show 8
+  var featuredTalents = [];
+
+  if (elara && elara.slug) {
+    featuredTalents.push({
+      first_name: elara.first_name || 'Elara',
+      last_name: elara.last_name || 'Keats',
+      city: elara.city || 'Los Angeles, CA',
+      slug: elara.slug || 'elara-k',
+      hero_image: normalizeImagePath(elaraHero)
+    });
+  }
+
+  floatingTalentsData.forEach(function (talent) {
+    if (
+      talent &&
+      talent.slug &&
+      (!elara || talent.slug !== elara.slug) &&
+      featuredTalents.length < 8
+    ) {
+      featuredTalents.push({
+        first_name: talent.first_name || '',
+        last_name: talent.last_name || '',
+        city: talent.city || '',
+        slug: talent.slug,
+        hero_image: normalizeImagePath(talent.hero_image || talent.hero_image_path)
+      });
+    }
+  });
+
+  // Fill with placeholders to reach 8
+  while (featuredTalents.length < 8) {
+    var placeholder = placeholderTalents[featuredTalents.length % placeholderTalents.length];
+    featuredTalents.push(placeholder);
+  }
+
+%>
+
+<!-- Hero: Split-Screen AI Transformation -->
+<section class="transformation-hero" id="transformation-hero">
+  <div class="transformation-hero__container">
+    <!-- Header -->
+    <div class="transformation-hero__header">
+      <h1 class="transformation-hero__title">
+        <span class="transformation-hero__title-raw">Raw Data.</span>
+        <span class="transformation-hero__title-arrow">
+          <svg width="60" height="24" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 12h56M48 4l8 8-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="52" cy="12" r="2" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="transformation-hero__title-accent">Transformed.</span>
+      </h1>
+      <p class="transformation-hero__subtitle">Watch Pholio transform unorganized talent data into publication-ready portfolios</p>
+    </div>
+
+    <!-- Split-Screen Transformation -->
+    <div class="transformation-hero__split" id="transformation-split">
+      <!-- Left: Raw Input -->
+      <div class="transformation-hero__side transformation-hero__side--raw">
+        <div class="transformation-hero__label">Before</div>
+        <div class="email-draft">
+          <!-- Email Client Interface -->
+          <div class="email-draft__window">
+            <!-- Email Header -->
+            <div class="email-draft__header">
+              <div class="email-draft__toolbar">
+                <div class="email-draft__toolbar-button email-draft__toolbar-button--close"></div>
+                <div class="email-draft__toolbar-button email-draft__toolbar-button--minimize"></div>
+                <div class="email-draft__toolbar-button email-draft__toolbar-button--maximize"></div>
+              </div>
+              <div class="email-draft__title">New Message</div>
+            </div>
+            
+            <!-- Email Form -->
+            <div class="email-draft__form">
+              <div class="email-draft__field">
+                <span class="email-draft__field-label">From:</span>
+                <span class="email-draft__field-value" id="raw-name">elara.k<%= Math.floor(Math.random() * 999) %>@gmail.com</span>
+              </div>
+              
+              <div class="email-draft__field">
+                <span class="email-draft__field-label">To:</span>
+                <span class="email-draft__field-value">casting@agency.com</span>
+              </div>
+              
+              <div class="email-draft__field email-draft__field--subject">
+                <span class="email-draft__field-label">Subject:</span>
+                <span class="email-draft__field-value email-draft__subject" id="raw-subject">Re: Fw: modeling submission - <%= heroTalent.first_name %> <%= heroTalent.last_name %> (open casting??)</span>
+              </div>
+            </div>
+            
+            <!-- Email Body -->
+            <div class="email-draft__body">
+              <div class="email-draft__body-content" id="raw-bio">
+                <p>hi!!!</p>
+                <p>i saw on insta you guys are looking for new faces?? im <%= heroTalent.first_name.toLowerCase() %> <%= heroTalent.last_name.toLowerCase() %> and im a model based in <%= heroTalent.city.split(',')[0] %> (but i can travel anywhere, i have a passport!!) im really looking to get into more editorial and runway work.</p>
+                <p>a bit about me:</p>
+                <ul>
+                  <li>im <%= formatHeight(heroTalent.height_cm || 180) %></li>
+                  <li>my measurements are <%= heroTalent.measurements || '32-25-35' %></li>
+                  <li>my shoe is a 9</li>
+                  <li>i have brown hair/green eyes.</li>
+                </ul>
+                <p>My insta is @<%= heroTalent.first_name.toLowerCase() %>.<%= heroTalent.last_name.toLowerCase().charAt(0) %> -- i post most of my new work there. im a super hard worker and everyone says im professional, i have a background in some smaller campaigns. i was with [Agency Name] last year but left, it wasnt a good fit.</p>
+                <p>I put my best photos (some are digitals my friend took, some are from real shoots but they are not edited yet) in this google drive. hope you can see them?</p>
+                <p>here is the link:</p>
+                <p class="email-draft__link">
+                  <a href="#" class="email-draft__link-url">https://www.google.com/search?q=https://drive.google.com/drive/folders/1aBcD-THIS-IS-A-MESSY-LINK-xyz</a>
+                </p>
+                <p>I also have a portfolio on a wix site i made, i think this is the link:</p>
+                <p class="email-draft__link">
+                  <a href="#" class="email-draft__link-url">https://www.google.com/search?q=<%= heroTalent.first_name.toLowerCase() %>-portfolio.wixsite.com/mysite</a>
+                </p>
+                <p>Let me know what you think! Thx so much!! 🙏 I'm free for a meeting basically any time next week.</p>
+                <p class="email-draft__signature">-<%= heroTalent.first_name %> <%= heroTalent.last_name.charAt(0) %>.</p>
+              </div>
+            </div>
+            
+            <!-- Email Footer/Actions -->
+            <div class="email-draft__footer">
+              <div class="email-draft__attachment">
+                <span class="email-draft__attachment-icon">📎</span>
+                <span class="email-draft__attachment-text">IMG_001.jpg, photo2.jpg, photo3.jpg, photo4.jpg</span>
+              </div>
+              <div class="email-draft__actions">
+                <button class="email-draft__button email-draft__button--send">Send</button>
+                <button class="email-draft__button email-draft__button--draft">Save Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Transformation Zone -->
+      <div class="transformation-hero__center">
+        <div class="transformation-zone" id="transformation-zone">
+          <div class="transformation-zone__particles"></div>
+          <div class="transformation-zone__flow"></div>
+          <div class="transformation-zone__indicator">
+            <span class="transformation-zone__ai-label">AI</span>
+            <span class="transformation-zone__processing">Processing...</span>
+          </div>
+        </div>
+        <button class="transformation-hero__replay" id="replay-transformation" aria-label="Replay transformation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 4v6h6M23 20v-6h-6"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          Replay
+        </button>
+      </div>
+
+      <!-- Right: Curated Output -->
+      <div class="transformation-hero__side transformation-hero__side--curated">
+        <div class="transformation-hero__label">After</div>
+        <div class="portfolio-card">
+          <!-- Free Badge -->
+          <div class="portfolio-card__free-badge">Free portfolio site</div>
+          
+          <!-- Split-Panel Layout: Image Left, Info Right -->
+          <div class="portfolio-card__split">
+            <!-- Left Panel: Hero Image -->
+            <div class="portfolio-card__image-panel">
+              <div class="portfolio-card__hero-image">
+                <img src="<%= heroTalent.hero_image %>" alt="<%= heroTalent.first_name %> <%= heroTalent.last_name %>" id="curated-hero-image">
+                <div class="portfolio-card__image-overlay"></div>
+              </div>
+            </div>
+            
+            <!-- Gold Vertical Divider -->
+            <div class="portfolio-card__divider"></div>
+            
+            <!-- Right Panel: Information -->
+            <div class="portfolio-card__info-panel">
+              <!-- Name and Location -->
+              <div class="portfolio-card__header">
+                <h2 class="portfolio-card__name" id="curated-name">
+                  <span class="portfolio-card__name-first"><%= heroTalent.first_name %></span>
+                  <span class="portfolio-card__name-last"><%= heroTalent.last_name %></span>
+                </h2>
+                <div class="portfolio-card__location" id="curated-location">
+                  <%= heroTalent.city.split(',')[0] %>
+                </div>
+              </div>
+              
+              <!-- Free Version Description -->
+              <div class="portfolio-card__free-description">
+                <p>Clean, modern comp-card style page you can share with agencies. <strong>Upgrade to Studio+</strong> to actively shop agencies and track applications.</p>
+              </div>
+              
+              <!-- Stats Section -->
+              <div class="portfolio-card__stats">
+                <div class="portfolio-card__stat">
+                  <span class="portfolio-card__stat-label">HEIGHT</span>
+                  <span class="portfolio-card__stat-value" id="curated-height"><%= formatHeight(heroTalent.height_cm || 180) %> / <%= heroTalent.height_cm || 180 %>cm</span>
+                </div>
+                <div class="portfolio-card__stat">
+                  <span class="portfolio-card__stat-label">MEASUREMENTS</span>
+                  <span class="portfolio-card__stat-value" id="curated-measurements"><%= heroTalent.measurements || '32-25-35' %></span>
+                </div>
+                <div class="portfolio-card__stat">
+                  <span class="portfolio-card__stat-label">SHOE</span>
+                  <span class="portfolio-card__stat-value" id="curated-shoe">9 US</span>
+                </div>
+                <div class="portfolio-card__stat">
+                  <span class="portfolio-card__stat-label">EYES</span>
+                  <span class="portfolio-card__stat-value" id="curated-eyes">Green</span>
+                </div>
+                <div class="portfolio-card__stat">
+                  <span class="portfolio-card__stat-label">HAIR</span>
+                  <span class="portfolio-card__stat-value" id="curated-hair">Brown</span>
+                </div>
+              </div>
+              
+              <!-- Specializations -->
+              <div class="portfolio-card__specializations">
+                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--editorial">Editorial</div>
+                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--runway">Runway</div>
+                <div class="portfolio-card__specialization-badge portfolio-card__specialization-badge--commercial">Commercial</div>
+              </div>
+              
+              <!-- Bio Preview -->
+              <div class="portfolio-card__bio-preview" id="curated-bio-preview">
+                <% 
+                  // Extract first 1-2 sentences or ~100 characters from curated bio
+                  var bioText = heroTalent.bio_curated || '';
+                  var bioPreview = '';
+                  if (bioText.length > 0) {
+                    // Try to get first sentence(s)
+                    var sentences = bioText.match(/[^.!?]+[.!?]+/g);
+                    if (sentences && sentences.length > 0) {
+                      bioPreview = sentences[0];
+                      if (sentences.length > 1 && bioPreview.length < 70) {
+                        bioPreview += ' ' + sentences[1];
+                      }
+                      // Limit to ~100 characters
+                      if (bioPreview.length > 100) {
+                        bioPreview = bioPreview.substring(0, 97) + '...';
+                      }
+                    } else {
+                      // Fallback: just truncate to 100 chars
+                      bioPreview = bioText.length > 100 ? bioText.substring(0, 97) + '...' : bioText;
+                    }
+                  }
+                %>
+                <%= bioPreview %>
+              </div>
+              
+              <!-- Portfolio Access -->
+              <div class="portfolio-card__portfolio-access">
+                <div class="portfolio-card__portfolio-url">
+                  <span class="portfolio-card__portfolio-label">Portfolio</span>
+                  <a href="/portfolio/<%= heroTalent.slug %>" class="portfolio-card__portfolio-link" id="curated-portfolio-url">
+                    <%= heroTalent.slug %>.pholio.studio
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Contact Section -->
+              <div class="portfolio-card__contact">
+                <a href="#" class="portfolio-card__contact-card portfolio-card__contact-card--instagram" aria-label="Instagram">
+                  <div class="portfolio-card__contact-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162 0 3.403 2.759 6.162 6.162 6.162 3.403 0 6.162-2.759 6.162-6.162 0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4 2.209 0 4 1.791 4 4 0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <span class="portfolio-card__contact-handle">@<%= heroTalent.first_name.toLowerCase() %>.<%= heroTalent.last_name.toLowerCase().charAt(0) %></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Metrics Banner -->
+<section class="metrics-banner">
+  <div class="metrics-banner__container">
+    <div class="metrics-banner__item">
+      <span class="metrics-banner__number" data-target="2847">0</span>
+      <span class="metrics-banner__label">Join Talent</span>
+    </div>
+    <div class="metrics-banner__item">
+      <span class="metrics-banner__number" data-target="184">0</span>
+      <span class="metrics-banner__label">Partner Agencies</span>
+    </div>
+    <div class="metrics-banner__item">
+      <span class="metrics-banner__number" data-target="12394">0</span>
+      <span class="metrics-banner__label">Applications Sent</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- Dashboard Showcase Section -->
+<section class="dashboard-showcase" id="dashboard-showcase">
+  <div class="dashboard-showcase__container">
+    <div class="dashboard-showcase__header">
+      <h2 class="dashboard-showcase__title">Your Dashboard, Your Way</h2>
+      <p class="dashboard-showcase__subtitle">Experience the power of Pholio from both perspectives</p>
+    </div>
+
+    <div class="dashboard-showcase__content">
+      <!-- Talent Dashboard Preview -->
+      <div class="dashboard-showcase__panel dashboard-showcase__panel--talent">
+        <div class="dashboard-showcase__panel-header">
+          <div class="dashboard-showcase__panel-badge dashboard-showcase__panel-badge--talent">For Talent</div>
+          <h3 class="dashboard-showcase__panel-title">Manage Your Portfolio</h3>
+        </div>
+        
+        <div class="dashboard-showcase__mockup">
+          <!-- Talent Hero Section -->
+          <div class="dashboard-showcase__talent-hero">
+            <div class="dashboard-showcase__talent-image">
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80" alt="Talent profile" loading="lazy">
+            </div>
+            <div class="dashboard-showcase__talent-info">
+              <div class="dashboard-showcase__talent-name-wrapper">
+                <h4 class="dashboard-showcase__talent-name">Elara Keats</h4>
+                <span class="dashboard-showcase__badge dashboard-showcase__badge--pro">STUDIO+</span>
+              </div>
+              <p class="dashboard-showcase__talent-location">Los Angeles, CA</p>
+              <div class="dashboard-showcase__talent-stats">
+                <div class="dashboard-showcase__stat">
+                  <span class="dashboard-showcase__stat-label">Height</span>
+                  <span class="dashboard-showcase__stat-value">180 cm</span>
+                </div>
+                <div class="dashboard-showcase__stat">
+                  <span class="dashboard-showcase__stat-label">Images</span>
+                  <span class="dashboard-showcase__stat-value">8</span>
+                </div>
+                <div class="dashboard-showcase__stat">
+                  <span class="dashboard-showcase__stat-label">Profile</span>
+                  <span class="dashboard-showcase__stat-value dashboard-showcase__stat-value--complete">95%</span>
+                </div>
+              </div>
+              <div class="dashboard-showcase__talent-actions">
+                <button class="dashboard-showcase__button dashboard-showcase__button--primary">Download Comp Card</button>
+                <button class="dashboard-showcase__button dashboard-showcase__button--secondary">View Portfolio</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Progress with Animation -->
+          <div class="dashboard-showcase__progress" id="talent-profile-progress">
+            <div class="dashboard-showcase__progress-header">
+              <span class="dashboard-showcase__progress-label">Profile Complete</span>
+              <span class="dashboard-showcase__progress-percentage" id="progress-percentage">0%</span>
+            </div>
+            <div class="dashboard-showcase__progress-bar">
+              <div class="dashboard-showcase__progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <!-- Completion Checklist -->
+            <div class="dashboard-showcase__completion-checklist">
+              <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
+                <span class="dashboard-showcase__completion-icon">✓</span>
+                <span class="dashboard-showcase__completion-label">Profile Details</span>
+              </div>
+              <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
+                <span class="dashboard-showcase__completion-icon">✓</span>
+                <span class="dashboard-showcase__completion-label">2+ Images</span>
+              </div>
+              <div class="dashboard-showcase__completion-item dashboard-showcase__completion-item--complete">
+                <span class="dashboard-showcase__completion-icon">✓</span>
+                <span class="dashboard-showcase__completion-label">Hero Image</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Media Grid Preview -->
+          <div class="dashboard-showcase__media-grid">
+            <div class="dashboard-showcase__media-item">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
+            </div>
+            <div class="dashboard-showcase__media-item">
+              <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
+            </div>
+            <div class="dashboard-showcase__media-item">
+              <img src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
+            </div>
+            <div class="dashboard-showcase__media-item">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Portfolio image" loading="lazy">
+            </div>
+          </div>
+
+          <!-- Quick Analytics -->
+          <div class="dashboard-showcase__analytics">
+            <div class="dashboard-showcase__analytics-card">
+              <div class="dashboard-showcase__analytics-icon">👁</div>
+              <div class="dashboard-showcase__analytics-value">1,247</div>
+              <div class="dashboard-showcase__analytics-label">Total Views</div>
+            </div>
+            <div class="dashboard-showcase__analytics-card">
+              <div class="dashboard-showcase__analytics-icon">📄</div>
+              <div class="dashboard-showcase__analytics-value">89</div>
+              <div class="dashboard-showcase__analytics-label">PDF Downloads</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agency Dashboard Preview -->
+      <div class="dashboard-showcase__panel dashboard-showcase__panel--agency">
+        <div class="dashboard-showcase__panel-header">
+          <div class="dashboard-showcase__panel-badge dashboard-showcase__panel-badge--agency">For Agencies</div>
+          <h3 class="dashboard-showcase__panel-title">Discover & Manage Talent</h3>
+        </div>
+        
+        <div class="dashboard-showcase__mockup">
+          <!-- Agency Hero Section -->
+          <div class="dashboard-showcase__agency-hero">
+            <div class="dashboard-showcase__agency-hero-main">
+              <div class="dashboard-showcase__agency-hero-header">
+                <div class="dashboard-showcase__agency-logo">T</div>
+                <div class="dashboard-showcase__agency-info">
+                  <div class="dashboard-showcase__agency-title-wrapper">
+                    <h4 class="dashboard-showcase__agency-title">True Modeling Agency</h4>
+                    <span class="dashboard-showcase__badge dashboard-showcase__badge--verified">Verified Partner</span>
+                  </div>
+                  <p class="dashboard-showcase__agency-subtitle">Los Angeles, CA</p>
+                </div>
+              </div>
+              <div class="dashboard-showcase__agency-stats">
+                <div class="dashboard-showcase__agency-stat">
+                  <span class="dashboard-showcase__agency-stat-value">24</span>
+                  <span class="dashboard-showcase__agency-stat-label">Total</span>
+                </div>
+                <div class="dashboard-showcase__agency-stat">
+                  <span class="dashboard-showcase__agency-stat-value">8</span>
+                  <span class="dashboard-showcase__agency-stat-label">Accepted</span>
+                </div>
+                <div class="dashboard-showcase__agency-stat">
+                  <span class="dashboard-showcase__agency-stat-value">5</span>
+                  <span class="dashboard-showcase__agency-stat-label">Pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agency Info Panel -->
+          <div class="dashboard-showcase__agency-info">
+            <div class="dashboard-showcase__agency-info-card">
+              <div class="dashboard-showcase__agency-info-icon">📊</div>
+              <div class="dashboard-showcase__agency-info-content">
+                <h5 class="dashboard-showcase__agency-info-title">Application Activity</h5>
+                <p class="dashboard-showcase__agency-info-text">3 new today, 12 this week</p>
+              </div>
+            </div>
+            <div class="dashboard-showcase__agency-info-card">
+              <div class="dashboard-showcase__agency-info-icon">⭐</div>
+              <div class="dashboard-showcase__agency-info-content">
+                <h5 class="dashboard-showcase__agency-info-title">Accepted Talent</h5>
+                <p class="dashboard-showcase__agency-info-text">8 talent profiles in roster</p>
+              </div>
+            </div>
+            <div class="dashboard-showcase__agency-info-card">
+              <div class="dashboard-showcase__agency-info-icon">💼</div>
+              <div class="dashboard-showcase__agency-info-content">
+                <h5 class="dashboard-showcase__agency-info-title">Partnership Status</h5>
+                <p class="dashboard-showcase__agency-info-text">Verified partner agency</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="dashboard-showcase__agency-dashboard-stats">
+            <div class="dashboard-showcase__agency-stat-card dashboard-showcase__agency-stat-card--highlight">
+              <div class="dashboard-showcase__agency-stat-card-icon">📥</div>
+              <div class="dashboard-showcase__agency-stat-card-content">
+                <div class="dashboard-showcase__agency-stat-card-value">3</div>
+                <div class="dashboard-showcase__agency-stat-card-label">New Today</div>
+              </div>
+            </div>
+            <div class="dashboard-showcase__agency-stat-card">
+              <div class="dashboard-showcase__agency-stat-card-icon">⏳</div>
+              <div class="dashboard-showcase__agency-stat-card-content">
+                <div class="dashboard-showcase__agency-stat-card-value">5</div>
+                <div class="dashboard-showcase__agency-stat-card-label">Awaiting Review</div>
+              </div>
+            </div>
+            <div class="dashboard-showcase__agency-stat-card">
+              <div class="dashboard-showcase__agency-stat-card-icon">✅</div>
+              <div class="dashboard-showcase__agency-stat-card-content">
+                <div class="dashboard-showcase__agency-stat-card-value">8</div>
+                <div class="dashboard-showcase__agency-stat-card-label">Accepted</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kanban Board Preview -->
+          <div class="dashboard-showcase__kanban">
+            <div class="dashboard-showcase__kanban-column">
+              <div class="dashboard-showcase__kanban-header">
+                <h5 class="dashboard-showcase__kanban-title">New Applications</h5>
+                <span class="dashboard-showcase__kanban-count">3</span>
+              </div>
+              <div class="dashboard-showcase__kanban-cards">
+                <div class="dashboard-showcase__kanban-card">
+                  <div class="dashboard-showcase__kanban-card-image">
+                    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=200&q=80" alt="Elara Keats" loading="lazy">
+                    <div class="dashboard-showcase__kanban-card-score">92</div>
+                  </div>
+                  <div class="dashboard-showcase__kanban-card-content">
+                    <h6 class="dashboard-showcase__kanban-card-name">Elara Keats</h6>
+                    <p class="dashboard-showcase__kanban-card-meta">Los Angeles • 180 cm</p>
+                    <div class="dashboard-showcase__kanban-card-tags">
+                      <span class="dashboard-showcase__tag dashboard-showcase__tag--purple">Editorial</span>
+                      <span class="dashboard-showcase__tag dashboard-showcase__tag--green">Runway</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="dashboard-showcase__kanban-column">
+              <div class="dashboard-showcase__kanban-header">
+                <h5 class="dashboard-showcase__kanban-title">Accepted</h5>
+                <span class="dashboard-showcase__kanban-count">8</span>
+              </div>
+              <div class="dashboard-showcase__kanban-cards">
+                <div class="dashboard-showcase__kanban-card">
+                  <div class="dashboard-showcase__kanban-card-image">
+                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="Aiko Ren" loading="lazy">
+                    <div class="dashboard-showcase__kanban-card-score">88</div>
+                  </div>
+                  <div class="dashboard-showcase__kanban-card-content">
+                    <h6 class="dashboard-showcase__kanban-card-name">Aiko Ren</h6>
+                    <p class="dashboard-showcase__kanban-card-meta">Tokyo / New York • 175 cm</p>
+                    <div class="dashboard-showcase__kanban-card-tags">
+                      <span class="dashboard-showcase__tag dashboard-showcase__tag--blue">Commercial</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-showcase__cta">
+      <a href="/apply" class="dashboard-showcase__cta-link dashboard-showcase__cta-link--talent">
+        <span>Start as Talent</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+      <a href="/partners" class="dashboard-showcase__cta-link dashboard-showcase__cta-link--agency">
+        <span>Partner as Agency</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- The Pholio Difference Section -->
+<section class="pholio-difference" id="pholio-difference">
+  <div class="pholio-difference__container">
+    <div class="pholio-difference__header">
+      <h2 class="pholio-difference__title">The Pholio Difference</h2>
+      <p class="pholio-difference__subtitle">Why elite talent is ditching traditional portfolios</p>
+    </div>
+
+    <div class="comparison-table">
+      <!-- Traditional Column -->
+      <div class="comparison-column comparison-column--traditional">
+        <div class="comparison-column__header">Traditional Way</div>
+        <div class="comparison-list">
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✕</div>
+            <div class="comparison-item__text">Spend $500 on a personal website</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✕</div>
+            <div class="comparison-item__text">Fill out 47 tedious form fields</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✕</div>
+            <div class="comparison-item__text">Manual email tag with 50 agencies</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✕</div>
+            <div class="comparison-item__text">Never know if an agent saw your link</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✕</div>
+            <div class="comparison-item__text">DIY everything with zero guidance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VS Badge -->
+      <div class="comparison-vs">vs</div>
+
+      <!-- Pholio Column -->
+      <div class="comparison-column comparison-column--pholio">
+        <div class="comparison-column__header">The Pholio Way</div>
+        <div class="comparison-list">
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✓</div>
+            <div class="comparison-item__text">Free, professional portfolio forever</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✓</div>
+            <div class="comparison-item__text">2-minute conversational casting call</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✓</div>
+            <div class="comparison-item__text">Apply to 184 agencies with 1 click</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✓</div>
+            <div class="comparison-item__text">Real-time tracking of every agency view</div>
+          </div>
+          <div class="comparison-item">
+            <div class="comparison-item__icon">✓</div>
+            <div class="comparison-item__text">AI does the heavy curation for you</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3-Minute Timeline Section -->
+<section class="launch-timeline" id="launch-timeline">
+  <div class="launch-timeline__container">
+    <div class="launch-timeline__header">
+      <h2 class="launch-timeline__title">3 Minutes to Professional</h2>
+      <p class="launch-timeline__subtitle">From raw photos to a signed agency contract</p>
+    </div>
+
+    <div class="timeline-grid">
+      <!-- Minute 1 -->
+      <div class="timeline-step" data-step="1">
+        <div class="timeline-step__time">Minute 1</div>
+        <div class="timeline-step__card">
+          <div class="timeline-step__icon">📸</div>
+          <h3 class="timeline-step__title">The Casting Call</h3>
+          <ul class="timeline-step__features">
+            <li>Upload 1 photo, answer 3 simple questions</li>
+            <li>Google OAuth pulls your info automatically</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Minute 2 -->
+      <div class="timeline-step" data-step="2">
+        <div class="timeline-step__time">Minute 2</div>
+        <div class="timeline-step__card">
+          <div class="timeline-step__icon">✨</div>
+          <h3 class="timeline-step__title">AI Magic</h3>
+          <ul class="timeline-step__features">
+            <li>Archetype analysis (Editorial? Commercial?)</li>
+            <li>Bio written with expert editorial voice</li>
+            <li>Real-time market-fit radar chart generation</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Minute 3 -->
+      <div class="timeline-step" data-step="3">
+        <div class="timeline-step__time">Minute 3</div>
+        <div class="timeline-step__card">
+          <div class="timeline-step__icon">🚀</div>
+          <h3 class="timeline-step__title">You're Live</h3>
+          <ul class="timeline-step__features">
+            <li>Download your publication-ready comp card</li>
+            <li>Live portfolio at <span>yourname.pholio.studio</span></li>
+            <li>Instantly apply to verified partner agencies</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="launch-timeline__cta">
+      <a href="/apply" class="button button-primary">Start Your 3-Minute Setup</a>
+    </div>
+  </div>
+</section>
+
+<!-- Value Proposition Section -->
+<section class="homepage-value-prop" id="homepage-value-prop">
+  <div class="homepage-value-prop__inner">
+    <div class="homepage-value-prop__content">
+      <div class="homepage-value-prop__icon">✨</div>
+      <h2 class="homepage-value-prop__headline">
+        See the magic?<br>
+        That's AI curation.
+      </h2>
+      <p class="homepage-value-prop__description">
+        Pholio's AI transforms raw talent data into publication-ready comp cards. Refined bios, organized stats, and editorial-quality presentation—all in minutes.
+      </p>
+      <div class="homepage-value-prop__benefits">
+        <div class="homepage-value-prop__benefit">
+          <span class="homepage-value-prop__benefit-icon">⚡</span>
+          <span class="homepage-value-prop__benefit-text">Publication-ready in minutes</span>
+        </div>
+        <div class="homepage-value-prop__benefit">
+          <span class="homepage-value-prop__benefit-icon">🎨</span>
+          <span class="homepage-value-prop__benefit-text">Editorial-quality presentation</span>
+        </div>
+        <div class="homepage-value-prop__benefit">
+          <span class="homepage-value-prop__benefit-icon">📊</span>
+          <span class="homepage-value-prop__benefit-text">Organized stats and metrics</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Portfolio Showcase Grid -->
+<section class="homepage-portfolio-showcase" id="homepage-portfolio-showcase">
+  <div class="homepage-portfolio-showcase__container">
+    <div class="homepage-portfolio-showcase__intro">
+      <h2 class="homepage-portfolio-showcase__title">See Pholio in Action</h2>
+      <p class="homepage-portfolio-showcase__subtitle">Real portfolios from our community</p>
+      <p class="homepage-portfolio-showcase__description">
+        Explore how Pholio transforms talent profiles into publication-ready portfolios. Each portfolio showcases AI-curated bios, organized stats, and editorial-quality presentation.
+      </p>
+    </div>
+    
+    <div class="homepage-portfolio-showcase__grid">
+      <% featuredTalents.slice(0, 8).forEach((talent, index) => { %>
+        <a href="/portfolio/<%= talent.slug %>" class="homepage-portfolio-showcase__card" data-index="<%= index %>">
+          <div class="homepage-portfolio-showcase__image-wrapper">
+            <img 
+              src="<%= talent.hero_image %>" 
+              alt="<%= talent.first_name %> <%= talent.last_name %>"
+              class="homepage-portfolio-showcase__image"
+              loading="lazy">
+            <div class="homepage-portfolio-showcase__overlay">
+              <div class="homepage-portfolio-showcase__overlay-content">
+                <h3 class="homepage-portfolio-showcase__name">
+                  <%= talent.first_name %> <%= talent.last_name %>
+                </h3>
+                <p class="homepage-portfolio-showcase__location">
+                  <%= talent.city %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<!-- Agency Partnership Section -->
+<section class="homepage-agency" id="homepage-agency">
+  <div class="homepage-agency__container">
+    <div class="homepage-agency__content">
+      <div class="homepage-agency__header">
+        <span class="homepage-agency__badge">For Agencies</span>
+        <h2 class="homepage-agency__title">Free Talent Management Dashboard</h2>
+        <p class="homepage-agency__description">
+          Pholio provides verified agencies with a free, premium dashboard to manage incoming talent applications. Review, organize, and discover talent with AI-powered insights—all at no cost.
+        </p>
+      </div>
+      
+      <div class="homepage-agency__features">
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-icon-wrapper">
+            <span class="homepage-agency__feature-icon">📋</span>
+          </div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">Application Management</h3>
+            <p class="homepage-agency__feature-text">Review and organize all incoming talent applications in one place. Use our Kanban board to track applications from submission to acceptance.</p>
+            <div class="homepage-agency__feature-highlight">
+              <span>Streamlined review process</span>
+            </div>
+          </div>
+        </div>
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-icon-wrapper">
+            <span class="homepage-agency__feature-icon">🤖</span>
+          </div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">AI-Powered Insights</h3>
+            <p class="homepage-agency__feature-text">Get AI-generated match scores and tags to quickly identify talent that fits your agency's needs. Save time on initial screening.</p>
+            <div class="homepage-agency__feature-highlight">
+              <span>Smart talent discovery</span>
+            </div>
+          </div>
+        </div>
+        <div class="homepage-agency__feature">
+          <div class="homepage-agency__feature-icon-wrapper">
+            <span class="homepage-agency__feature-icon">💼</span>
+          </div>
+          <div class="homepage-agency__feature-content">
+            <h3 class="homepage-agency__feature-title">100% Free for Agencies</h3>
+            <p class="homepage-agency__feature-text">Our dashboard is completely free for verified partner agencies. No subscription fees, no hidden costs—just powerful tools to manage your talent pipeline.</p>
+            <div class="homepage-agency__feature-highlight">
+              <span>Free forever</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="homepage-agency__cta-wrapper">
+        <a href="/partners" class="homepage-agency__cta">
+          <span class="homepage-agency__cta-text">Become a Partner Agency</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="homepage-testimonials" id="homepage-testimonials">
+  <div class="homepage-testimonials__inner">
+    <div class="homepage-testimonials__header">
+      <h2 class="homepage-testimonials__title">Trusted by the World's Leading Agencies</h2>
+      <p class="homepage-testimonials__subtitle">Join the professional platform scouts use to discover new faces</p>
+    </div>
+
+    <!-- Agency Logo Wall -->
+    <div class="agency-logos">
+      <p class="agency-logos__text">Trusted by agencies in LA, NYC, London, Paris, Tokyo</p>
+      <div class="agency-logos__grid">
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">Elite</text></svg>
+        </div>
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">Next</text></svg>
+        </div>
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">IMG</text></svg>
+        </div>
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">Ford</text></svg>
+        </div>
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">Major</text></svg>
+        </div>
+        <div class="agency-logo">
+          <svg viewBox="0 0 100 40" fill="currentColor"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Serif Display" font-weight="400" font-size="20">Storm</text></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="homepage-testimonials__carousel-wrapper">
+      <div class="homepage-testimonials__carousel" id="testimonial-carousel">
+        <!-- Testimonial 1: Agency (Enhanced Sarah Chen) -->
+        <div class="testimonial-slide active" data-index="0">
+          <div class="testimonial-slide__content">
+            <div class="testimonial-slide__image">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80" alt="Sarah Chen">
+            </div>
+            <div class="testimonial-slide__text-content">
+              <div class="testimonial-slide__quote">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" class="quote-icon">
+                  <path d="M10 25h5l3-7v-8h-10v8h5l-3 7zm15 0h5l3-7v-8h-10v8h5l-3 7z" fill="currentColor"/>
+                </svg>
+                <p>"Pholio transformed how we manage our talent roster. The AI curation maintains editorial standards while saving hours of manual work. Every comp card is publication-ready."</p>
+              </div>
+              <div class="testimonial-slide__footer">
+                <span class="testimonial-slide__name">Sarah Chen</span>
+                <span class="testimonial-slide__role">Creative Director, Elite Model Management</span>
+                <span class="testimonial-slide__location">New York City</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 2: Talent -->
+        <div class="testimonial-slide" data-index="1">
+          <div class="testimonial-slide__content">
+            <div class="testimonial-slide__image">
+              <img src="https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?auto=format&fit=crop&w=400&q=80" alt="Marcus Jenkins">
+            </div>
+            <div class="testimonial-slide__text-content">
+              <div class="testimonial-slide__quote">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" class="quote-icon">
+                  <path d="M10 25h5l3-7v-8h-10v8h5l-3 7zm15 0h5l3-7v-8h-10v8h5l-3 7z" fill="currentColor"/>
+                </svg>
+                <p>"I was struggling to format my digital portfolio for months. Pholio's AI took my raw photos and created a stunning comp card in seconds. I'm now signed with my dream agency in London."</p>
+              </div>
+              <div class="testimonial-slide__footer">
+                <span class="testimonial-slide__name">Marcus Jenkins</span>
+                <span class="testimonial-slide__role">Signed Talent</span>
+                <span class="testimonial-slide__location">London</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 3: Case Study -->
+        <div class="testimonial-slide testimonial-slide--case-study" data-index="2">
+          <div class="testimonial-slide__content">
+            <div class="testimonial-slide__image">
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80" alt="David Rossi">
+            </div>
+            <div class="testimonial-slide__text-content">
+              <div class="case-study-tag">Case Study</div>
+              <h3 class="case-study-title">Streamlining Global Scouting</h3>
+              <p class="case-study-excerpt">"We previously spent 15+ hours a week just reformatting submissions. With Pholio, our scouts get auto-curated profiles that are ready for internal review immediately. It's reduced our recruitment cycle by 40%."</p>
+              <div class="testimonial-slide__footer">
+                <span class="testimonial-slide__name">David Rossi</span>
+                <span class="testimonial-slide__role">Global Scouting Director, Major Model Management</span>
+                <span class="testimonial-slide__location">Milan / Paris</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-nav">
+        <button class="carousel-nav__btn carousel-nav__btn--prev" aria-label="Previous testimonial">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div class="carousel-indicators">
+          <button class="carousel-indicator active" data-index="0"></button>
+          <button class="carousel-indicator" data-index="1"></button>
+          <button class="carousel-indicator" data-index="2"></button>
+        </div>
+        <button class="carousel-nav__btn carousel-nav__btn--next" aria-label="Next testimonial">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="pricing-spread" id="homepage-pricing-bottom" style="position: relative; padding: 4rem 2rem; background: linear-gradient(135deg, #faf9f7 0%, #f5f4f2 100%); overflow: hidden;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="font-size: 3rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; letter-spacing: -0.02em;">
+        Choose Your Plan
+      </h1>
+      <p style="font-size: 1.125rem; color: #64748b; max-width: 600px; margin: 0 auto 2rem;">
+        Elevate your portfolio with Studio+. Cancel anytime.
+      </p>
+      
+      <!-- Billing Toggle -->
+      <div style="display: inline-flex; align-items: center; gap: 1rem; background: white; padding: 0.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <button class="billing-toggle" data-period="monthly" style="padding: 0.625rem 1.25rem; border-radius: 8px; background: #C9A55A; color: white; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          Monthly
+        </button>
+        <button class="billing-toggle" data-period="annual" style="padding: 0.625rem 1.25rem; border-radius: 8px; background: transparent; color: #64748b; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+          Annual
+          <span style="padding: 0.125rem 0.5rem; background: #dcfce7; color: #16a34a; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Save 20%</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Plans Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto;">
+      <!-- Free Plan -->
+      <div class="pricing-card pricing-card--free" style="background: #ffffff; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.08); position: relative; transform: scale(1); transition: all 0.3s ease;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+          Free
+        </h2>
+
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
+          Perfect for getting started
+        </p>
+
+        <div style="margin-bottom: 2rem;">
+          <span style="font-size: 3rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
+            $0
+          </span>
+          <span style="font-size: 0.875rem; color: #64748b; margin-left: 0.5rem;">
+            forever
+          </span>
+        </div>
+
+        <ul style="list-style: none; padding: 0; margin: 0 0 2rem 0;">
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Professional portfolio page
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Basic comp card download
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Up to 10 portfolio images
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            7-day analytics
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Profile strength tracker
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Agency applications
+          </li>
+        </ul>
+
+        <a href="/apply" style="width: 100%; padding: 0.875rem 1.5rem; background: #0f172a; color: #ffffff; border: none; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: block; text-align: center; text-decoration: none;">
+          Get Started Free
+        </a>
+      </div>
+
+      <!-- Studio+ Plan (Highlighted) -->
+      <div class="pricing-card pricing-card--pro" style="background: #ffffff; border-radius: 16px; padding: 2.5rem; box-shadow: 0 20px 40px -10px rgba(201, 165, 90, 0.2), 0 0 0 2px #C9A55A; position: relative; transform: scale(1.05); transition: all 0.3s ease;">
+        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #C9A55A 0%, #b08d45 100%); color: #ffffff; padding: 0.375rem 1rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.375rem; letter-spacing: 0.05em; text-transform: uppercase;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Recommended
+        </div>
+
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+          Studio+
+        </h2>
+
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
+          For serious talent
+        </p>
+
+        <div style="margin-bottom: 2rem;">
+          <div class="price-display" data-monthly="true">
+            <span style="font-size: 3rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
+              $9.99
+            </span>
+            <span style="font-size: 0.875rem; color: #64748b; margin-left: 0.5rem;">
+              per month
+            </span>
+          </div>
+          <div class="price-display" data-monthly="false" style="display: none;">
+            <span style="font-size: 3rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">
+              $95.90
+            </span>
+            <span style="font-size: 0.875rem; color: #64748b; margin-left: 0.5rem;">
+              per year
+            </span>
+            <div style="margin-top: 0.5rem;">
+              <span style="font-size: 0.75rem; color: #16a34a; font-weight: 600;">Save $23.98 annually</span>
+            </div>
+          </div>
+        </div>
+
+        <ul style="list-style: none; padding: 0; margin: 0 0 2rem 0;">
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <strong>Everything in Free, plus:</strong>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Live portfolio website with custom domain
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Full agency database & unlimited applications
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            AI agency matching & profile optimization
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Smart portfolio builder with AI photo selection
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Professional comp cards with multiple layouts
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Full analytics dashboard & engagement tracking
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a; border-bottom: 1px solid #f1f5f9;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Unlimited photo uploads with vector support
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; font-size: 0.875rem; color: #0f172a;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A55A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Push recommendations to matched agencies
+          </li>
+        </ul>
+
+        <a href="/pro/upgrade" style="width: 100%; padding: 0.875rem 1.5rem; background: #C9A55A; color: #ffffff; border: none; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: block; text-align: center; text-decoration: none;">
+          Upgrade to Studio+
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Billing toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleButtons = document.querySelectorAll('.billing-toggle');
+  const priceDisplays = document.querySelectorAll('.price-display');
+  
+  toggleButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const period = this.getAttribute('data-period');
+      const isMonthly = period === 'monthly';
+      
+      // Update button states
+      toggleButtons.forEach(btn => {
+        if (btn.getAttribute('data-period') === period) {
+          btn.style.background = '#C9A55A';
+          btn.style.color = 'white';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = '#64748b';
+        }
+      });
+      
+      // Update price displays
+      priceDisplays.forEach(display => {
+        const displayIsMonthly = display.getAttribute('data-monthly') === 'true';
+        display.style.display = (displayIsMonthly === isMonthly) ? 'block' : 'none';
+      });
+    });
+  });
+});
+</script>
+
+<script>
+  // Pass talent data to JavaScript
+  window.heroTalent = <%- JSON.stringify(heroTalent) %>;
+</script>
+<script src="/scripts/homepage.js?v=<%= Date.now() %>" defer></script>
+

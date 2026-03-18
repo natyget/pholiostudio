@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Complete Your Profile' %> - Pholio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/global.css">
+  <style>
+    /* Full-screen onboarding - no header/footer */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #faf9f7;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    .onboarding-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, #faf9f7 0%, #f5f4f2 100%);
+    }
+    
+    .onboarding-card {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    
+    .onboarding-header {
+      background: linear-gradient(135deg, rgba(201, 165, 90, 0.08) 0%, rgba(201, 165, 90, 0.04) 100%);
+      border-bottom: 1px solid rgba(201, 165, 90, 0.15);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    
+    .onboarding-header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    
+    .onboarding-header p {
+      margin: 0;
+      font-size: 1rem;
+      color: #64748b;
+    }
+    
+    .progress-indicator {
+      display: flex;
+      justify-content: space-between;
+      padding: 1.5rem 2rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      position: relative;
+    }
+    
+    .progress-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .progress-step::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      right: -50%;
+      height: 2px;
+      background: #e2e8f0;
+      z-index: 0;
+    }
+    
+    .progress-step:last-child::before {
+      display: none;
+    }
+    
+    .progress-step.completed::before,
+    .progress-step.active::before {
+      background: rgba(201, 165, 90, 0.5);
+    }
+    
+    .progress-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s ease;
+    }
+    
+    .progress-step.completed .progress-dot {
+      background: rgba(201, 165, 90, 0.9);
+      color: white;
+    }
+    
+    .progress-step.active .progress-dot {
+      background: rgba(201, 165, 90, 1);
+      color: white;
+      box-shadow: 0 0 0 4px rgba(201, 165, 90, 0.15);
+    }
+    
+    .progress-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .progress-step.completed .progress-label,
+    .progress-step.active .progress-label {
+      color: rgba(201, 165, 90, 0.9);
+    }
+    
+    .onboarding-body {
+      padding: 3rem 2rem;
+    }
+    
+    .onboarding-step {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .onboarding-step.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .onboarding-step h2 {
+      margin: 0 0 2rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .form-field label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .form-field input,
+    .form-field select {
+      padding: 0.875rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: rgba(201, 165, 90, 0.5);
+      box-shadow: 0 0 0 3px rgba(201, 165, 90, 0.1);
+    }
+    
+    .upload-zone {
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      padding: 4rem 2rem;
+      text-align: center;
+      background: #f8f9fa;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    
+    .upload-zone:hover {
+      border-color: rgba(201, 165, 90, 0.4);
+      background: rgba(201, 165, 90, 0.03);
+    }
+    
+    .upload-zone.drag-over {
+      border-color: rgba(201, 165, 90, 1);
+      background: rgba(201, 165, 90, 0.08);
+    }
+    
+    .upload-zone.uploading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .photo-preview {
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+    }
+    
+    .photo-preview img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    .predictions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .prediction-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .prediction-field label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #64748b;
+    }
+    
+    .prediction-field label .prefilled-label {
+      color: rgba(201, 165, 90, 0.9);
+      font-size: 0.75rem;
+      margin-left: 0.25rem;
+    }
+    
+    .market-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .market-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .market-item .market-info {
+      flex: 1;
+    }
+    
+    .market-item .market-name {
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+    
+    .market-item .market-description {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+    
+    .market-item .market-score {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: rgba(201, 165, 90, 1);
+      margin-left: 1rem;
+    }
+    
+    .finish-screen {
+      text-align: center;
+      padding: 2rem 0;
+    }
+    
+    .finish-screen h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .finish-screen p {
+      margin: 0 0 2rem 0;
+      font-size: 1rem;
+      color: #64748b;
+    }
+    
+    .locked-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    
+    .locked-feature {
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .locked-feature .feature-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      border-radius: 12px;
+      background: rgba(201, 165, 90, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(201, 165, 90, 1);
+    }
+    
+    .locked-feature .feature-name {
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+    
+    .locked-feature .feature-status {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+    
+    .pool-status-banner {
+      background: rgba(201, 165, 90, 0.08);
+      border: 1px solid rgba(201, 165, 90, 0.2);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 2rem 0;
+      text-align: center;
+      font-size: 0.9375rem;
+      color: #334155;
+    }
+    
+    .studio-upsell {
+      background: linear-gradient(135deg, rgba(201, 165, 90, 0.1) 0%, rgba(201, 165, 90, 0.05) 100%);
+      border: 1px solid rgba(201, 165, 90, 0.25);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    
+    .studio-upsell h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .studio-upsell p {
+      margin: 0 0 1rem 0;
+      font-size: 0.9375rem;
+      color: #64748b;
+    }
+    
+    .studio-upsell a {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: rgba(201, 165, 90, 1);
+      color: #0f172a;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .studio-upsell a:hover {
+      background: rgba(201, 165, 90, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 165, 90, 0.3);
+    }
+    
+    .onboarding-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 2rem;
+      border-top: 1px solid #e9ecef;
+      background: #f8f9fa;
+    }
+    
+    .btn {
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-family: inherit;
+    }
+    
+    .btn-primary {
+      background: rgba(201, 165, 90, 1);
+      color: #0f172a;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: rgba(201, 165, 90, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 165, 90, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      background: #f8f9fa;
+      border-color: #cbd5e1;
+    }
+    
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(201, 165, 90, 0.2);
+      border-top-color: rgba(201, 165, 90, 1);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="onboarding-container">
+    <div class="onboarding-card">
+      <div class="onboarding-header">
+        <h1>Complete Your Profile</h1>
+        <p>Get started in under 2 minutes</p>
+      </div>
+      
+      <div class="progress-indicator">
+        <div class="progress-step <%= currentStep >= 1 ? 'completed' : '' %> <%= currentStep === 1 ? 'active' : '' %>" data-step="1">
+          <div class="progress-dot">1</div>
+          <div class="progress-label">Identity</div>
+        </div>
+        <div class="progress-step <%= currentStep >= 2 ? 'completed' : '' %> <%= currentStep === 2 ? 'active' : '' %>" data-step="2">
+          <div class="progress-dot">2</div>
+          <div class="progress-label">Upload</div>
+        </div>
+        <div class="progress-step <%= currentStep >= 3 ? 'completed' : '' %> <%= currentStep === 3 ? 'active' : '' %>" data-step="3">
+          <div class="progress-dot">3</div>
+          <div class="progress-label">Confirm</div>
+        </div>
+        <div class="progress-step <%= currentStep >= 4 ? 'completed' : '' %> <%= currentStep === 4 ? 'active' : '' %>" data-step="4">
+          <div class="progress-dot">4</div>
+          <div class="progress-label">Market Fit</div>
+        </div>
+        <div class="progress-step <%= currentStep >= 5 ? 'completed' : '' %> <%= currentStep === 5 ? 'active' : '' %>" data-step="5">
+          <div class="progress-dot">5</div>
+          <div class="progress-label">Social</div>
+        </div>
+      </div>
+      
+      <div class="onboarding-body">
+        <div id="error-container"></div>
+        
+        <!-- Step 1: Identity -->
+        <div class="onboarding-step <%= currentStep === 1 ? 'active' : '' %>" data-step="1">
+          <h2>Tell us about yourself</h2>
+          <form id="step1-form" class="form-grid">
+            <div class="form-field">
+              <label for="first_name">First Name</label>
+              <input type="text" id="first_name" name="first_name" value="<%= profile?.first_name || '' %>" required autofocus>
+            </div>
+            <div class="form-field">
+              <label for="last_name">Last Name</label>
+              <input type="text" id="last_name" name="last_name" value="<%= profile?.last_name || '' %>" required>
+            </div>
+            <div class="form-field">
+              <label for="city">City</label>
+              <input type="text" id="city" name="city" value="<%= profile?.city || '' %>" required placeholder="e.g., New York, NY">
+            </div>
+            <div class="form-field">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender">
+                <option value="">Select...</option>
+                <option value="Male" <%= profile?.gender === 'Male' ? 'selected' : '' %>>Male</option>
+                <option value="Female" <%= profile?.gender === 'Female' ? 'selected' : '' %>>Female</option>
+                <option value="Non-binary" <%= profile?.gender === 'Non-binary' ? 'selected' : '' %>>Non-binary</option>
+                <option value="Other" <%= profile?.gender === 'Other' ? 'selected' : '' %>>Other</option>
+                <option value="Prefer not to say" <%= profile?.gender === 'Prefer not to say' ? 'selected' : '' %>>Prefer not to say</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Step 2: Upload -->
+        <div class="onboarding-step <%= currentStep === 2 ? 'active' : '' %>" data-step="2">
+          <h2>Upload your photo</h2>
+          <p style="color: #64748b; margin-bottom: 1.5rem;">Upload at least one clear, front-facing photo</p>
+          
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="photo-input" accept="image/*" style="display: none;">
+            <% if (photoCount > 0 && images && images[0]) { %>
+              <div class="photo-preview">
+                <img src="<%= images[0].path %>" alt="Uploaded photo">
+              </div>
+            <% } else { %>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 1rem; color: #94a3b8;">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21,15 16,10 5,21"/>
+              </svg>
+            <% } %>
+            <p style="margin: 0; font-weight: 500; color: #334155;">Click to upload or drag and drop</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #94a3b8;">JPG, PNG up to 10MB</p>
+          </div>
+        </div>
+        
+        <!-- Step 3: Predictions -->
+        <div class="onboarding-step <%= currentStep === 3 ? 'active' : '' %>" data-step="3">
+          <h2>Confirm your details</h2>
+          <p style="color: #64748b; margin-bottom: 1.5rem;">Prefilled — adjust if needed</p>
+          
+          <form id="step3-form" class="predictions-grid">
+            <div class="prediction-field">
+              <label for="height_cm">
+                Height (cm)
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="number" id="height_cm" name="height_cm" min="120" max="220" value="<%= profile?.height_cm || profile?.predicted_height_cm || '' %>" required>
+            </div>
+            <div class="prediction-field">
+              <label for="weight_lbs">
+                Weight (lbs)
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="number" id="weight_lbs" name="weight_lbs" min="80" max="300" step="0.1" value="<%= profile?.weight_lbs || profile?.predicted_weight_lbs || '' %>">
+            </div>
+            <div class="prediction-field">
+              <label for="bust">
+                Bust (inches)
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="number" id="bust" name="bust" step="0.5" min="20" max="60" value="<%= profile?.bust || profile?.predicted_bust || '' %>" required>
+            </div>
+            <div class="prediction-field">
+              <label for="waist">
+                Waist (inches)
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="number" id="waist" name="waist" step="0.5" min="20" max="50" value="<%= profile?.waist || profile?.predicted_waist || '' %>" required>
+            </div>
+            <div class="prediction-field">
+              <label for="hips">
+                Hips (inches)
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="number" id="hips" name="hips" step="0.5" min="25" max="60" value="<%= profile?.hips || profile?.predicted_hips || '' %>" required>
+            </div>
+            <div class="prediction-field">
+              <label for="hair_color">
+                Hair Color
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="text" id="hair_color" name="hair_color" value="<%= profile?.hair_color || profile?.predicted_hair_color || '' %>">
+            </div>
+            <div class="prediction-field">
+              <label for="eye_color">
+                Eye Color
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="text" id="eye_color" name="eye_color" value="<%= profile?.eye_color || profile?.predicted_eye_color || '' %>">
+            </div>
+            <div class="prediction-field">
+              <label for="skin_tone">
+                Skin Tone
+                <span class="prefilled-label">— Prefilled</span>
+              </label>
+              <input type="text" id="skin_tone" name="skin_tone" value="<%= profile?.skin_tone || profile?.predicted_skin_tone || '' %>">
+            </div>
+          </form>
+        </div>
+        
+        <!-- Step 4: Market Fit -->
+        <div class="onboarding-step <%= currentStep === 4 ? 'active' : '' %>" data-step="4">
+          <h2>Market Fit</h2>
+          <p style="color: #64748b; margin-bottom: 2rem;">Based on your profile and photo.</p>
+          
+          <div class="market-list" id="market-list">
+            <% 
+              let marketRankings = [];
+              if (profile?.market_fit_rankings) {
+                try {
+                  marketRankings = typeof profile.market_fit_rankings === 'string' 
+                    ? JSON.parse(profile.market_fit_rankings)
+                    : profile.market_fit_rankings;
+                } catch (e) {
+                  marketRankings = [];
+                }
+              }
+              
+              if (marketRankings && marketRankings.length > 0) {
+                marketRankings.slice(0, 5).forEach((market, index) => {
+            %>
+              <div class="market-item">
+                <div class="market-info">
+                  <div class="market-name"><%= market.name || 'Market' %></div>
+                  <div class="market-description"><%= market.description || '' %></div>
+                </div>
+                <div class="market-score"><%= (market.score * 100).toFixed(0) %>%</div>
+              </div>
+            <% 
+                });
+              } else {
+            %>
+              <div class="market-item">
+                <div class="market-info">
+                  <div class="market-name">Analysis pending</div>
+                  <div class="market-description">Upload a photo to see your market fit</div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Step 5: Instagram -->
+        <div class="onboarding-step <%= currentStep === 5 ? 'active' : '' %>" data-step="5">
+          <h2>Connect Instagram</h2>
+          <p style="color: #64748b; margin-bottom: 2rem;">Profiles with connected socials get more visibility.</p>
+          
+          <div style="text-align: center; padding: 2rem 0;">
+            <button type="button" id="connect-instagram" class="btn btn-primary" style="margin-bottom: 1rem;">
+              Connect Instagram (recommended)
+            </button>
+            <div>
+              <a href="#" id="skip-instagram" style="color: #64748b; font-size: 0.875rem; text-decoration: none;">Skip for now</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Finish Screen -->
+        <div class="onboarding-step <%= currentStep === 6 ? 'active' : '' %>" data-step="6" id="finish-screen" style="display: none;">
+          <div class="finish-screen">
+            <h2>Your profile foundation is complete.</h2>
+            <p>Continue to your dashboard to unlock features.</p>
+            
+            <div class="locked-features">
+              <div class="locked-feature">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  </svg>
+                </div>
+                <div class="feature-name">Comp Card</div>
+                <div class="feature-status">Complete profile to unlock</div>
+              </div>
+              <div class="locked-feature">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="feature-name">Agency Applications</div>
+                <div class="feature-status">Complete profile to unlock</div>
+              </div>
+              <div class="locked-feature">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <path d="M3 9h18"/>
+                    <path d="M9 21V9"/>
+                  </svg>
+                </div>
+                <div class="feature-name">Portfolio Features</div>
+                <div class="feature-status">Complete profile to unlock</div>
+              </div>
+            </div>
+            
+            <div class="pool-status-banner">
+              <%= poolStatusDescription || 'You are currently in a Private Intake Pool.' %>
+            </div>
+            
+            <% if (!isPro) { %>
+            <div class="studio-upsell">
+              <h3>Unlock Global Discoverability</h3>
+              <p>Studio+ members become discoverable across all agencies.</p>
+              <a href="/pro/upgrade">Upgrade to Studio+</a>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="onboarding-actions">
+        <button type="button" id="prev-btn" class="btn btn-secondary" disabled>Previous</button>
+        <button type="button" id="next-btn" class="btn btn-primary">Next</button>
+        <button type="button" id="complete-btn" class="btn btn-primary" style="display: none;">Go to dashboard</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let currentStep = <%= currentStep || 1 %>;
+    const totalSteps = 5;
+    let photoUploaded = <%= photoCount > 0 ? 'true' : 'false' %>;
+    let photoAnalysisComplete = <%= profile?.predicted_height_cm ? 'true' : 'false' %>;
+    
+    const steps = document.querySelectorAll('.onboarding-step');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const completeBtn = document.getElementById('complete-btn');
+    const errorContainer = document.getElementById('error-container');
+    
+    function showStep(step) {
+      if (step < 1 || step > totalSteps + 1) return;
+      
+      // Hide all steps
+      steps.forEach(s => s.classList.remove('active'));
+      
+      // Show current step (use .onboarding-step selector to avoid matching progress dots)
+      const currentStepEl = document.querySelector(`.onboarding-step[data-step="${step}"]`);
+      if (currentStepEl) {
+        currentStepEl.classList.add('active');
+      }
+      
+      // Update progress
+      progressSteps.forEach((ps, index) => {
+        ps.classList.remove('active', 'completed');
+        if (index + 1 < step) {
+          ps.classList.add('completed');
+        } else if (index + 1 === step) {
+          ps.classList.add('active');
+        }
+      });
+      
+      // Update buttons
+      prevBtn.disabled = step === 1;
+      
+      if (step === totalSteps + 1) {
+        // Finish screen
+        nextBtn.style.display = 'none';
+        completeBtn.style.display = 'inline-block';
+      } else if (step === totalSteps) {
+        // Last step
+        nextBtn.style.display = 'inline-block';
+        nextBtn.textContent = 'Continue';
+        completeBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = 'inline-block';
+        nextBtn.textContent = 'Next';
+        completeBtn.style.display = 'none';
+      }
+      
+      currentStep = step;
+    }
+    
+    function validateStep(step) {
+      const stepEl = document.querySelector(`[data-step="${step}"]`);
+      if (!stepEl) return true;
+      
+      const form = stepEl.querySelector('form');
+      if (!form) return true;
+      
+      const required = form.querySelectorAll('[required]');
+      let valid = true;
+      required.forEach(field => {
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          valid = false;
+        }
+      });
+      
+      // Step 2: Check photo uploaded
+      if (step === 2 && !photoUploaded) {
+        showError('Please upload at least one photo to continue.');
+        valid = false;
+      }
+      
+      return valid;
+    }
+    
+    function showError(message) {
+      errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+      errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    function clearError() {
+      errorContainer.innerHTML = '';
+    }
+    
+    // Step 1: Identity
+    const step1Form = document.getElementById('step1-form');
+    if (step1Form) {
+      nextBtn.addEventListener('click', async () => {
+        if (currentStep === 1) {
+          if (!validateStep(1)) return;
+          
+          clearError();
+          nextBtn.disabled = true;
+          nextBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+          
+          try {
+            const formData = new FormData(step1Form);
+            const data = Object.fromEntries(formData.entries());
+            
+            const res = await fetch('/onboarding/step/1', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+              credentials: 'same-origin'
+            });
+            
+            if (!res.ok) {
+              const error = await res.json().catch(() => ({ error: 'Save failed' }));
+              throw new Error(error.error || 'Failed to save');
+            }
+            
+            showStep(2);
+          } catch (error) {
+            showError(error.message || 'Failed to save. Please try again.');
+          } finally {
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Next';
+          }
+        }
+      });
+    }
+    
+    // Step 2: Upload
+    const uploadZone = document.getElementById('upload-zone');
+    const photoInput = document.getElementById('photo-input');
+    
+    if (uploadZone && photoInput) {
+      uploadZone.addEventListener('click', () => photoInput.click());
+      
+      ['dragover', 'dragenter'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          uploadZone.classList.add('drag-over');
+        });
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          uploadZone.classList.remove('drag-over');
+        });
+      });
+      
+      uploadZone.addEventListener('drop', async (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) await uploadPhoto(file);
+      });
+      
+      photoInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) await uploadPhoto(file);
+      });
+      
+      async function uploadPhoto(file) {
+        clearError();
+        uploadZone.classList.add('uploading');
+        nextBtn.disabled = true;
+        nextBtn.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+        
+        try {
+          const formData = new FormData();
+          formData.append('photo', file);
+          
+          const res = await fetch('/onboarding/step/2', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+          });
+          
+          if (!res.ok) {
+            const error = await res.json().catch(() => ({ error: 'Upload failed' }));
+            throw new Error(error.error || 'Failed to upload');
+          }
+          
+          const result = await res.json();
+          photoUploaded = true;
+          photoAnalysisComplete = true;
+          
+          // Update preview
+          if (result.path) {
+            uploadZone.innerHTML = `
+              <div class="photo-preview">
+                <img src="${result.path}" alt="Uploaded photo">
+              </div>
+              <p style="margin: 0; font-weight: 500; color: #334155;">Photo uploaded successfully</p>
+            `;
+          }
+          
+          // Auto-advance to step 3
+          setTimeout(() => showStep(3), 500);
+        } catch (error) {
+          showError(error.message || 'Failed to upload photo. Please try again.');
+        } finally {
+          uploadZone.classList.remove('uploading');
+          nextBtn.disabled = false;
+          nextBtn.textContent = 'Next';
+        }
+      }
+      
+      // Next button for step 2
+      nextBtn.addEventListener('click', () => {
+        if (currentStep === 2 && photoUploaded) {
+          showStep(3);
+        }
+      });
+    }
+    
+    // Step 3: Predictions
+    const step3Form = document.getElementById('step3-form');
+    if (step3Form) {
+      nextBtn.addEventListener('click', async () => {
+        if (currentStep === 3) {
+          if (!validateStep(3)) return;
+          
+          clearError();
+          nextBtn.disabled = true;
+          nextBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+          
+          try {
+            const formData = new FormData(step3Form);
+            const data = Object.fromEntries(formData.entries());
+            
+            const res = await fetch('/onboarding/step/3', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+              credentials: 'same-origin'
+            });
+            
+            if (!res.ok) {
+              const error = await res.json().catch(() => ({ error: 'Save failed' }));
+              throw new Error(error.error || 'Failed to save');
+            }
+            
+            showStep(4);
+          } catch (error) {
+            showError(error.message || 'Failed to save. Please try again.');
+          } finally {
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Next';
+          }
+        }
+      });
+    }
+    
+    // Step 4: Market Fit (read-only, just continue)
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 4) {
+        fetch('/onboarding/step/4', {
+          method: 'POST',
+          credentials: 'same-origin'
+        }).catch(() => {}); // Ignore errors
+        showStep(5);
+      }
+    });
+    
+    // Step 5: Instagram (optional)
+    const skipInstagram = document.getElementById('skip-instagram');
+    const connectInstagram = document.getElementById('connect-instagram');
+    
+    if (skipInstagram) {
+      skipInstagram.addEventListener('click', (e) => {
+        e.preventDefault();
+        showStep(6); // Finish screen
+      });
+    }
+    
+    if (connectInstagram) {
+      connectInstagram.addEventListener('click', async () => {
+        // TODO: Implement Instagram OAuth
+        // For now, just skip to finish
+        showStep(6);
+      });
+    }
+    
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 5) {
+        showStep(6); // Finish screen
+      }
+    });
+    
+    // Finish: Complete onboarding
+    if (completeBtn) {
+      completeBtn.addEventListener('click', async () => {
+        completeBtn.disabled = true;
+        completeBtn.innerHTML = '<span class="loading-spinner"></span> Completing...';
+        
+        try {
+          const res = await fetch('/onboarding/complete', {
+            method: 'POST',
+            credentials: 'same-origin',
+            redirect: 'manual'
+          });
+          
+          if (res.ok || res.status === 303 || res.status === 302) {
+            window.location.href = res.headers.get('location') || '/dashboard/talent';
+          } else {
+            const error = await res.json().catch(() => ({ error: 'Completion failed' }));
+            showError(error.error || 'Failed to complete. Please try again.');
+            completeBtn.disabled = false;
+            completeBtn.textContent = 'Go to dashboard';
+          }
+        } catch (error) {
+          showError('An error occurred. Please try again.');
+          completeBtn.disabled = false;
+          completeBtn.textContent = 'Go to dashboard';
+        }
+      });
+    }
+    
+    // Previous button
+    prevBtn.addEventListener('click', () => {
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    });
+    
+    // Initialize
+    showStep(currentStep);
+  </script>
+</body>
+</html>

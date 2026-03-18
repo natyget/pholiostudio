@@ -13,12 +13,17 @@ async function logAnalyticsEvent(profileId, eventType, metadata = {}, req = null
       return;
     }
     
+    const extendedMetadata = {
+      ...metadata,
+      referrer: req?.headers?.['referer'] || req?.headers?.['referrer'] || null
+    };
+    
     await knex('analytics').insert({
       id: uuidv4(),
       profile_id: profileId,
       event_type: eventType,
       event_source: 'web',
-      metadata: JSON.stringify(metadata),
+      metadata: JSON.stringify(extendedMetadata),
       ip_address: req?.ip || req?.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || null,
       user_agent: req?.headers?.['user-agent'] || null,
       created_at: knex.fn.now()
@@ -26,6 +31,64 @@ async function logAnalyticsEvent(profileId, eventType, metadata = {}, req = null
   } catch (error) {
     console.error('[Portfolio] Error logging analytics:', error);
     // Don't throw - analytics logging is non-critical
+  }
+}
+
+/**
+ * Helper function to track visitor sessions
+ */
+async function trackVisitorSession(profileId, req, res) {
+  if (!profileId || profileId === 'demo-elara-k') return null;
+
+  try {
+    const visitorId = req.cookies.pholio_visitor_id || uuidv4();
+    const sessionId = req.cookies.pholio_session_id;
+
+    // Set visitor cookie (1 year)
+    res.cookie('pholio_visitor_id', visitorId, { 
+      maxAge: 365 * 24 * 60 * 60 * 1000, 
+      httpOnly: true,
+      sameSite: 'lax'
+    });
+
+    if (sessionId) {
+      // Check if session exists in DB and update last activity
+      const existingSession = await knex('visitor_sessions').where({ id: sessionId }).first();
+      if (existingSession) {
+        await knex('visitor_sessions')
+          .where({ id: sessionId })
+          .update({ last_activity_at: knex.fn.now() });
+        return sessionId;
+      }
+    }
+
+    // New session needed
+    const newSessionId = uuidv4();
+    const isReturning = !!req.cookies.pholio_visitor_id;
+    
+    await knex('visitor_sessions').insert({
+      id: newSessionId,
+      profile_id: profileId,
+      visitor_id: visitorId,
+      started_at: knex.fn.now(),
+      last_activity_at: knex.fn.now(),
+      ip_address: req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || null,
+      user_agent: req.headers['user-agent'] || null,
+      referrer: req.headers.referer || req.headers.referrer || null,
+      is_returning: isReturning
+    });
+
+    // Set session cookie (30 mins)
+    res.cookie('pholio_session_id', newSessionId, { 
+      maxAge: 30 * 60 * 1000, 
+      httpOnly: true,
+      sameSite: 'lax'
+    });
+
+    return newSessionId;
+  } catch (error) {
+    console.error('[Portfolio] Session tracking error:', error);
+    return null;
   }
 }
 
@@ -45,7 +108,7 @@ function getDemoProfile(slug) {
       measurements: '32-25-35',
       bio_raw: 'Elara is a collaborative creative professional with a background in editorial campaigns and on-set leadership. Based in Los Angeles, she balances editorial edge with commercial versatility.',
       bio_curated: 'Elara Keats brings a polished presence to every production. Based in Los Angeles, she balances editorial edge with commercial versatility. Standing at 5\'11" with measurements of 32-25-35, she brings a commanding presence to both high-fashion editorials and commercial campaigns.',
-      hero_image_path: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=75',
+      // hero_image_path removed from demo as it is derived
       is_pro: true,
       pdf_theme: null,
       pdf_customizations: null,
@@ -199,6 +262,8 @@ router.get('/portfolio/:slug', async (req, res, next) => {
         profile = await knex('profiles').where({ slug: slug }).first();
         if (profile) {
           images = await knex('images').where({ profile_id: profile.id }).orderBy('sort');
+          const primaryImage = images.find(img => img.is_primary);
+          profile.hero_image_path = primaryImage ? (primaryImage.public_url || primaryImage.path) : null;
           console.log('[Portfolio] Profile loaded from database:', profile.slug, 'with', images.length, 'images');
         }
       } catch (dbError) {
@@ -243,6 +308,13 @@ router.get('/portfolio/:slug', async (req, res, next) => {
     res.locals.currentPage = 'portfolio';
     // Use pro layout for pro portfolios (no header/footer), regular layout for free
     const layoutType = profile.is_pro ? 'portfolio-pro' : 'layout';
+
+    // Track portfolio view (non-blocking)
+    logAnalyticsEvent(profile.id, 'view', { source: 'web', slug: profile.slug }, req);
+
+    // Track visitor session (Tier 2)
+    trackVisitorSession(profile.id, req, res);
+
     return res.render('portfolio/show', {
       title: `${profile.first_name} ${profile.last_name}`,
       profile,
@@ -279,6 +351,24 @@ router.get('/portfolio/:slug', async (req, res, next) => {
     }
 
     return next(error);
+  }
+});
+
+router.post('/portfolio/:slug/event', async (req, res) => {
+  const slug = req.params.slug;
+  const { eventType, metadata } = req.body;
+
+  try {
+    const profile = await knex('profiles').where({ slug: slug }).first();
+    if (profile) {
+      // Log event using the existing helper
+      await logAnalyticsEvent(profile.id, eventType, metadata, req);
+      return res.json({ success: true });
+    }
+    return res.status(404).json({ error: 'Profile not found' });
+  } catch (error) {
+    console.error('[Portfolio Event] Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

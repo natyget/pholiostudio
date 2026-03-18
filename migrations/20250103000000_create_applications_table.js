@@ -39,6 +39,19 @@ exports.up = async function up(knex) {
  * @param {import('knex')} knex
  */
 exports.down = async function down(knex) {
-  await knex.schema.dropTableIfExists('applications');
+  // Drop dependent tables first (in case they weren't rolled back by later migrations)
+  // These tables have foreign keys referencing applications
+  const hasApplicationTagsTable = await knex.schema.hasTable('application_tags');
+  if (hasApplicationTagsTable) {
+    await knex.raw('DROP TABLE IF EXISTS application_tags CASCADE');
+  }
+  
+  const hasApplicationNotesTable = await knex.schema.hasTable('application_notes');
+  if (hasApplicationNotesTable) {
+    await knex.raw('DROP TABLE IF EXISTS application_notes CASCADE');
+  }
+  
+  // Now drop the main applications table (use CASCADE to handle any remaining dependencies)
+  await knex.raw('DROP TABLE IF EXISTS applications CASCADE');
 };
 
