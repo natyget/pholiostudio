@@ -12,24 +12,20 @@ const files = [
   'node_modules/express/lib/express.js',
 ];
 
-const replacements = [
-  ["require('./router')", "require('./router/index.js')"],
-  ["require('./middleware/init')", "require('./middleware/init.js')"],
-  ["require('./middleware/query')", "require('./middleware/query.js')"],
-];
-
 files.forEach(filePath => {
   const abs = path.resolve(__dirname, '..', filePath);
   if (!fs.existsSync(abs)) return;
   let src = fs.readFileSync(abs, 'utf8');
-  let changed = false;
-  replacements.forEach(([from, to]) => {
-    if (src.includes(from)) {
-      src = src.split(from).join(to);
-      changed = true;
-    }
-  });
-  if (changed) {
+  let originalSrc = src;
+
+  // Replace exact occurrences to avoid .js.js issues
+  // Using Regex prevents replacing require('./router/index.js') with require('./router/index.js.js')
+  src = src.replace(/require\(['"]\.\/router['"]\)/g, "require('./router/index.js')");
+  src = src.replace(/require\(['"]\.\/router\/index['"]\)/g, "require('./router/index.js')");
+  src = src.replace(/require\(['"]\.\/middleware\/init['"]\)/g, "require('./middleware/init.js')");
+  src = src.replace(/require\(['"]\.\/middleware\/query['"]\)/g, "require('./middleware/query.js')");
+
+  if (src !== originalSrc) {
     fs.writeFileSync(abs, src);
     console.log(`patched: ${filePath}`);
   }
