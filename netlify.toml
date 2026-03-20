@@ -25,7 +25,8 @@
     "zod", "validator",
     "mysql", "mysql2", "tedious", "oracledb", "mssql",
     "fsevents", "pg-native", "pg-query-stream",
-    "readable-stream"
+    "readable-stream",
+    "firebase-admin"
   ]
 
 [[redirects]]
