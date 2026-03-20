@@ -102,7 +102,12 @@ app.set('trust proxy', true);
 // +++ 2. SET UP THE NEW LAYOUT ENGINE +++
 app.use(ejsLayouts);
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '..', 'views'));
+// In serverless (Lambda), __dirname is the bundle root (/var/task) and included_files
+// puts views/ directly there. In local dev, __dirname is src/ so we go up one level.
+const appRoot = config.isServerless
+  ? (process.env.LAMBDA_TASK_ROOT || __dirname)
+  : path.join(__dirname, '..');
+app.set('views', path.join(appRoot, 'views'));
 app.set('layout', 'layout'); // Default to public layout (dashboard routes explicitly use 'layouts/dashboard')
 // Disable EJS cache in development to see template changes immediately
 if (process.env.NODE_ENV !== 'production') {
@@ -543,7 +548,7 @@ const staticOptions = process.env.NODE_ENV === 'production' ? {} : {
     }
   }
 };
-app.use(express.static(path.join(__dirname, '..', 'public'), staticOptions));
+app.use(express.static(path.join(appRoot, 'public'), staticOptions));
 
 // Only serve uploads directory if not in serverless environment
 // In serverless, uploads should be served via CDN or cloud storage
@@ -580,7 +585,7 @@ app.get([
   }
 
   // Production: Serve React app
-  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard-app', 'index.html'));
+  res.sendFile(path.join(appRoot, 'public', 'dashboard-app', 'index.html'));
 });
 
 // Root route handler - Fixes 404 on localhost:3000
