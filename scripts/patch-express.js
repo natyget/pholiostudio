@@ -49,6 +49,29 @@ if (fs.existsSync(validatorDir)) {
   });
 }
 
+// Patch readable-stream: add .js extensions to extensionless relative requires so nft
+// can trace all files when it's listed as an external_node_module on Netlify.
+const readableStreamDir = path.resolve(__dirname, '..', 'node_modules/readable-stream');
+if (fs.existsSync(readableStreamDir)) {
+  const rsLibDir = path.join(readableStreamDir, 'lib');
+  const rsInternalDir = path.join(readableStreamDir, 'lib', 'internal', 'streams');
+  const rsFilesToPatch = [
+    path.join(readableStreamDir, 'readable.js'),
+    ...(fs.existsSync(rsLibDir) ? fs.readdirSync(rsLibDir).filter(f => f.endsWith('.js')).map(f => path.join(rsLibDir, f)) : []),
+    ...(fs.existsSync(rsInternalDir) ? fs.readdirSync(rsInternalDir).filter(f => f.endsWith('.js')).map(f => path.join(rsInternalDir, f)) : []),
+  ].filter(f => fs.existsSync(f));
+
+  rsFilesToPatch.forEach(absFile => {
+    let src = fs.readFileSync(absFile, 'utf8');
+    const original = src;
+    src = src.replace(/require\(['"](\.[^'"]+)(?<!\.js)['"]\)/g, "require('$1.js')");
+    if (src !== original) {
+      fs.writeFileSync(absFile, src);
+      console.log(`patched readable-stream requires: ${path.relative(path.resolve(__dirname, '..'), absFile)}`);
+    }
+  });
+}
+
 // Netlify's Linux environment fundamentally physically rejects parsing extend-node.js.
 const iconvFile = path.resolve(__dirname, '..', 'node_modules/iconv-lite/lib/index.js');
 if (fs.existsSync(iconvFile)) {

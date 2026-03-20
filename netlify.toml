@@ -25,7 +25,11 @@
 
     "mysql", "mysql2", "tedious", "oracledb", "mssql",
     "fsevents", "pg-native", "pg-query-stream",
-    "firebase-admin"
+    "firebase-admin",
+
+    # readable-stream has extensionless requires patched by scripts/patch-express.js
+    # so nft can trace them; keeping external avoids esbuild bundling issues.
+    "readable-stream"
   ]
 
 [[redirects]]
