@@ -22,14 +22,9 @@
   # Knex optional dialects (mysql, tedious, oracledb) are not installed but referenced in knex source.
   external_node_modules = [
     "bcrypt", "sharp", "puppeteer", "@sparticuz/chromium", "better-sqlite3", "sqlite3",
-
     "mysql", "mysql2", "tedious", "oracledb", "mssql",
     "fsevents", "pg-native", "pg-query-stream",
-    "firebase-admin",
-
-    # readable-stream has extensionless requires patched by scripts/patch-express.js
-    # so nft can trace them; keeping external avoids esbuild bundling issues.
-    "readable-stream"
+    "firebase-admin", "readable-stream"
   ]
 
 [[redirects]]

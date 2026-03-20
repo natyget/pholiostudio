@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const files = [
   'node_modules/express/lib/application.js',
@@ -49,27 +50,32 @@ if (fs.existsSync(validatorDir)) {
   });
 }
 
-// Patch readable-stream: add .js extensions to extensionless relative requires so nft
-// can trace all files when it's listed as an external_node_module on Netlify.
-const readableStreamDir = path.resolve(__dirname, '..', 'node_modules/readable-stream');
-if (fs.existsSync(readableStreamDir)) {
-  const rsLibDir = path.join(readableStreamDir, 'lib');
-  const rsInternalDir = path.join(readableStreamDir, 'lib', 'internal', 'streams');
-  const rsFilesToPatch = [
-    path.join(readableStreamDir, 'readable.js'),
-    ...(fs.existsSync(rsLibDir) ? fs.readdirSync(rsLibDir).filter(f => f.endsWith('.js')).map(f => path.join(rsLibDir, f)) : []),
-    ...(fs.existsSync(rsInternalDir) ? fs.readdirSync(rsInternalDir).filter(f => f.endsWith('.js')).map(f => path.join(rsInternalDir, f)) : []),
-  ].filter(f => fs.existsSync(f));
+// Patch ALL readable-stream installations (root + nested): add .js extensions to
+// extensionless relative requires so nft can trace all files when listed as external.
+try {
+  const rsCmd = `find "${path.resolve(__dirname, '..', 'node_modules')}" -type d -name "readable-stream" -not -path "*/readable-stream/node_modules/*"`;
+  const rsDirs = execSync(rsCmd, { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  rsDirs.forEach(readableStreamDir => {
+    const rsLibDir = path.join(readableStreamDir, 'lib');
+    const rsInternalDir = path.join(readableStreamDir, 'lib', 'internal', 'streams');
+    const rsFilesToPatch = [
+      path.join(readableStreamDir, 'readable.js'),
+      ...(fs.existsSync(rsLibDir) ? fs.readdirSync(rsLibDir).filter(f => f.endsWith('.js')).map(f => path.join(rsLibDir, f)) : []),
+      ...(fs.existsSync(rsInternalDir) ? fs.readdirSync(rsInternalDir).filter(f => f.endsWith('.js')).map(f => path.join(rsInternalDir, f)) : []),
+    ].filter(f => fs.existsSync(f));
 
-  rsFilesToPatch.forEach(absFile => {
-    let src = fs.readFileSync(absFile, 'utf8');
-    const original = src;
-    src = src.replace(/require\(['"](\.[^'"]+)(?<!\.js)['"]\)/g, "require('$1.js')");
-    if (src !== original) {
-      fs.writeFileSync(absFile, src);
-      console.log(`patched readable-stream requires: ${path.relative(path.resolve(__dirname, '..'), absFile)}`);
-    }
+    rsFilesToPatch.forEach(absFile => {
+      let src = fs.readFileSync(absFile, 'utf8');
+      const original = src;
+      src = src.replace(/require\(['"](\.[^'"]+)(?<!\.js)['"]\)/g, "require('$1.js')");
+      if (src !== original) {
+        fs.writeFileSync(absFile, src);
+        console.log(`patched readable-stream requires: ${path.relative(path.resolve(__dirname, '..'), absFile)}`);
+      }
+    });
   });
+} catch (err) {
+  console.log('Error patching readable-stream installs:', err.message);
 }
 
 // Netlify's Linux environment fundamentally physically rejects parsing extend-node.js.
@@ -86,7 +92,6 @@ if (fs.existsSync(iconvFile)) {
 }
 
 // Fix Netlify esbuild dropping server files due to 'browser' field confusion on nested versions
-const { execSync } = require('child_process');
 try {
   // Use find to locate all package.json files for iconv-lite and readable-stream
   const cmd = `find "${path.resolve(__dirname, '..', 'node_modules')}" -type f -path "*/iconv-lite/package.json"`;
