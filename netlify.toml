@@ -22,7 +22,7 @@
   # Knex optional dialects (mysql, tedious, oracledb) are not installed but referenced in knex source.
   external_node_modules = [
     "bcrypt", "sharp", "puppeteer", "@sparticuz/chromium", "better-sqlite3", "sqlite3",
-    "zod", "validator",
+    "validator",
     "mysql", "mysql2", "tedious", "oracledb", "mssql",
     "fsevents", "pg-native", "pg-query-stream",
     "readable-stream",
@@ -33,3 +33,4 @@
   from = "/*"
   to = "/.netlify/functions/server"
   status = 200
+ = 200
