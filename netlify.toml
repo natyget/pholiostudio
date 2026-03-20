@@ -16,10 +16,13 @@
 [functions."server"]
   timeout = 26
   memory = 3008
-  # Copy express wholesale instead of tracing it.
-  # nft has a bug with directory requires (e.g. require('./router') in express/lib/application.js).
-  # external_node_modules copies the full package tree, so runtime resolution works correctly.
-  external_node_modules = ["express"]
+  # nft has a bug with directory requires (e.g. require('./something') without .js extension).
+  # external_node_modules copies these packages wholesale so runtime resolution works correctly.
+  # - express: require('./router') in application.js
+  # - validator: require('./util/nullUndefinedCheck') in isFloat.js
+  # - mime: ESM-only / directory require issues
+  # - zod: v4 is ESM-only
+  external_node_modules = ["express", "validator", "mime", "zod"]
 
 [[redirects]]
   from = "/*"
