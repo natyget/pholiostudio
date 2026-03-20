@@ -24,6 +24,31 @@ files.forEach(filePath => {
   }
 });
 
+// Patch validator: add .js extensions to all extensionless relative requires so esbuild
+// can resolve them on Netlify's build server (same issue as express directory requires).
+const validatorDir = path.resolve(__dirname, '..', 'node_modules/validator');
+if (fs.existsSync(validatorDir)) {
+  const libDir = path.join(validatorDir, 'lib');
+  const utilDir = path.join(validatorDir, 'lib', 'util');
+  const filesToPatch = [
+    path.join(validatorDir, 'index.js'),
+    ...(fs.existsSync(libDir) ? fs.readdirSync(libDir).map(f => path.join(libDir, f)) : []),
+    ...(fs.existsSync(utilDir) ? fs.readdirSync(utilDir).map(f => path.join(utilDir, f)) : []),
+  ].filter(f => f.endsWith('.js'));
+
+  filesToPatch.forEach(absFile => {
+    if (!fs.existsSync(absFile)) return;
+    let src = fs.readFileSync(absFile, 'utf8');
+    const original = src;
+    // Add .js to relative requires that don't already end in .js
+    src = src.replace(/require\(['"](\.[^'"]+)(?<!\.js)['"]\)/g, "require('$1.js')");
+    if (src !== original) {
+      fs.writeFileSync(absFile, src);
+      console.log(`patched validator requires: ${path.relative(path.resolve(__dirname, '..'), absFile)}`);
+    }
+  });
+}
+
 // Netlify's Linux environment fundamentally physically rejects parsing extend-node.js.
 const iconvFile = path.resolve(__dirname, '..', 'node_modules/iconv-lite/lib/index.js');
 if (fs.existsSync(iconvFile)) {
