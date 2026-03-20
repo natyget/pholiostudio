@@ -1,21 +1,25 @@
 [build]
-  # Install + build React SPA. Pre-bundle Netlify functions using esbuild.
-  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build && npm run build:function"
+  # Build React SPA. nft bundles the Express function.
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
   publish = "public"
 
 [build.environment]
-  NODE_VERSION = "20.11.1"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--include=optional"
 
 [functions]
-  directory = "netlify/function-built"
-  # nft will uniquely zip our pre-bundled server.js natively without missing sub-files since esbuild inlines them!
+  directory = "netlify/function"
   node_bundler = "nft"
+  # Include EJS views, static assets, and DB migrations in the function zip.
   included_files = ["views/**", "public/**", "migrations/**"]
 
 [functions."server"]
   timeout = 26
   memory = 3008
+  # Copy express wholesale instead of tracing it.
+  # nft has a bug with directory requires (e.g. require('./router') in express/lib/application.js).
+  # external_node_modules copies the full package tree, so runtime resolution works correctly.
+  external_node_modules = ["express"]
 
 [[redirects]]
   from = "/*"
