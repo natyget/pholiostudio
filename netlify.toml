@@ -11,7 +11,7 @@
   directory = "netlify/function"
   # nft correctly traces our NodeJS modules now that the postinstall script removed browser-isms	
   node_bundler = "nft"
-  included_files = ["views/**", "public/**", "migrations/**"]
+  included_files = ["views/**", "public/**", "migrations/**", "node_modules/iconv-lite/**"]
 
 [functions."server"]
   timeout = 26
