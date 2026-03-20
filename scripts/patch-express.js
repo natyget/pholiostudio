@@ -24,28 +24,7 @@ files.forEach(filePath => {
   }
 });
 
-// Fix Netlify's nft/esbuild dropping server files due to 'browser' field confusion
-const pkgTargets = [
-  'node_modules/iconv-lite/package.json',
-  'node_modules/readable-stream/package.json',
-  'node_modules/pg/package.json'
-];
-
-pkgTargets.forEach(t => {
-  const absPkg = path.resolve(__dirname, '..', t);
-  if (fs.existsSync(absPkg)) {
-    let pkg = JSON.parse(fs.readFileSync(absPkg, 'utf8'));
-    if (pkg.browser) {
-      delete pkg.browser;
-      fs.writeFileSync(absPkg, JSON.stringify(pkg, null, 2));
-      console.log(`Stripped browser field from: ${t}`);
-    }
-  }
-});
-
 // Netlify's Linux environment fundamentally physically rejects parsing extend-node.js.
-// Since Express does not use Node's Buffer.isEncoding streaming overrides, we can brutally
-// disable the dynamic requires.
 const iconvFile = path.resolve(__dirname, '..', 'node_modules/iconv-lite/lib/index.js');
 if (fs.existsSync(iconvFile)) {
     let code = fs.readFileSync(iconvFile, 'utf8');
@@ -56,4 +35,30 @@ if (fs.existsSync(iconvFile)) {
         fs.writeFileSync(iconvFile, code);
         console.log('Disabled optional esoteric Next/Netlify crashing extends inside iconv-lite.');
     }
+}
+
+// Fix Netlify esbuild dropping server files due to 'browser' field confusion on nested versions
+const { execSync } = require('child_process');
+try {
+  // Use find to locate all package.json files for iconv-lite and readable-stream
+  const cmd = `find "${path.resolve(__dirname, '..', 'node_modules')}" -type f -path "*/iconv-lite/package.json" -o -path "*/readable-stream/package.json" -o -path "*/pg/package.json"`;
+  const result = execSync(cmd, { encoding: 'utf8' }).trim();
+  
+  if (result) {
+    const pkgFiles = result.split('\n').filter(Boolean);
+    pkgFiles.forEach(absPkg => {
+      try {
+        let pkg = JSON.parse(fs.readFileSync(absPkg, 'utf8'));
+        if (pkg.browser) {
+          delete pkg.browser;
+          fs.writeFileSync(absPkg, JSON.stringify(pkg, null, 2));
+          console.log(`Stripped browser field from nested package: ${absPkg}`);
+        }
+      } catch (e) {
+        console.log(`Could not strip ${absPkg}: ${e.message}`);
+      }
+    });
+  }
+} catch (err) {
+  console.log('Error finding nested packages:', err.message);
 }
