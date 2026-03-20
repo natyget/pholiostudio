@@ -42,3 +42,18 @@ pkgTargets.forEach(t => {
     }
   }
 });
+
+// Netlify's Linux environment fundamentally physically rejects parsing extend-node.js.
+// Since Express does not use Node's Buffer.isEncoding streaming overrides, we can brutally
+// disable the dynamic requires.
+const iconvFile = path.resolve(__dirname, '..', 'node_modules/iconv-lite/lib/index.js');
+if (fs.existsSync(iconvFile)) {
+    let code = fs.readFileSync(iconvFile, 'utf8');
+    let ocode = code;
+    code = code.replace(/require\(['"]\.\/streams['"]\)\(iconv\);/g, '// require("./streams")(iconv);');
+    code = code.replace(/require\(['"]\.\/extend-node['"]\)\(iconv\);/g, '// require("./extend-node")(iconv);');
+    if (code !== ocode) {
+        fs.writeFileSync(iconvFile, code);
+        console.log('Disabled optional esoteric Next/Netlify crashing extends inside iconv-lite.');
+    }
+}
