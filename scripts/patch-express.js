@@ -41,7 +41,7 @@ if (fs.existsSync(iconvFile)) {
 const { execSync } = require('child_process');
 try {
   // Use find to locate all package.json files for iconv-lite and readable-stream
-  const cmd = `find "${path.resolve(__dirname, '..', 'node_modules')}" -type f -path "*/iconv-lite/package.json" -o -path "*/readable-stream/package.json" -o -path "*/pg/package.json"`;
+  const cmd = `find "${path.resolve(__dirname, '..', 'node_modules')}" -type f -path "*/iconv-lite/package.json"`;
   const result = execSync(cmd, { encoding: 'utf8' }).trim();
   
   if (result) {

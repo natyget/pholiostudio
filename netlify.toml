@@ -24,7 +24,8 @@
     "bcrypt", "sharp", "puppeteer", "@sparticuz/chromium", "better-sqlite3", "sqlite3",
     "zod", "validator", "mime",
     "mysql", "mysql2", "tedious", "oracledb", "mssql",
-    "fsevents", "pg-native", "pg-query-stream"
+    "fsevents", "pg-native", "pg-query-stream",
+    "readable-stream"
   ]
 
 [[redirects]]
