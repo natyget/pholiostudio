@@ -1,6 +1,6 @@
 [build]
-  # Install + build React SPA. Pre-bundle Netlify functions using esbuild.
-  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build && npm run build:function"
+  # Install + build React SPA. Native Netlify functions bundled via nft.
+  command = "npm --prefix client install --legacy-peer-deps --include=dev && npm --prefix client run build"
   publish = "public"
 
 [build.environment]
@@ -8,8 +8,8 @@
   NPM_FLAGS = "--include=optional"
 
 [functions]
-  directory = "netlify/function-built"
-  # nft will uniquely zip our pre-bundled server.js natively without missing sub-files since esbuild inlines them!
+  directory = "netlify/function"
+  # nft correctly traces our NodeJS modules now that the postinstall script removed browser-isms	
   node_bundler = "nft"
   included_files = ["views/**", "public/**", "migrations/**"]
 
